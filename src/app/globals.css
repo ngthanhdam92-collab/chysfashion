@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #171310;
+  --color-paper: #faf7f2;
+  --color-surface: #ffffff;
+  --color-cream: #f1ebe0;
+  --color-sand: #e4d9c4;
+  --color-stone: #948b7c;
+  --color-muted: #7a7266;
+  --color-gold: #a9843f;
+  --color-gold-dark: #8a6b31;
+  --color-line: #e3ddd0;
+  --color-success: #3f5e3f;
+  --color-error: #a3372c;
+  --font-serif: var(--font-playfair);
+  --font-sans: var(--font-vietnam);
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+::selection {
+  background: var(--color-gold);
+  color: var(--color-paper);
+}
+
+.tracking-label {
+  letter-spacing: 0.14em;
+}
