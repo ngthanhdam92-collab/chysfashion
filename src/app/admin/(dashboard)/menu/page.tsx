@@ -1,22 +1,24 @@
 import { Fragment } from "react";
 import { getNavLinks } from "@/lib/nav-links";
+import { getCategories } from "@/lib/categories";
 import { NavLinkRow } from "@/components/admin/nav-link-row";
 import { AddNavLinkForm } from "@/components/admin/add-nav-link-form";
 
 export default async function AdminMenuPage() {
-  const links = await getNavLinks();
+  const [links, categories] = await Promise.all([getNavLinks(), getCategories()]);
 
   return (
     <div>
       <h1 className="mb-6 font-serif text-2xl text-ink">Menu điều hướng</h1>
       <p className="mb-4 text-sm text-muted">
-        Đây là các mục hiển thị trên thanh menu đầu trang. Chọn &quot;Thuộc menu cha&quot; khi
-        thêm để tạo menu con dạng thả xuống (ví dụ: Áo thun Nam nằm trong menu Nam). Dùng mũi
-        tên để sắp xếp thứ tự trong cùng một cấp.
+        Đây là các mục hiển thị trên thanh menu đầu trang. Để tạo menu con: chọn menu cha
+        (ví dụ Nam), chọn một danh mục có sẵn (ví dụ Áo thun) — đường dẫn sẽ tự tạo, khách
+        trỏ chuột vào menu cha sẽ thấy danh mục sổ xuống và bấm vào là ra đúng sản phẩm.
+        Dùng mũi tên để sắp xếp thứ tự trong cùng một cấp.
       </p>
 
       <div className="mb-6 border border-line bg-surface p-5">
-        <AddNavLinkForm topLevelLinks={links} />
+        <AddNavLinkForm topLevelLinks={links} categories={categories} />
       </div>
 
       <div className="border border-line bg-surface">
