@@ -1,8 +1,8 @@
 const VARIANTS = [
-  "from-[#efe7d8] via-[#e4d9c4] to-[#cdbb9a]",
-  "from-[#e9e3d6] via-[#d9cfba] to-[#b7a687]",
-  "from-[#f1ebe0] via-[#e8ded0] to-[#c9b79c]",
-  "from-[#eae4d9] via-[#dcd0ba] to-[#a9843f]/40",
+  "from-white via-[#f7f5f1] to-[#ebe6dc]",
+  "from-white via-[#f5f3ee] to-[#e3ddd0]",
+  "from-[#fbfaf8] via-[#f2efe8] to-[#e8e1d2]",
+  "from-white via-[#f6f4ef] to-[#a9843f]/15",
 ];
 
 function hashToIndex(seed: string, mod: number) {

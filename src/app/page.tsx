@@ -26,7 +26,7 @@ export default function HomePage() {
   return (
     <div>
       {/* Hero */}
-      <section className="relative flex min-h-[78vh] items-center overflow-hidden bg-gradient-to-br from-cream via-sand to-[#c9b79c]">
+      <section className="relative flex min-h-[78vh] items-center overflow-hidden bg-gradient-to-br from-white via-white to-cream">
         <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:px-8">
           <div className="flex flex-col justify-center">
             <p className="text-[12px] tracking-label uppercase text-gold-dark">
@@ -139,24 +139,24 @@ export default function HomePage() {
       </section>
 
       {/* Brand story */}
-      <section className="bg-ink text-cream">
+      <section className="bg-cream/50">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:px-8">
           <ProductImagePlaceholder seed="story" className="order-2 lg:order-1" />
           <div className="order-1 flex flex-col justify-center lg:order-2">
-            <p className="text-[12px] tracking-label uppercase text-gold">
+            <p className="text-[12px] tracking-label uppercase text-gold-dark">
               Câu chuyện thương hiệu
             </p>
-            <h2 className="mt-4 font-serif text-3xl leading-tight text-paper sm:text-4xl">
+            <h2 className="mt-4 font-serif text-3xl leading-tight text-ink sm:text-4xl">
               Được tạo nên bởi sự tận tâm với từng đường kim mũi chỉ
             </h2>
-            <p className="mt-5 max-w-lg text-[15px] leading-relaxed text-stone">
+            <p className="mt-5 max-w-lg text-[15px] leading-relaxed text-muted">
               CHYS Fashion ra đời từ niềm tin rằng thời trang cao cấp không
               cần phô trương — mà nằm ở chất liệu thật, đường may tỉ mỉ và
               thiết kế vượt thời gian. Mỗi sản phẩm đều được chọn lọc kỹ lưỡng
               để đồng hành cùng bạn trong nhiều năm tới.
             </p>
             <div className="mt-8">
-              <CtaButton href="/ve-chung-toi" variant="goldOutline">
+              <CtaButton href="/ve-chung-toi" variant="primary">
                 Tìm hiểu thêm
               </CtaButton>
             </div>

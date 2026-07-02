@@ -6,7 +6,7 @@ export const metadata = { title: "Về chúng tôi — CHYS Fashion" };
 export default function AboutPage() {
   return (
     <div>
-      <section className="bg-gradient-to-br from-cream via-sand to-[#c9b79c] py-20">
+      <section className="bg-gradient-to-br from-white via-white to-cream py-20">
         <div className="mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-8">
           <p className="text-[12px] tracking-label uppercase text-gold-dark">
             Câu chuyện thương hiệu
@@ -37,13 +37,13 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="bg-ink text-cream">
+      <section className="bg-cream/50">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:px-8">
           <div className="flex flex-col justify-center lg:order-1">
-            <h2 className="font-serif text-2xl text-paper sm:text-3xl">
+            <h2 className="font-serif text-2xl text-ink sm:text-3xl">
               Cam kết chất lượng
             </h2>
-            <p className="mt-4 text-[15px] leading-relaxed text-stone">
+            <p className="mt-4 text-[15px] leading-relaxed text-muted">
               Mỗi sản phẩm của CHYS Fashion đều trải qua quy trình kiểm định
               nghiêm ngặt về chất liệu và đường may. Chúng tôi làm việc trực
               tiếp với các xưởng may uy tín trong nước để đảm bảo mỗi sản
