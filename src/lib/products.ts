@@ -1,8 +1,6 @@
 import { Product } from "./types";
 import { createPublicClient } from "./supabase/public";
 
-export { categories } from "./categories";
-
 interface ProductRow {
   id: string;
   slug: string;

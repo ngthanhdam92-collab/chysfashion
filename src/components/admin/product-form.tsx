@@ -4,15 +4,16 @@ import { useState } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
 import { Product } from "@/lib/types";
-import { categories } from "@/lib/categories";
+import { Category } from "@/lib/categories";
 import { createClient } from "@/lib/supabase/client";
 
 interface ProductFormProps {
   product?: Product;
+  categories: Category[];
   action: (formData: FormData) => Promise<{ error: string } | void>;
 }
 
-export function ProductForm({ product, action }: ProductFormProps) {
+export function ProductForm({ product, categories, action }: ProductFormProps) {
   const [keptImages, setKeptImages] = useState<string[]>(product?.images ?? []);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -110,6 +111,11 @@ export function ProductForm({ product, action }: ProductFormProps) {
           <label className="text-xs text-muted" htmlFor="category">
             Danh mục *
           </label>
+          {categories.length === 0 && (
+            <p className="mt-1 text-xs text-error">
+              Chưa có danh mục nào — vào mục Danh mục để thêm trước.
+            </p>
+          )}
           <select
             id="category"
             name="category"
@@ -131,9 +137,7 @@ export function ProductForm({ product, action }: ProductFormProps) {
             id="categoryLabel"
             name="categoryLabel"
             type="hidden"
-            defaultValue={
-              product?.categoryLabel ?? categories[0].label
-            }
+            defaultValue={product?.categoryLabel ?? categories[0]?.label ?? ""}
           />
         </div>
 

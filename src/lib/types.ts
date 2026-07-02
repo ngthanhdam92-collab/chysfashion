@@ -7,7 +7,7 @@ export interface Product {
   id: string;
   slug: string;
   name: string;
-  category: "ao-so-mi" | "ao-thun" | "quan" | "ao-khoac" | "dam-vay" | "phu-kien";
+  category: string;
   categoryLabel: string;
   gender: "nam" | "nu" | "unisex";
   price: number;

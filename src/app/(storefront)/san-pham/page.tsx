@@ -3,6 +3,7 @@ import { ProductFilters } from "@/components/product-filters";
 import { SortSelect } from "@/components/sort-select";
 import { ProductCard } from "@/components/product-card";
 import { getAllProducts } from "@/lib/products";
+import { getCategories } from "@/lib/categories";
 import { Product } from "@/lib/types";
 
 export const metadata = {
@@ -21,6 +22,7 @@ interface Params {
 export default async function ProductListingPage({ searchParams }: Params) {
   const { gender, category, filter, sort } = await searchParams;
   let items: Product[] = await getAllProducts();
+  const categories = await getCategories();
 
   if (gender === "nam" || gender === "nu") {
     items = items.filter((p) => p.gender === gender || p.gender === "unisex");
@@ -48,7 +50,7 @@ export default async function ProductListingPage({ searchParams }: Params) {
 
       <div className="flex flex-col gap-10 lg:flex-row">
         <Suspense fallback={<div className="lg:w-56 lg:shrink-0" />}>
-          <ProductFilters />
+          <ProductFilters categories={categories} />
         </Suspense>
 
         <div className="flex-1">

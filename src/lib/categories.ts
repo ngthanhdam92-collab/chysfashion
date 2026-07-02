@@ -1,10 +1,22 @@
-import { Product } from "./types";
+import { createPublicClient } from "./supabase/public";
 
-export const categories: { value: Product["category"]; label: string }[] = [
-  { value: "ao-so-mi", label: "Áo sơ mi" },
-  { value: "ao-thun", label: "Áo thun" },
-  { value: "quan", label: "Quần" },
-  { value: "ao-khoac", label: "Áo khoác" },
-  { value: "dam-vay", label: "Đầm & Váy" },
-  { value: "phu-kien", label: "Phụ kiện" },
-];
+export interface Category {
+  id: string;
+  value: string;
+  label: string;
+}
+
+export async function getCategories(): Promise<Category[]> {
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("categories")
+    .select("*")
+    .order("created_at", { ascending: true });
+
+  if (error || !data) {
+    console.error("getCategories error:", error?.message);
+    return [];
+  }
+
+  return data as Category[];
+}
