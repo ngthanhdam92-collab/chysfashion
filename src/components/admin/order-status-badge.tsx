@@ -10,7 +10,7 @@ const STATUS_CONFIG: Record<OrderStatus, { label: string; className: string }> =
 export function OrderStatusBadge({ status }: { status: OrderStatus }) {
   const config = STATUS_CONFIG[status];
   return (
-    <span className={`px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide ${config.className}`}>
+    <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide ${config.className}`}>
       {config.label}
     </span>
   );

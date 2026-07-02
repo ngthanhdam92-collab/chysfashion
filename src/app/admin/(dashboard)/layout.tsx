@@ -1,16 +1,8 @@
-import Link from "next/link";
-import { LayoutDashboard, Shirt, Tag, Menu, Receipt, Users, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/supabase/actions";
-
-const NAV_ITEMS = [
-  { href: "/admin", label: "Tổng quan", icon: LayoutDashboard },
-  { href: "/admin/products", label: "Sản phẩm", icon: Shirt },
-  { href: "/admin/categories", label: "Danh mục", icon: Tag },
-  { href: "/admin/menu", label: "Menu điều hướng", icon: Menu },
-  { href: "/admin/orders", label: "Đơn hàng", icon: Receipt },
-  { href: "/admin/customers", label: "Khách hàng", icon: Users },
-];
+import { AdminSidebarNav } from "@/components/admin/admin-sidebar-nav";
+import { AvatarInitials } from "@/components/admin/avatar-initials";
 
 export default async function DashboardLayout({
   children,
@@ -21,6 +13,15 @@ export default async function DashboardLayout({
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  const email = user?.email ?? "";
+  const displayName = email.split("@")[0] || "Admin";
+  const today = new Date().toLocaleDateString("vi-VN", {
+    weekday: "long",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 
   return (
     <div className="flex min-h-screen">
@@ -33,20 +34,9 @@ export default async function DashboardLayout({
             Quản lý
           </span>
         </div>
-        <nav className="flex-1 space-y-1 px-3 py-4">
-          {NAV_ITEMS.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex items-center gap-3 rounded px-3 py-2.5 text-sm text-ink hover:bg-cream"
-            >
-              <item.icon size={17} strokeWidth={1.75} />
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+        <AdminSidebarNav />
         <div className="border-t border-line p-3">
-          <p className="truncate px-3 py-1 text-xs text-muted">{user?.email}</p>
+          <p className="truncate px-3 py-1 text-xs text-muted">{email}</p>
           <form action={signOut}>
             <button
               type="submit"
@@ -59,6 +49,15 @@ export default async function DashboardLayout({
         </div>
       </aside>
       <div className="flex-1 bg-cream/40">
+        <div className="flex h-16 items-center justify-end gap-3 border-b border-line bg-surface px-6 sm:px-10">
+          <div className="text-right">
+            <p className="text-sm text-ink">
+              Xin chào, <span className="font-medium capitalize">{displayName}</span>
+            </p>
+            <p className="text-xs capitalize text-muted">{today}</p>
+          </div>
+          <AvatarInitials name={displayName} size={38} />
+        </div>
         <div className="mx-auto max-w-6xl px-6 py-8 sm:px-10">{children}</div>
       </div>
     </div>

@@ -39,10 +39,12 @@ export default async function AdminProductsPage() {
                 <td className="px-4 py-3">
                   <div className="flex gap-1.5">
                     {p.isNew && (
-                      <span className="bg-ink px-2 py-0.5 text-[10px] uppercase text-paper">Mới</span>
+                      <span className="rounded-full bg-ink px-2 py-0.5 text-[10px] uppercase text-paper">
+                        Mới
+                      </span>
                     )}
                     {p.isBestSeller && (
-                      <span className="bg-gold px-2 py-0.5 text-[10px] uppercase text-paper">
+                      <span className="rounded-full bg-gold px-2 py-0.5 text-[10px] uppercase text-paper">
                         Bán chạy
                       </span>
                     )}

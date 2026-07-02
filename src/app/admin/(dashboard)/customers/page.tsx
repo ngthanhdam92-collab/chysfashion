@@ -1,5 +1,6 @@
 import { getAllOrders } from "@/lib/orders";
 import { formatVnd } from "@/lib/utils";
+import { AvatarInitials } from "@/components/admin/avatar-initials";
 
 export default async function AdminCustomersPage() {
   const orders = await getAllOrders();
@@ -49,7 +50,12 @@ export default async function AdminCustomersPage() {
           <tbody>
             {customers.map((c) => (
               <tr key={c.phone} className="border-b border-line last:border-0">
-                <td className="px-4 py-3 text-ink">{c.fullName}</td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2.5">
+                    <AvatarInitials name={c.fullName} size={30} />
+                    <span className="text-ink">{c.fullName}</span>
+                  </div>
+                </td>
                 <td className="px-4 py-3 text-ink">{c.phone}</td>
                 <td className="px-4 py-3 text-muted">{c.address}</td>
                 <td className="px-4 py-3 text-ink">{c.orderCount}</td>
