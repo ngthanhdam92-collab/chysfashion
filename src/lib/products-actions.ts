@@ -33,30 +33,7 @@ function parseLines(raw: string): string[] {
     .filter(Boolean);
 }
 
-async function uploadImages(
-  formData: FormData,
-  slug: string
-): Promise<string[]> {
-  const supabase = await createClient();
-  const files = formData.getAll("newImages").filter((f): f is File => f instanceof File && f.size > 0);
-  const urls: string[] = [];
-
-  for (const file of files) {
-    const ext = file.name.split(".").pop();
-    const path = `${slug}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error } = await supabase.storage.from("product-media").upload(path, file);
-    if (error) {
-      console.error("uploadImages error:", error.message);
-      continue;
-    }
-    const { data } = supabase.storage.from("product-media").getPublicUrl(path);
-    urls.push(data.publicUrl);
-  }
-
-  return urls;
-}
-
-function buildProductPayload(formData: FormData, slug: string, newImageUrls: string[]) {
+function buildProductPayload(formData: FormData, slug: string) {
   const keptImages = formData.getAll("keptImages").map(String);
   const price = Number(formData.get("price"));
   const compareAtPriceRaw = formData.get("compareAtPrice");
@@ -78,15 +55,14 @@ function buildProductPayload(formData: FormData, slug: string, newImageUrls: str
     is_bestseller: formData.get("isBestSeller") === "on",
     rating: Number(formData.get("rating") || 5),
     review_count: Number(formData.get("reviewCount") || 0),
-    images: [...keptImages, ...newImageUrls],
+    images: keptImages,
   };
 }
 
 export async function createProduct(formData: FormData) {
   const name = String(formData.get("name") || "");
   const slug = slugify(String(formData.get("slug") || name));
-  const newImageUrls = await uploadImages(formData, slug);
-  const payload = buildProductPayload(formData, slug, newImageUrls);
+  const payload = buildProductPayload(formData, slug);
 
   const supabase = await createClient();
   const { error } = await supabase.from("products").insert(payload);
@@ -103,8 +79,7 @@ export async function createProduct(formData: FormData) {
 export async function updateProduct(id: string, formData: FormData) {
   const name = String(formData.get("name") || "");
   const slug = slugify(String(formData.get("slug") || name));
-  const newImageUrls = await uploadImages(formData, slug);
-  const payload = buildProductPayload(formData, slug, newImageUrls);
+  const payload = buildProductPayload(formData, slug);
 
   const supabase = await createClient();
   const { error } = await supabase.from("products").update(payload).eq("id", id);

@@ -5,6 +5,7 @@ import Image from "next/image";
 import { X } from "lucide-react";
 import { Product } from "@/lib/types";
 import { categories } from "@/lib/categories";
+import { createClient } from "@/lib/supabase/client";
 
 interface ProductFormProps {
   product?: Product;
@@ -15,6 +16,35 @@ export function ProductForm({ product, action }: ProductFormProps) {
   const [keptImages, setKeptImages] = useState<string[]>(product?.images ?? []);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+
+    setUploading(true);
+    setError(null);
+    const supabase = createClient();
+
+    for (const file of files) {
+      const ext = file.name.split(".").pop();
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("product-media")
+        .upload(path, file);
+
+      if (uploadError) {
+        setError(`Không thể tải ảnh "${file.name}": ${uploadError.message}`);
+        continue;
+      }
+
+      const { data } = supabase.storage.from("product-media").getPublicUrl(path);
+      setKeptImages((imgs) => [...imgs, data.publicUrl]);
+    }
+
+    setUploading(false);
+    e.target.value = "";
+  }
 
   async function handleSubmit(formData: FormData) {
     setSubmitting(true);
@@ -252,18 +282,20 @@ export function ProductForm({ product, action }: ProductFormProps) {
         </div>
         <input
           type="file"
-          name="newImages"
           accept="image/*"
           multiple
+          disabled={uploading}
+          onChange={handleFileChange}
           className="mt-3 block text-sm"
         />
+        {uploading && <p className="mt-2 text-xs text-muted">Đang tải ảnh lên...</p>}
       </div>
 
       {error && <p className="text-sm text-error">{error}</p>}
 
       <button
         type="submit"
-        disabled={submitting}
+        disabled={submitting || uploading}
         className="bg-ink px-6 py-3 text-[12px] tracking-label uppercase text-paper transition-colors hover:bg-ink/85 disabled:opacity-50"
       >
         {submitting ? "Đang lưu..." : "Lưu sản phẩm"}
