@@ -2,10 +2,30 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { X } from "lucide-react";
-import { Product } from "@/lib/types";
+import { X, Check, Plus } from "lucide-react";
+import { Product, ProductColor } from "@/lib/types";
 import { Category } from "@/lib/categories";
 import { createClient } from "@/lib/supabase/client";
+
+const PRESET_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "Freesize"];
+
+const PRESET_COLORS: ProductColor[] = [
+  { name: "Đen", hex: "#171310" },
+  { name: "Trắng", hex: "#ffffff" },
+  { name: "Kem", hex: "#f1ebe0" },
+  { name: "Be", hex: "#c9b79c" },
+  { name: "Xám", hex: "#8a8479" },
+  { name: "Nâu", hex: "#5c4224" },
+  { name: "Xanh rêu", hex: "#3f5e3f" },
+  { name: "Xanh navy", hex: "#1f2a44" },
+  { name: "Xanh dương", hex: "#2563eb" },
+  { name: "Đỏ", hex: "#c0392b" },
+  { name: "Đỏ đô", hex: "#6d2f34" },
+  { name: "Hồng", hex: "#e8a0bf" },
+  { name: "Vàng", hex: "#d4a017" },
+  { name: "Cam", hex: "#d97706" },
+  { name: "Tím", hex: "#6b21a8" },
+];
 
 interface ProductFormProps {
   product?: Product;
@@ -18,6 +38,46 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
+
+  const [selectedSizes, setSelectedSizes] = useState<string[]>(
+    product?.sizes ?? ["S", "M", "L", "XL"]
+  );
+  const [selectedColors, setSelectedColors] = useState<ProductColor[]>(
+    product?.colors ?? [{ name: "Đen", hex: "#171310" }]
+  );
+  const [customColorName, setCustomColorName] = useState("");
+  const [customColorHex, setCustomColorHex] = useState("#a9843f");
+
+  // Gộp bảng màu mặc định với các màu tùy chỉnh đã lưu trên sản phẩm (khi sửa)
+  const paletteColors = [
+    ...PRESET_COLORS,
+    ...selectedColors.filter(
+      (c) => !PRESET_COLORS.some((p) => p.name === c.name && p.hex === c.hex)
+    ),
+  ];
+
+  function toggleSize(size: string) {
+    setSelectedSizes((sizes) =>
+      sizes.includes(size) ? sizes.filter((s) => s !== size) : [...sizes, size]
+    );
+  }
+
+  function toggleColor(color: ProductColor) {
+    setSelectedColors((colors) =>
+      colors.some((c) => c.name === color.name && c.hex === color.hex)
+        ? colors.filter((c) => !(c.name === color.name && c.hex === color.hex))
+        : [...colors, color]
+    );
+  }
+
+  function addCustomColor() {
+    const name = customColorName.trim();
+    if (!name) return;
+    if (!selectedColors.some((c) => c.name === name)) {
+      setSelectedColors((colors) => [...colors, { name, hex: customColorHex }]);
+    }
+    setCustomColorName("");
+  }
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
@@ -57,10 +117,6 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
     }
   }
 
-  const colorsText = (product?.colors ?? [])
-    .map((c) => `${c.name},${c.hex}`)
-    .join("\n");
-  const sizesText = (product?.sizes ?? []).join("\n");
   const detailsText = (product?.details ?? []).join("\n");
 
   return (
@@ -201,29 +257,101 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
         </div>
 
         <div className="sm:col-span-2">
-          <label className="text-xs text-muted" htmlFor="sizes">
-            Kích thước (mỗi dòng 1 size, ví dụ: S / M / L / XL)
+          <label className="text-xs text-muted">
+            Kích thước — bấm để chọn/bỏ chọn
           </label>
-          <textarea
-            id="sizes"
-            name="sizes"
-            rows={4}
-            defaultValue={sizesText || "S\nM\nL\nXL"}
-            className="mt-1 w-full border border-line bg-white px-3 py-2.5 text-sm focus:border-gold focus:outline-none"
-          />
+          <input type="hidden" name="sizes" value={selectedSizes.join("\n")} />
+          <div className="mt-2 flex flex-wrap gap-2">
+            {PRESET_SIZES.map((size) => {
+              const active = selectedSizes.includes(size);
+              return (
+                <button
+                  key={size}
+                  type="button"
+                  onClick={() => toggleSize(size)}
+                  className={`min-w-12 border px-3 py-2 text-sm transition-colors ${
+                    active
+                      ? "border-ink bg-ink text-paper"
+                      : "border-line bg-white text-ink hover:border-ink"
+                  }`}
+                >
+                  {size}
+                </button>
+              );
+            })}
+          </div>
+          {selectedSizes.length === 0 && (
+            <p className="mt-1.5 text-xs text-error">Chọn ít nhất 1 kích thước.</p>
+          )}
         </div>
 
         <div className="sm:col-span-2">
-          <label className="text-xs text-muted" htmlFor="colors">
-            Màu sắc (mỗi dòng: Tên màu,#mãhex — ví dụ: Đen,#171310)
+          <label className="text-xs text-muted">
+            Màu sắc — bấm để chọn/bỏ chọn
           </label>
-          <textarea
-            id="colors"
+          <input
+            type="hidden"
             name="colors"
-            rows={4}
-            defaultValue={colorsText || "Đen,#171310"}
-            className="mt-1 w-full border border-line bg-white px-3 py-2.5 text-sm focus:border-gold focus:outline-none"
+            value={selectedColors.map((c) => `${c.name},${c.hex}`).join("\n")}
           />
+          <div className="mt-2 flex flex-wrap gap-2">
+            {paletteColors.map((color) => {
+              const active = selectedColors.some(
+                (c) => c.name === color.name && c.hex === color.hex
+              );
+              return (
+                <button
+                  key={`${color.name}-${color.hex}`}
+                  type="button"
+                  onClick={() => toggleColor(color)}
+                  className={`flex items-center gap-2 border px-3 py-2 text-sm transition-colors ${
+                    active
+                      ? "border-gold bg-gold/10 text-ink"
+                      : "border-line bg-white text-ink hover:border-ink"
+                  }`}
+                >
+                  <span
+                    className="inline-block h-4 w-4 rounded-full border border-line"
+                    style={{ backgroundColor: color.hex }}
+                  />
+                  {color.name}
+                  {active && <Check size={13} className="text-gold-dark" />}
+                </button>
+              );
+            })}
+          </div>
+          {selectedColors.length === 0 && (
+            <p className="mt-1.5 text-xs text-error">Chọn ít nhất 1 màu.</p>
+          )}
+          <div className="mt-3 flex items-end gap-2">
+            <div>
+              <label className="text-xs text-muted" htmlFor="customColorName">
+                Thêm màu khác (nếu cần)
+              </label>
+              <input
+                id="customColorName"
+                value={customColorName}
+                onChange={(e) => setCustomColorName(e.target.value)}
+                placeholder="Tên màu, ví dụ: Xanh mint"
+                className="mt-1 w-48 border border-line bg-white px-3 py-2 text-sm focus:border-gold focus:outline-none"
+              />
+            </div>
+            <input
+              type="color"
+              value={customColorHex}
+              onChange={(e) => setCustomColorHex(e.target.value)}
+              className="h-9 w-12 cursor-pointer border border-line bg-white"
+              aria-label="Chọn mã màu"
+            />
+            <button
+              type="button"
+              onClick={addCustomColor}
+              disabled={!customColorName.trim()}
+              className="flex items-center gap-1.5 border border-ink px-3 py-2 text-sm text-ink hover:bg-ink hover:text-paper disabled:opacity-40"
+            >
+              <Plus size={14} /> Thêm màu
+            </button>
+          </div>
         </div>
 
         <div className="sm:col-span-2">
