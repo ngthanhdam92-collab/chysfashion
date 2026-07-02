@@ -19,6 +19,7 @@ interface ProductRow {
   rating: number;
   review_count: number;
   images: string[];
+  stock: number;
 }
 
 function mapRow(row: ProductRow): Product {
@@ -40,6 +41,8 @@ function mapRow(row: ProductRow): Product {
     rating: Number(row.rating),
     reviewCount: row.review_count,
     images: row.images ?? [],
+    // Cột stock có thể chưa tồn tại nếu chưa chạy migration — coi như còn hàng
+    stock: row.stock ?? 100,
   };
 }
 

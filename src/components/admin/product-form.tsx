@@ -227,6 +227,24 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
         </div>
 
         <div>
+          <label className="text-xs text-muted" htmlFor="stock">
+            Số lượng tồn kho *
+          </label>
+          <input
+            id="stock"
+            name="stock"
+            type="number"
+            min={0}
+            required
+            defaultValue={product?.stock ?? 0}
+            className="mt-1 w-full border border-line bg-white px-3 py-2.5 text-sm focus:border-gold focus:outline-none"
+          />
+          <p className="mt-1 text-xs text-muted">
+            Về 0 sẽ hiện &quot;Hết hàng&quot; trên website. Tự trừ khi khách đặt hàng.
+          </p>
+        </div>
+
+        <div>
           <label className="text-xs text-muted" htmlFor="rating">
             Điểm đánh giá (0-5)
           </label>

@@ -21,6 +21,7 @@ export interface Product {
   rating: number;
   reviewCount: number;
   images: string[];
+  stock: number;
 }
 
 export interface OrderItem {

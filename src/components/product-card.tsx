@@ -39,6 +39,11 @@ export function ProductCard({ product }: { product: Product }) {
             </span>
           )}
         </div>
+        {product.stock === 0 && (
+          <div className="absolute inset-x-0 bottom-0 bg-ink/70 py-2 text-center text-[11px] tracking-label uppercase text-paper">
+            Hết hàng
+          </div>
+        )}
       </div>
       <div className="mt-3 space-y-1">
         <p className="text-[11px] tracking-label uppercase text-muted">

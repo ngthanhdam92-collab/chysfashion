@@ -47,6 +47,7 @@ function buildProductPayload(formData: FormData, slug: string) {
     rating: Number(formData.get("rating") || 5),
     review_count: Number(formData.get("reviewCount") || 0),
     images: keptImages,
+    stock: Math.max(0, Number(formData.get("stock") || 0)),
   };
 }
 

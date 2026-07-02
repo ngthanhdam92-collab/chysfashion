@@ -14,6 +14,7 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
   const [size, setSize] = useState(product.sizes[0]);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+  const outOfStock = product.stock === 0;
 
   function handleAddToCart() {
     addItem(
@@ -102,45 +103,60 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
         <p className="text-[12px] tracking-label uppercase text-ink">
           Số lượng
         </p>
-        <div className="mt-3 flex w-fit items-center border border-line">
-          <button
-            aria-label="Giảm số lượng"
-            onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-            className="p-3 hover:bg-cream"
-          >
-            <Minus size={14} />
-          </button>
-          <span className="w-10 text-center text-sm">{quantity}</span>
-          <button
-            aria-label="Tăng số lượng"
-            onClick={() => setQuantity((q) => q + 1)}
-            className="p-3 hover:bg-cream"
-          >
-            <Plus size={14} />
-          </button>
+        <div className="mt-3 flex items-center gap-3">
+          <div className="flex w-fit items-center border border-line">
+            <button
+              aria-label="Giảm số lượng"
+              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+              className="p-3 hover:bg-cream"
+            >
+              <Minus size={14} />
+            </button>
+            <span className="w-10 text-center text-sm">{quantity}</span>
+            <button
+              aria-label="Tăng số lượng"
+              onClick={() => setQuantity((q) => Math.min(product.stock, q + 1))}
+              className="p-3 hover:bg-cream"
+            >
+              <Plus size={14} />
+            </button>
+          </div>
+          {product.stock > 0 && product.stock <= 5 && (
+            <span className="text-xs text-gold-dark">
+              Chỉ còn {product.stock} sản phẩm
+            </span>
+          )}
         </div>
       </div>
 
-      <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-        <button
-          onClick={handleAddToCart}
-          className="flex flex-1 items-center justify-center gap-2 border border-ink px-6 py-3.5 text-[12px] tracking-label uppercase text-ink transition-colors hover:bg-ink hover:text-paper"
-        >
-          {added ? (
-            <>
-              <Check size={16} /> Đã thêm vào giỏ
-            </>
-          ) : (
-            "Thêm vào giỏ hàng"
-          )}
-        </button>
-        <button
-          onClick={handleBuyNow}
-          className="flex-1 bg-ink px-6 py-3.5 text-[12px] tracking-label uppercase text-paper transition-colors hover:bg-ink/85"
-        >
-          Mua ngay
-        </button>
-      </div>
+      {outOfStock ? (
+        <div className="mt-9">
+          <div className="w-full border border-line bg-cream/60 px-6 py-3.5 text-center text-[12px] tracking-label uppercase text-muted">
+            Hết hàng — sẽ sớm có lại
+          </div>
+        </div>
+      ) : (
+        <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+          <button
+            onClick={handleAddToCart}
+            className="flex flex-1 items-center justify-center gap-2 border border-ink px-6 py-3.5 text-[12px] tracking-label uppercase text-ink transition-colors hover:bg-ink hover:text-paper"
+          >
+            {added ? (
+              <>
+                <Check size={16} /> Đã thêm vào giỏ
+              </>
+            ) : (
+              "Thêm vào giỏ hàng"
+            )}
+          </button>
+          <button
+            onClick={handleBuyNow}
+            className="flex-1 bg-ink px-6 py-3.5 text-[12px] tracking-label uppercase text-paper transition-colors hover:bg-ink/85"
+          >
+            Mua ngay
+          </button>
+        </div>
+      )}
     </div>
   );
 }

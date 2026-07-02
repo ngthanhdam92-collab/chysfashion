@@ -26,6 +26,7 @@ export default async function AdminProductsPage() {
               <th className="px-4 py-3">Sản phẩm</th>
               <th className="px-4 py-3">Danh mục</th>
               <th className="px-4 py-3">Giá</th>
+              <th className="px-4 py-3">Tồn kho</th>
               <th className="px-4 py-3">Trạng thái</th>
               <th className="px-4 py-3 text-right">Thao tác</th>
             </tr>
@@ -36,6 +37,19 @@ export default async function AdminProductsPage() {
                 <td className="px-4 py-3 text-ink">{p.name}</td>
                 <td className="px-4 py-3 text-muted">{p.categoryLabel}</td>
                 <td className="px-4 py-3 text-ink">{formatVnd(p.price)}</td>
+                <td className="px-4 py-3">
+                  {p.stock === 0 ? (
+                    <span className="rounded-full bg-error/15 px-2.5 py-1 text-[11px] font-medium uppercase text-error">
+                      Hết hàng
+                    </span>
+                  ) : p.stock <= 5 ? (
+                    <span className="rounded-full bg-gold/15 px-2.5 py-1 text-[11px] font-medium text-gold-dark">
+                      Còn {p.stock}
+                    </span>
+                  ) : (
+                    <span className="text-ink">{p.stock}</span>
+                  )}
+                </td>
                 <td className="px-4 py-3">
                   <div className="flex gap-1.5">
                     {p.isNew && (
@@ -66,7 +80,7 @@ export default async function AdminProductsPage() {
             ))}
             {products.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-10 text-center text-muted">
+                <td colSpan={6} className="px-4 py-10 text-center text-muted">
                   Chưa có sản phẩm nào.
                 </td>
               </tr>

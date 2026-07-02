@@ -23,6 +23,7 @@ create table if not exists products (
   rating numeric not null default 5,
   review_count integer not null default 0,
   images jsonb not null default '[]',
+  stock integer not null default 0,
   created_at timestamptz not null default now()
 );
 
@@ -67,6 +68,31 @@ create policy "orders_admin_read" on orders
 
 create policy "orders_admin_update" on orders
   for update to authenticated using (true);
+
+-- Tự động trừ tồn kho khi có đơn hàng mới
+create or replace function decrement_stock_on_order()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  item jsonb;
+begin
+  for item in select * from jsonb_array_elements(new.items)
+  loop
+    update products
+      set stock = greatest(0, stock - coalesce((item->>'quantity')::int, 1))
+      where id::text = item->>'productId';
+  end loop;
+  return new;
+end;
+$$;
+
+drop trigger if exists orders_decrement_stock on orders;
+create trigger orders_decrement_stock
+  after insert on orders
+  for each row execute function decrement_stock_on_order();
 
 -- ============ TABLE: categories ============
 create table if not exists categories (
