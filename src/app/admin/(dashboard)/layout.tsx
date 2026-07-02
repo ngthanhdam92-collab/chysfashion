@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LayoutDashboard, Shirt, Tag, Receipt, Users, LogOut } from "lucide-react";
+import { LayoutDashboard, Shirt, Tag, Menu, Receipt, Users, LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/supabase/actions";
 
@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { href: "/admin", label: "Tổng quan", icon: LayoutDashboard },
   { href: "/admin/products", label: "Sản phẩm", icon: Shirt },
   { href: "/admin/categories", label: "Danh mục", icon: Tag },
+  { href: "/admin/menu", label: "Menu điều hướng", icon: Menu },
   { href: "/admin/orders", label: "Đơn hàng", icon: Receipt },
   { href: "/admin/customers", label: "Khách hàng", icon: Users },
 ];

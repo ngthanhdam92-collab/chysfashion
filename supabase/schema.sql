@@ -99,6 +99,37 @@ insert into categories (value, label) values
   ('phu-kien', 'Phụ kiện')
 on conflict (value) do nothing;
 
+-- ============ TABLE: nav_links ============
+create table if not exists nav_links (
+  id uuid primary key default gen_random_uuid(),
+  label text not null,
+  href text not null,
+  position integer not null default 0,
+  created_at timestamptz not null default now()
+);
+
+alter table nav_links enable row level security;
+
+create policy "nav_links_public_read" on nav_links
+  for select using (true);
+
+create policy "nav_links_admin_write" on nav_links
+  for insert to authenticated with check (true);
+
+create policy "nav_links_admin_update" on nav_links
+  for update to authenticated using (true);
+
+create policy "nav_links_admin_delete" on nav_links
+  for delete to authenticated using (true);
+
+insert into nav_links (label, href, position) values
+  ('Nam', '/san-pham?gender=nam', 1),
+  ('Nữ', '/san-pham?gender=nu', 2),
+  ('Bộ sưu tập mới', '/san-pham?filter=moi', 3),
+  ('Sale', '/san-pham?filter=sale', 4),
+  ('Về chúng tôi', '/ve-chung-toi', 5)
+on conflict do nothing;
+
 -- ============ STORAGE: product-media bucket ============
 insert into storage.buckets (id, name, public)
 values ('product-media', 'product-media', true)

@@ -4,16 +4,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { Menu, X, Search, ShoppingBag, User } from "lucide-react";
 import { useCart } from "@/context/cart-context";
+import { NavLink } from "@/lib/nav-links";
 
-const NAV_LINKS = [
-  { href: "/san-pham?gender=nam", label: "Nam" },
-  { href: "/san-pham?gender=nu", label: "Nữ" },
-  { href: "/san-pham?filter=moi", label: "Bộ sưu tập mới" },
-  { href: "/san-pham?filter=sale", label: "Sale" },
-  { href: "/ve-chung-toi", label: "Về chúng tôi" },
-];
-
-export function Header() {
+export function Header({ navLinks }: { navLinks: NavLink[] }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { totalCount } = useCart();
 
@@ -41,9 +34,9 @@ export function Header() {
         </Link>
 
         <nav className="hidden items-center gap-8 lg:flex">
-          {NAV_LINKS.map((link) => (
+          {navLinks.map((link) => (
             <Link
-              key={link.label}
+              key={link.id}
               href={link.href}
               className="text-[13px] tracking-label uppercase text-ink transition-colors hover:text-gold-dark"
             >
@@ -80,9 +73,9 @@ export function Header() {
 
       {menuOpen && (
         <nav className="flex flex-col border-t border-line bg-paper px-4 py-4 lg:hidden">
-          {NAV_LINKS.map((link) => (
+          {navLinks.map((link) => (
             <Link
-              key={link.label}
+              key={link.id}
               href={link.href}
               onClick={() => setMenuOpen(false)}
               className="border-b border-line py-3 text-sm tracking-label uppercase text-ink"
