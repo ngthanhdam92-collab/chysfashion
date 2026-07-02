@@ -20,7 +20,7 @@ interface Params {
 
 export default async function ProductListingPage({ searchParams }: Params) {
   const { gender, category, filter, sort } = await searchParams;
-  let items: Product[] = getAllProducts();
+  let items: Product[] = await getAllProducts();
 
   if (gender === "nam" || gender === "nu") {
     items = items.filter((p) => p.gender === gender || p.gender === "unisex");

@@ -1,17 +1,32 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Product } from "@/lib/types";
 import { formatVnd } from "@/lib/utils";
 import { ProductImagePlaceholder } from "./product-image-placeholder";
 
 export function ProductCard({ product }: { product: Product }) {
+  const cover = product.images[0];
+
   return (
     <Link href={`/san-pham/${product.slug}`} className="group block">
       <div className="relative overflow-hidden">
-        <ProductImagePlaceholder
-          seed={product.id}
-          label={product.categoryLabel}
-          className="transition-transform duration-500 ease-out group-hover:scale-105"
-        />
+        {cover ? (
+          <div className="relative aspect-[3/4] w-full overflow-hidden bg-cream">
+            <Image
+              src={cover}
+              alt={product.name}
+              fill
+              sizes="(min-width: 1024px) 25vw, 50vw"
+              className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+            />
+          </div>
+        ) : (
+          <ProductImagePlaceholder
+            seed={product.id}
+            label={product.categoryLabel}
+            className="transition-transform duration-500 ease-out group-hover:scale-105"
+          />
+        )}
         <div className="absolute left-3 top-3 flex flex-col gap-1.5">
           {product.isNew && (
             <span className="bg-ink px-2.5 py-1 text-[10px] tracking-label uppercase text-paper">

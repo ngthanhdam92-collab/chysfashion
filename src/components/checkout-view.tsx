@@ -5,11 +5,14 @@ import Link from "next/link";
 import { CircleCheck } from "lucide-react";
 import { useCart } from "@/context/cart-context";
 import { formatVnd } from "@/lib/utils";
+import { createOrder } from "@/lib/orders";
 import { CtaButton } from "./cta-button";
 
 export function CheckoutView() {
   const { lines, subtotal, clearCart } = useCart();
   const [orderCode, setOrderCode] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
     fullName: "",
     phone: "",
@@ -25,10 +28,39 @@ export function CheckoutView() {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    const code = `CHYS${Date.now().toString().slice(-8)}`;
-    setOrderCode(code);
+    setSubmitting(true);
+    setError(null);
+
+    const result = await createOrder({
+      fullName: form.fullName,
+      phone: form.phone,
+      address: form.address,
+      city: form.city,
+      note: form.note,
+      items: lines.map((l) => ({
+        productId: l.productId,
+        slug: l.slug,
+        name: l.name,
+        price: l.price,
+        color: l.color,
+        size: l.size,
+        quantity: l.quantity,
+      })),
+      subtotal,
+      shipping,
+      total,
+    });
+
+    setSubmitting(false);
+
+    if ("error" in result) {
+      setError(result.error);
+      return;
+    }
+
+    setOrderCode(result.orderCode);
     clearCart();
   }
 
@@ -194,11 +226,13 @@ export function CheckoutView() {
           <span>Tổng cộng</span>
           <span>{formatVnd(total)}</span>
         </div>
+        {error && <p className="mt-4 text-sm text-error">{error}</p>}
         <button
           type="submit"
-          className="mt-6 w-full bg-ink px-6 py-3.5 text-[12px] tracking-label uppercase text-paper transition-colors hover:bg-ink/85"
+          disabled={submitting}
+          className="mt-6 w-full bg-ink px-6 py-3.5 text-[12px] tracking-label uppercase text-paper transition-colors hover:bg-ink/85 disabled:opacity-50"
         >
-          Đặt hàng
+          {submitting ? "Đang xử lý..." : "Đặt hàng"}
         </button>
         <Link
           href="/gio-hang"

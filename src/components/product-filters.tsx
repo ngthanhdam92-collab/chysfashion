@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { categories } from "@/lib/products";
+import { categories } from "@/lib/categories";
 
 export function ProductFilters() {
   const router = useRouter();

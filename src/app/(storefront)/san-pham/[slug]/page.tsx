@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { getProductBySlug, getRelatedProducts } from "@/lib/products";
@@ -11,26 +12,52 @@ interface Params {
 
 export async function generateMetadata({ params }: Params) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
   return { title: product ? `${product.name} — CHYS Fashion` : "Sản phẩm" };
 }
 
 export default async function ProductDetailPage({ params }: Params) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
   if (!product) notFound();
 
-  const related = getRelatedProducts(product);
+  const related = await getRelatedProducts(product);
+  const gallery = product.images.length > 0 ? product.images : null;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-16">
         <div>
-          <ProductImagePlaceholder seed={product.id} />
+          {gallery ? (
+            <div className="relative aspect-[3/4] w-full overflow-hidden bg-cream">
+              <Image
+                src={gallery[0]}
+                alt={product.name}
+                fill
+                sizes="(min-width: 1024px) 50vw, 100vw"
+                className="object-cover"
+                priority
+              />
+            </div>
+          ) : (
+            <ProductImagePlaceholder seed={product.id} />
+          )}
           <div className="mt-3 grid grid-cols-4 gap-3">
-            {[0, 1, 2, 3].map((i) => (
-              <ProductImagePlaceholder key={i} seed={`${product.id}-${i}`} />
-            ))}
+            {gallery
+              ? gallery.slice(0, 4).map((src, i) => (
+                  <div key={src} className="relative aspect-[3/4] overflow-hidden bg-cream">
+                    <Image
+                      src={src}
+                      alt={`${product.name} ${i + 1}`}
+                      fill
+                      sizes="25vw"
+                      className="object-cover"
+                    />
+                  </div>
+                ))
+              : [0, 1, 2, 3].map((i) => (
+                  <ProductImagePlaceholder key={i} seed={`${product.id}-${i}`} />
+                ))}
           </div>
         </div>
 

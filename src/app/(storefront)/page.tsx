@@ -18,8 +18,8 @@ const CATEGORY_TILES = [
   { label: "Phụ kiện", href: "/san-pham?category=phu-kien", seed: "cat-pk" },
 ];
 
-export default function HomePage() {
-  const products = getAllProducts();
+export default async function HomePage() {
+  const products = await getAllProducts();
   const bestSellers = products.filter((p) => p.isBestSeller).slice(0, 4);
   const newArrivals = products.filter((p) => p.isNew).slice(0, 4);
 
