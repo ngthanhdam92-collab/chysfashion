@@ -9,10 +9,12 @@ export function NavLinkRow({
   link,
   isFirst,
   isLast,
+  isChild = false,
 }: {
   link: NavLink;
   isFirst: boolean;
   isLast: boolean;
+  isChild?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [label, setLabel] = useState(link.label);
@@ -49,7 +51,7 @@ export function NavLinkRow({
   }
 
   return (
-    <tr className="border-b border-line last:border-0">
+    <tr className={`border-b border-line last:border-0 ${isChild ? "bg-cream/20" : ""}`}>
       <td className="px-4 py-3">
         <div className="flex flex-col gap-1">
           <button
@@ -72,7 +74,8 @@ export function NavLinkRow({
           </button>
         </div>
       </td>
-      <td className="px-4 py-3">
+      <td className="px-4 py-3" style={isChild ? { paddingLeft: "2rem" } : undefined}>
+        {isChild && <span className="mr-1.5 text-muted">↳</span>}
         {editing ? (
           <input
             value={label}

@@ -105,6 +105,7 @@ create table if not exists nav_links (
   label text not null,
   href text not null,
   position integer not null default 0,
+  parent_id uuid references nav_links(id) on delete cascade,
   created_at timestamptz not null default now()
 );
 

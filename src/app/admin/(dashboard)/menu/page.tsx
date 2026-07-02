@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { getNavLinks } from "@/lib/nav-links";
 import { NavLinkRow } from "@/components/admin/nav-link-row";
 import { AddNavLinkForm } from "@/components/admin/add-nav-link-form";
@@ -9,12 +10,13 @@ export default async function AdminMenuPage() {
     <div>
       <h1 className="mb-6 font-serif text-2xl text-ink">Menu điều hướng</h1>
       <p className="mb-4 text-sm text-muted">
-        Đây là các mục hiển thị trên thanh menu đầu trang của website. Dùng mũi tên để sắp
-        xếp thứ tự.
+        Đây là các mục hiển thị trên thanh menu đầu trang. Chọn &quot;Thuộc menu cha&quot; khi
+        thêm để tạo menu con dạng thả xuống (ví dụ: Áo thun Nam nằm trong menu Nam). Dùng mũi
+        tên để sắp xếp thứ tự trong cùng một cấp.
       </p>
 
       <div className="mb-6 border border-line bg-surface p-5">
-        <AddNavLinkForm />
+        <AddNavLinkForm topLevelLinks={links} />
       </div>
 
       <div className="border border-line bg-surface">
@@ -28,13 +30,23 @@ export default async function AdminMenuPage() {
             </tr>
           </thead>
           <tbody>
-            {links.map((link, i) => (
-              <NavLinkRow
-                key={link.id}
-                link={link}
-                isFirst={i === 0}
-                isLast={i === links.length - 1}
-              />
+            {links.map((link) => (
+              <Fragment key={link.id}>
+                <NavLinkRow
+                  link={link}
+                  isFirst={links[0].id === link.id}
+                  isLast={links[links.length - 1].id === link.id}
+                />
+                {link.children.map((child) => (
+                  <NavLinkRow
+                    key={child.id}
+                    link={child}
+                    isChild
+                    isFirst={link.children[0].id === child.id}
+                    isLast={link.children[link.children.length - 1].id === child.id}
+                  />
+                ))}
+              </Fragment>
             ))}
             {links.length === 0 && (
               <tr>

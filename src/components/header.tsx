@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Menu, X, Search, ShoppingBag, User } from "lucide-react";
+import { Menu, X, Search, ShoppingBag, User, ChevronDown } from "lucide-react";
 import { useCart } from "@/context/cart-context";
 import { NavLink } from "@/lib/nav-links";
 
@@ -34,15 +34,38 @@ export function Header({ navLinks }: { navLinks: NavLink[] }) {
         </Link>
 
         <nav className="hidden items-center gap-8 lg:flex">
-          {navLinks.map((link) => (
-            <Link
-              key={link.id}
-              href={link.href}
-              className="text-[13px] tracking-label uppercase text-ink transition-colors hover:text-gold-dark"
-            >
-              {link.label}
-            </Link>
-          ))}
+          {navLinks.map((link) =>
+            link.children.length > 0 ? (
+              <div key={link.id} className="group relative py-2">
+                <Link
+                  href={link.href}
+                  className="flex items-center gap-1 text-[13px] tracking-label uppercase text-ink transition-colors hover:text-gold-dark"
+                >
+                  {link.label}
+                  <ChevronDown size={13} />
+                </Link>
+                <div className="invisible absolute left-1/2 top-full w-52 -translate-x-1/2 border border-line bg-surface opacity-0 shadow-lg transition-all duration-150 group-hover:visible group-hover:opacity-100">
+                  {link.children.map((child) => (
+                    <Link
+                      key={child.id}
+                      href={child.href}
+                      className="block px-4 py-2.5 text-sm text-ink hover:bg-cream hover:text-gold-dark"
+                    >
+                      {child.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <Link
+                key={link.id}
+                href={link.href}
+                className="text-[13px] tracking-label uppercase text-ink transition-colors hover:text-gold-dark"
+              >
+                {link.label}
+              </Link>
+            )
+          )}
         </nav>
 
         <div className="flex items-center gap-1">
@@ -73,16 +96,40 @@ export function Header({ navLinks }: { navLinks: NavLink[] }) {
 
       {menuOpen && (
         <nav className="flex flex-col border-t border-line bg-paper px-4 py-4 lg:hidden">
-          {navLinks.map((link) => (
-            <Link
-              key={link.id}
-              href={link.href}
-              onClick={() => setMenuOpen(false)}
-              className="border-b border-line py-3 text-sm tracking-label uppercase text-ink"
-            >
-              {link.label}
-            </Link>
-          ))}
+          {navLinks.map((link) =>
+            link.children.length > 0 ? (
+              <details key={link.id} className="group border-b border-line py-1">
+                <summary className="flex cursor-pointer list-none items-center justify-between py-2 text-sm tracking-label uppercase text-ink">
+                  {link.label}
+                  <ChevronDown
+                    size={15}
+                    className="transition-transform group-open:rotate-180"
+                  />
+                </summary>
+                <div className="flex flex-col pb-2 pl-3">
+                  {link.children.map((child) => (
+                    <Link
+                      key={child.id}
+                      href={child.href}
+                      onClick={() => setMenuOpen(false)}
+                      className="py-2 text-sm text-muted hover:text-ink"
+                    >
+                      {child.label}
+                    </Link>
+                  ))}
+                </div>
+              </details>
+            ) : (
+              <Link
+                key={link.id}
+                href={link.href}
+                onClick={() => setMenuOpen(false)}
+                className="border-b border-line py-3 text-sm tracking-label uppercase text-ink"
+              >
+                {link.label}
+              </Link>
+            )
+          )}
         </nav>
       )}
     </header>

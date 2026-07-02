@@ -3,8 +3,9 @@
 import { useState, useRef } from "react";
 import { Plus } from "lucide-react";
 import { createNavLink } from "@/lib/nav-links-actions";
+import { NavLink } from "@/lib/nav-links";
 
-export function AddNavLinkForm() {
+export function AddNavLinkForm({ topLevelLinks }: { topLevelLinks: NavLink[] }) {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -31,7 +32,7 @@ export function AddNavLinkForm() {
           id="label"
           name="label"
           required
-          placeholder="Ví dụ: Phụ kiện"
+          placeholder="Ví dụ: Áo thun Nam"
           className="mt-1 w-48 border border-line bg-white px-3 py-2.5 text-sm focus:border-gold focus:outline-none"
         />
       </div>
@@ -43,9 +44,26 @@ export function AddNavLinkForm() {
           id="href"
           name="href"
           required
-          placeholder="/san-pham?category=phu-kien"
-          className="mt-1 w-64 border border-line bg-white px-3 py-2.5 text-sm focus:border-gold focus:outline-none"
+          placeholder="/san-pham?gender=nam&category=ao-thun"
+          className="mt-1 w-72 border border-line bg-white px-3 py-2.5 text-sm focus:border-gold focus:outline-none"
         />
+      </div>
+      <div>
+        <label className="text-xs text-muted" htmlFor="parentId">
+          Thuộc menu cha
+        </label>
+        <select
+          id="parentId"
+          name="parentId"
+          className="mt-1 w-48 border border-line bg-white px-3 py-2.5 text-sm focus:border-gold focus:outline-none"
+        >
+          <option value="">— Mục cấp 1 (không có cha) —</option>
+          {topLevelLinks.map((link) => (
+            <option key={link.id} value={link.id}>
+              {link.label}
+            </option>
+          ))}
+        </select>
       </div>
       <button
         type="submit"

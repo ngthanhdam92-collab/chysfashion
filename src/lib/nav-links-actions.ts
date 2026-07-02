@@ -8,15 +8,18 @@ type ActionResult = { error: string } | { success: true };
 export async function createNavLink(formData: FormData): Promise<ActionResult> {
   const label = String(formData.get("label") || "").trim();
   const href = String(formData.get("href") || "").trim();
+  const parentId = String(formData.get("parentId") || "").trim() || null;
   if (!label || !href) return { error: "Vui lòng nhập đầy đủ tên và đường dẫn." };
 
   const supabase = await createClient();
-  const { count } = await supabase
-    .from("nav_links")
-    .select("*", { count: "exact", head: true });
+  let countQuery = supabase.from("nav_links").select("*", { count: "exact", head: true });
+  countQuery = parentId ? countQuery.eq("parent_id", parentId) : countQuery.is("parent_id", null);
+  const { count } = await countQuery;
   const position = (count ?? 0) + 1;
 
-  const { error } = await supabase.from("nav_links").insert({ label, href, position });
+  const { error } = await supabase
+    .from("nav_links")
+    .insert({ label, href, position, parent_id: parentId });
   if (error) return { error: error.message };
 
   revalidatePath("/", "layout");
@@ -53,21 +56,24 @@ export async function moveNavLink(
   direction: "up" | "down"
 ): Promise<ActionResult> {
   const supabase = await createClient();
-  const { data: links, error: fetchError } = await supabase
+  const { data: allLinks, error: fetchError } = await supabase
     .from("nav_links")
     .select("*")
     .order("position", { ascending: true });
 
-  if (fetchError || !links) return { error: fetchError?.message ?? "Không tải được menu." };
+  if (fetchError || !allLinks) return { error: fetchError?.message ?? "Không tải được menu." };
 
-  const index = links.findIndex((l) => l.id === id);
+  const current = allLinks.find((l) => l.id === id);
+  if (!current) return { success: true };
+
+  const siblings = allLinks.filter((l) => l.parent_id === current.parent_id);
+  const index = siblings.findIndex((l) => l.id === id);
   const swapIndex = direction === "up" ? index - 1 : index + 1;
-  if (index === -1 || swapIndex < 0 || swapIndex >= links.length) {
+  if (swapIndex < 0 || swapIndex >= siblings.length) {
     return { success: true };
   }
 
-  const current = links[index];
-  const swapWith = links[swapIndex];
+  const swapWith = siblings[swapIndex];
 
   const [{ error: err1 }, { error: err2 }] = await Promise.all([
     supabase.from("nav_links").update({ position: swapWith.position }).eq("id", current.id),
