@@ -24,7 +24,9 @@ interface ProductRow {
   variants: ProductVariant[] | null;
   video_url: string | null;
   related_product_ids: string[] | null;
-  size_chart: Record<string, unknown> | null;
+  size_chart_id: string | null;
+  // Present only when queried with size_charts join
+  size_charts?: { data: Record<string, unknown> } | null;
 }
 
 function mapRow(row: ProductRow): Product {
@@ -46,12 +48,12 @@ function mapRow(row: ProductRow): Product {
     rating: Number(row.rating),
     reviewCount: row.review_count,
     images: row.images ?? [],
-    // Cột stock có thể chưa tồn tại nếu chưa chạy migration — coi như còn hàng
     stock: row.stock ?? 100,
     variants: row.variants ?? [],
     videoUrl: row.video_url ?? null,
     relatedProductIds: row.related_product_ids ?? [],
-    sizeChart: (row.size_chart ?? {}) as Record<string, Partial<SizeChartRow>>,
+    sizeChartId: (row.size_chart_id as string | null) ?? null,
+    sizeChart: (row.size_charts?.data ?? {}) as Record<string, Partial<SizeChartRow>>,
   };
 }
 
@@ -93,11 +95,12 @@ export async function getAllProducts(filters?: ProductFilters): Promise<Product[
   return rows;
 }
 
+// Detail queries join the size_charts table so product.sizeChart is populated
 export async function getProductBySlug(slug: string): Promise<Product | undefined> {
   const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("products")
-    .select("*")
+    .select("*, size_charts(data)")
     .eq("slug", slug)
     .maybeSingle();
 
@@ -109,7 +112,7 @@ export async function getProductById(id: string): Promise<Product | undefined> {
   const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("products")
-    .select("*")
+    .select("*, size_charts(data)")
     .eq("id", id)
     .maybeSingle();
 

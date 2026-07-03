@@ -37,6 +37,7 @@ export interface Product {
   variants: ProductVariant[];
   videoUrl: string | null;
   relatedProductIds: string[];
+  sizeChartId: string | null;
   sizeChart: Record<string, Partial<SizeChartRow>>;
 }
 

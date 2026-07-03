@@ -9,6 +9,7 @@ import {
   Menu,
   Receipt,
   Users,
+  Ruler,
 } from "lucide-react";
 
 const NAV_GROUPS = [
@@ -21,6 +22,7 @@ const NAV_GROUPS = [
     items: [
       { href: "/admin/products", label: "Sản phẩm", icon: Shirt },
       { href: "/admin/categories", label: "Danh mục", icon: Tag },
+      { href: "/admin/size-charts", label: "Bảng size", icon: Ruler },
       { href: "/admin/menu", label: "Menu điều hướng", icon: Menu },
     ],
   },

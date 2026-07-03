@@ -387,7 +387,7 @@ function SizeGuideModal({ sizes, sizeChart, onClose, onSelectSize }: SizeGuideMo
                           const val =
                             key === "height" ? `${d.heightMin}–${d.heightMax}`
                             : key === "weight" ? `${d.weightMin}–${d.weightMax}`
-                            : (d as Record<string, unknown>)[key];
+                            : (d as unknown as Record<string, unknown>)[key];
                           return (
                             <td key={s} className={`px-3 py-2 text-center text-sm ${result === s ? "font-semibold text-blue-600" : "text-ink"}`}>
                               {val as string}
