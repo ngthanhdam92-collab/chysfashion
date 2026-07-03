@@ -2,35 +2,25 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { X, Check, Plus } from "lucide-react";
-import { Product, ProductColor } from "@/lib/types";
+import { X, Plus, Trash2 } from "lucide-react";
+import { Product } from "@/lib/types";
 import { Category } from "@/lib/categories";
 import { createClient } from "@/lib/supabase/client";
-
-const PRESET_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "Freesize"];
-
-const PRESET_COLORS: ProductColor[] = [
-  { name: "Đen", hex: "#171310" },
-  { name: "Trắng", hex: "#ffffff" },
-  { name: "Kem", hex: "#f1ebe0" },
-  { name: "Be", hex: "#c9b79c" },
-  { name: "Xám", hex: "#8a8479" },
-  { name: "Nâu", hex: "#5c4224" },
-  { name: "Xanh rêu", hex: "#3f5e3f" },
-  { name: "Xanh navy", hex: "#1f2a44" },
-  { name: "Xanh dương", hex: "#2563eb" },
-  { name: "Đỏ", hex: "#c0392b" },
-  { name: "Đỏ đô", hex: "#6d2f34" },
-  { name: "Hồng", hex: "#e8a0bf" },
-  { name: "Vàng", hex: "#d4a017" },
-  { name: "Cam", hex: "#d97706" },
-  { name: "Tím", hex: "#6b21a8" },
-];
 
 interface ProductFormProps {
   product?: Product;
   categories: Category[];
   action: (formData: FormData) => Promise<{ error: string } | void>;
+}
+
+interface ClassOption {
+  name: string;
+  desc: string;
+}
+
+interface Classification {
+  name: string;
+  options: ClassOption[];
 }
 
 interface VariantValue {
@@ -39,8 +29,12 @@ interface VariantValue {
   sku: string;
 }
 
-function variantKey(color: string, size: string) {
-  return `${color}__${size}`;
+function variantKey(col: string, row: string) {
+  return `${col}__${row}`;
+}
+
+function emptyOption(): ClassOption {
+  return { name: "", desc: "" };
 }
 
 export function ProductForm({ product, categories, action }: ProductFormProps) {
@@ -49,19 +43,29 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  const [selectedSizes, setSelectedSizes] = useState<string[]>(
-    product?.sizes ?? ["S", "M", "L", "XL"]
-  );
-  const [selectedColors, setSelectedColors] = useState<ProductColor[]>(
-    product?.colors ?? [{ name: "Đen", hex: "#171310" }]
-  );
-  const [customColorName, setCustomColorName] = useState("");
-  const [customColorHex, setCustomColorHex] = useState("#a9843f");
+  // ===== Phân loại hàng =====
+  const [classifications, setClassifications] = useState<Classification[]>(() => {
+    const existingColors = product?.colors ?? [];
+    const existingSizes = product?.sizes ?? [];
+    if (existingColors.length > 0) {
+      const cls1: Classification = {
+        name: "MÀU SẮC",
+        options: [...existingColors.map((c) => ({ name: c.name, desc: "" })), emptyOption()],
+      };
+      if (existingSizes.length > 0) {
+        return [
+          cls1,
+          {
+            name: "SIZE",
+            options: [...existingSizes.map((s) => ({ name: s, desc: "" })), emptyOption()],
+          },
+        ];
+      }
+      return [cls1];
+    }
+    return [{ name: "", options: [emptyOption(), emptyOption()] }];
+  });
 
-  // ===== Phân loại hàng (giá/kho/SKU riêng theo Màu × Size) =====
-  const [variantsEnabled, setVariantsEnabled] = useState(
-    (product?.variants?.length ?? 0) > 0
-  );
   const [variantData, setVariantData] = useState<Record<string, VariantValue>>(() => {
     const initial: Record<string, VariantValue> = {};
     for (const v of product?.variants ?? []) {
@@ -73,15 +77,21 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
     }
     return initial;
   });
+
   const [bulkPrice, setBulkPrice] = useState("");
   const [bulkStock, setBulkStock] = useState("");
   const [bulkSku, setBulkSku] = useState("");
 
-  const variantCombos = variantsEnabled
-    ? selectedColors.flatMap((color) =>
-        selectedSizes.map((size) => ({ color: color.name, size }))
-      )
-    : [];
+  // Compute variant combos from classifications
+  const cls0Options = (classifications[0]?.options ?? []).filter((o) => o.name.trim());
+  const cls1Options = (classifications[1]?.options ?? []).filter((o) => o.name.trim());
+
+  const variantCombos =
+    cls0Options.length > 0
+      ? cls1Options.length > 0
+        ? cls0Options.flatMap((a) => cls1Options.map((b) => ({ color: a.name, size: b.name })))
+        : cls0Options.map((a) => ({ color: a.name, size: "" }))
+      : [];
 
   function getVariant(color: string, size: string): VariantValue {
     return variantData[variantKey(color, size)] ?? { price: "", stock: "0", sku: "" };
@@ -129,6 +139,53 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
     0
   );
 
+  // Classification helpers
+  function updateClsName(idx: number, name: string) {
+    setClassifications((cls) => cls.map((c, i) => (i === idx ? { ...c, name } : c)));
+  }
+
+  function updateOption(clsIdx: number, optIdx: number, field: keyof ClassOption, value: string) {
+    setClassifications((cls) =>
+      cls.map((c, i) => {
+        if (i !== clsIdx) return c;
+        const newOpts = c.options.map((o, j) =>
+          j === optIdx ? { ...o, [field]: value } : o
+        );
+        // Auto-add new empty slot if editing the last option name
+        if (field === "name" && value.trim() && optIdx === c.options.length - 1) {
+          newOpts.push(emptyOption());
+        }
+        return { ...c, options: newOpts };
+      })
+    );
+  }
+
+  function removeOption(clsIdx: number, optIdx: number) {
+    setClassifications((cls) =>
+      cls.map((c, i) => {
+        if (i !== clsIdx) return c;
+        const newOpts = c.options.filter((_, j) => j !== optIdx);
+        if (newOpts.length === 0 || newOpts[newOpts.length - 1].name.trim() !== "") {
+          newOpts.push(emptyOption());
+        }
+        return { ...c, options: newOpts };
+      })
+    );
+  }
+
+  function addClassification() {
+    if (classifications.length >= 2) return;
+    setClassifications((cls) => [...cls, { name: "", options: [emptyOption(), emptyOption()] }]);
+  }
+
+  function removeClassification(idx: number) {
+    setClassifications((cls) => cls.filter((_, i) => i !== idx));
+  }
+
+  // Serialize for form submission
+  const colorsValue = cls0Options.map((o) => `${o.name},#000000`).join("\n");
+  const sizesValue = cls1Options.map((o) => o.name).join("\n");
+
   // ===== Video sản phẩm =====
   const [videoUrl, setVideoUrl] = useState<string>(product?.videoUrl ?? "");
   const [uploadingVideo, setUploadingVideo] = useState(false);
@@ -141,7 +198,6 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
       e.target.value = "";
       return;
     }
-
     setUploadingVideo(true);
     setError(null);
     const supabase = createClient();
@@ -150,7 +206,6 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
     const { error: uploadError } = await supabase.storage
       .from("product-media")
       .upload(path, file);
-
     if (uploadError) {
       setError(`Không thể tải video: ${uploadError.message}`);
     } else {
@@ -165,61 +220,25 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
     setKeptImages((imgs) => [url, ...imgs.filter((u) => u !== url)]);
   }
 
-  // Gộp bảng màu mặc định với các màu tùy chỉnh đã lưu trên sản phẩm (khi sửa)
-  const paletteColors = [
-    ...PRESET_COLORS,
-    ...selectedColors.filter(
-      (c) => !PRESET_COLORS.some((p) => p.name === c.name && p.hex === c.hex)
-    ),
-  ];
-
-  function toggleSize(size: string) {
-    setSelectedSizes((sizes) =>
-      sizes.includes(size) ? sizes.filter((s) => s !== size) : [...sizes, size]
-    );
-  }
-
-  function toggleColor(color: ProductColor) {
-    setSelectedColors((colors) =>
-      colors.some((c) => c.name === color.name && c.hex === color.hex)
-        ? colors.filter((c) => !(c.name === color.name && c.hex === color.hex))
-        : [...colors, color]
-    );
-  }
-
-  function addCustomColor() {
-    const name = customColorName.trim();
-    if (!name) return;
-    if (!selectedColors.some((c) => c.name === name)) {
-      setSelectedColors((colors) => [...colors, { name, hex: customColorHex }]);
-    }
-    setCustomColorName("");
-  }
-
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
     if (files.length === 0) return;
-
     setUploading(true);
     setError(null);
     const supabase = createClient();
-
     for (const file of files) {
       const ext = file.name.split(".").pop();
       const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from("product-media")
         .upload(path, file);
-
       if (uploadError) {
         setError(`Không thể tải ảnh "${file.name}": ${uploadError.message}`);
         continue;
       }
-
       const { data } = supabase.storage.from("product-media").getPublicUrl(path);
       setKeptImages((imgs) => [...imgs, data.publicUrl]);
     }
-
     setUploading(false);
     e.target.value = "";
   }
@@ -345,9 +364,9 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
 
         <div>
           <label className="text-xs text-muted" htmlFor="stock">
-            Số lượng tồn kho {variantsEnabled ? "" : "*"}
+            Số lượng tồn kho
           </label>
-          {variantsEnabled ? (
+          {variantCombos.length > 0 ? (
             <p className="mt-2.5 text-sm text-ink">
               Tổng theo bảng phân loại: <span className="font-medium">{totalVariantStock}</span>
             </p>
@@ -397,173 +416,99 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
           />
         </div>
 
+        {/* ===== PHÂN LOẠI HÀNG ===== */}
         <div className="sm:col-span-2">
-          <label className="text-xs text-muted">
-            Kích thước — bấm để chọn/bỏ chọn
-          </label>
-          <input type="hidden" name="sizes" value={selectedSizes.join("\n")} />
-          <div className="mt-2 flex flex-wrap gap-2">
-            {PRESET_SIZES.map((size) => {
-              const active = selectedSizes.includes(size);
-              return (
-                <button
-                  key={size}
-                  type="button"
-                  onClick={() => toggleSize(size)}
-                  className={`min-w-12 border px-3 py-2 text-sm transition-colors ${
-                    active
-                      ? "border-ink bg-ink text-paper"
-                      : "border-line bg-white text-ink hover:border-ink"
-                  }`}
-                >
-                  {size}
-                </button>
-              );
-            })}
-          </div>
-          {selectedSizes.length === 0 && (
-            <p className="mt-1.5 text-xs text-error">Chọn ít nhất 1 kích thước.</p>
-          )}
-        </div>
+          <input type="hidden" name="colors" value={colorsValue} />
+          <input type="hidden" name="sizes" value={sizesValue} />
+          <input type="hidden" name="variants" value={variantsJson} />
 
-        <div className="sm:col-span-2">
-          <label className="text-xs text-muted">
-            Màu sắc — bấm để chọn/bỏ chọn
-          </label>
-          <input
-            type="hidden"
-            name="colors"
-            value={selectedColors.map((c) => `${c.name},${c.hex}`).join("\n")}
-          />
-          <div className="mt-2 flex flex-wrap gap-2">
-            {paletteColors.map((color) => {
-              const active = selectedColors.some(
-                (c) => c.name === color.name && c.hex === color.hex
-              );
-              return (
-                <button
-                  key={`${color.name}-${color.hex}`}
-                  type="button"
-                  onClick={() => toggleColor(color)}
-                  className={`flex items-center gap-2 border px-3 py-2 text-sm transition-colors ${
-                    active
-                      ? "border-gold bg-gold/10 text-ink"
-                      : "border-line bg-white text-ink hover:border-ink"
-                  }`}
-                >
-                  <span
-                    className="inline-block h-4 w-4 rounded-full border border-line"
-                    style={{ backgroundColor: color.hex }}
-                  />
-                  {color.name}
-                  {active && <Check size={13} className="text-gold-dark" />}
-                </button>
-              );
-            })}
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-error" />
+            <span className="text-sm font-medium text-ink">Phân loại hàng</span>
           </div>
-          {selectedColors.length === 0 && (
-            <p className="mt-1.5 text-xs text-error">Chọn ít nhất 1 màu.</p>
-          )}
-          <div className="mt-3 flex items-end gap-2">
-            <div>
-              <label className="text-xs text-muted" htmlFor="customColorName">
-                Thêm màu khác (nếu cần)
-              </label>
-              <input
-                id="customColorName"
-                value={customColorName}
-                onChange={(e) => setCustomColorName(e.target.value)}
-                placeholder="Tên màu, ví dụ: Xanh mint"
-                className="mt-1 w-48 border border-line bg-white px-3 py-2 text-sm focus:border-gold focus:outline-none"
+
+          <div className="mt-3 space-y-3">
+            {classifications.map((cls, clsIdx) => (
+              <ClassificationPanel
+                key={clsIdx}
+                index={clsIdx}
+                classification={cls}
+                onNameChange={(v) => updateClsName(clsIdx, v)}
+                onOptionChange={(optIdx, field, v) => updateOption(clsIdx, optIdx, field, v)}
+                onRemoveOption={(optIdx) => removeOption(clsIdx, optIdx)}
+                onRemove={() => removeClassification(clsIdx)}
               />
-            </div>
-            <input
-              type="color"
-              value={customColorHex}
-              onChange={(e) => setCustomColorHex(e.target.value)}
-              className="h-9 w-12 cursor-pointer border border-line bg-white"
-              aria-label="Chọn mã màu"
-            />
+            ))}
+          </div>
+
+          {classifications.length < 2 && (
             <button
               type="button"
-              onClick={addCustomColor}
-              disabled={!customColorName.trim()}
-              className="flex items-center gap-1.5 border border-ink px-3 py-2 text-sm text-ink hover:bg-ink hover:text-paper disabled:opacity-40"
+              onClick={addClassification}
+              className="mt-3 flex items-center gap-1.5 border border-dashed border-line px-4 py-2 text-sm text-muted hover:border-gold hover:text-gold-dark"
             >
-              <Plus size={14} /> Thêm màu
+              <Plus size={14} /> Thêm phân loại
             </button>
-          </div>
-        </div>
+          )}
 
-        <div className="sm:col-span-2">
-          <input type="hidden" name="variants" value={variantsEnabled ? variantsJson : "[]"} />
-          <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-ink">
-            <input
-              type="checkbox"
-              checked={variantsEnabled}
-              onChange={(e) => setVariantsEnabled(e.target.checked)}
-            />
-            Bật phân loại hàng — đặt giá, kho hàng, SKU riêng cho từng Màu × Size
-          </label>
+          {/* Danh sách phân loại hàng */}
+          {variantCombos.length > 0 && (
+            <div className="mt-5">
+              <p className="mb-2 text-sm font-medium text-ink">Danh sách phân loại hàng</p>
 
-          {variantsEnabled && variantCombos.length > 0 && (
-            <div className="mt-4 space-y-3">
-              <div className="flex flex-wrap items-end gap-2 border border-line bg-cream/40 p-3">
-                <div>
-                  <label className="text-xs text-muted" htmlFor="bulkPrice">
-                    Giá (đ)
-                  </label>
+              {/* Bulk row */}
+              <div className="flex flex-wrap items-end gap-2 border border-line bg-cream/40 px-3 py-3">
+                <div className="flex-1 min-w-[80px]">
+                  <label className="text-xs text-muted">đ Giá</label>
                   <input
-                    id="bulkPrice"
                     type="number"
                     min={0}
                     value={bulkPrice}
                     onChange={(e) => setBulkPrice(e.target.value)}
-                    placeholder="149000"
-                    className="mt-1 w-32 border border-line bg-white px-3 py-2 text-sm focus:border-gold focus:outline-none"
+                    placeholder="Giá"
+                    className="mt-1 w-full border border-line bg-white px-2 py-1.5 text-sm focus:border-gold focus:outline-none"
                   />
                 </div>
-                <div>
-                  <label className="text-xs text-muted" htmlFor="bulkStock">
-                    Kho hàng
-                  </label>
+                <div className="flex-1 min-w-[80px]">
+                  <label className="text-xs text-muted">Kho hàng</label>
                   <input
-                    id="bulkStock"
                     type="number"
                     min={0}
                     value={bulkStock}
                     onChange={(e) => setBulkStock(e.target.value)}
-                    placeholder="100"
-                    className="mt-1 w-28 border border-line bg-white px-3 py-2 text-sm focus:border-gold focus:outline-none"
+                    placeholder="Kho hàng"
+                    className="mt-1 w-full border border-line bg-white px-2 py-1.5 text-sm focus:border-gold focus:outline-none"
                   />
                 </div>
-                <div>
-                  <label className="text-xs text-muted" htmlFor="bulkSku">
-                    SKU phân loại
-                  </label>
+                <div className="flex-1 min-w-[100px]">
+                  <label className="text-xs text-muted">SKU phân loại</label>
                   <input
-                    id="bulkSku"
                     value={bulkSku}
                     onChange={(e) => setBulkSku(e.target.value)}
-                    placeholder="OP11"
-                    className="mt-1 w-32 border border-line bg-white px-3 py-2 text-sm focus:border-gold focus:outline-none"
+                    placeholder="SKU phân loại"
+                    className="mt-1 w-full border border-line bg-white px-2 py-1.5 text-sm focus:border-gold focus:outline-none"
                   />
                 </div>
                 <button
                   type="button"
                   onClick={applyBulk}
-                  className="bg-gold px-4 py-2 text-[12px] tracking-label uppercase text-paper hover:bg-gold-dark"
+                  className="bg-[#ee4d2d] px-4 py-2 text-[12px] tracking-wide text-white hover:bg-[#d73211] whitespace-nowrap"
                 >
                   Áp dụng cho tất cả phân loại
                 </button>
               </div>
 
-              <div className="overflow-x-auto border border-line">
+              {/* Variant table */}
+              <div className="overflow-x-auto border border-t-0 border-line">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-line bg-cream/40 text-left text-xs uppercase tracking-label text-muted">
-                      <th className="px-3 py-2.5">Màu sắc</th>
-                      <th className="px-3 py-2.5">Size</th>
+                      {classifications[0] && (
+                        <th className="px-3 py-2.5">{classifications[0].name || "Phân loại 1"}</th>
+                      )}
+                      {classifications[1] && (
+                        <th className="px-3 py-2.5">{classifications[1].name || "Phân loại 2"}</th>
+                      )}
                       <th className="px-3 py-2.5">Giá (đ) *</th>
                       <th className="px-3 py-2.5">Kho hàng *</th>
                       <th className="px-3 py-2.5">SKU phân loại</th>
@@ -578,7 +523,9 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
                           className="border-b border-line last:border-0"
                         >
                           <td className="px-3 py-2 text-ink">{combo.color}</td>
-                          <td className="px-3 py-2 text-ink">{combo.size}</td>
+                          {classifications[1] && (
+                            <td className="px-3 py-2 text-ink">{combo.size}</td>
+                          )}
                           <td className="px-3 py-2">
                             <input
                               type="number"
@@ -616,9 +563,9 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
                   </tbody>
                 </table>
               </div>
-              <p className="text-xs text-muted">
-                Giá hiển thị trên website sẽ tự lấy giá thấp nhất trong bảng; tổng tồn kho tự
-                cộng từ các phân loại. Khách đặt phân loại nào thì kho phân loại đó tự trừ.
+              <p className="mt-1.5 text-xs text-muted">
+                Giá hiển thị trên website lấy giá thấp nhất; tổng tồn kho tự cộng từ các phân
+                loại. Kho phân loại nào tự trừ khi khách đặt.
               </p>
             </div>
           )}
@@ -755,5 +702,141 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
         {submitting ? "Đang lưu..." : "Lưu sản phẩm"}
       </button>
     </form>
+  );
+}
+
+// ===== Sub-component: Classification Panel =====
+interface ClassificationPanelProps {
+  index: number;
+  classification: Classification;
+  onNameChange: (v: string) => void;
+  onOptionChange: (optIdx: number, field: keyof ClassOption, v: string) => void;
+  onRemoveOption: (optIdx: number) => void;
+  onRemove: () => void;
+}
+
+function ClassificationPanel({
+  index,
+  classification,
+  onNameChange,
+  onOptionChange,
+  onRemoveOption,
+  onRemove,
+}: ClassificationPanelProps) {
+  // Pair options into rows of 2 for 2-column grid display
+  const namedOpts = classification.options.slice(0, -1); // all except last empty slot
+  const emptySlot = classification.options[classification.options.length - 1];
+  const allForDisplay = [...namedOpts, emptySlot];
+
+  // Build rows: pair every 2 options
+  const rows: Array<[number, number | null]> = [];
+  for (let i = 0; i < allForDisplay.length; i += 2) {
+    rows.push([i, i + 1 < allForDisplay.length ? i + 1 : null]);
+  }
+
+  return (
+    <div className="border border-line bg-white">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-line px-4 py-3">
+        <span className="text-sm font-medium text-ink">Phân loại {index + 1}</span>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="text-muted hover:text-error"
+          aria-label="Xóa phân loại"
+        >
+          <X size={16} />
+        </button>
+      </div>
+
+      <div className="px-4 py-4 space-y-4">
+        {/* Classification name input */}
+        <div>
+          <input
+            value={classification.name}
+            onChange={(e) => onNameChange(e.target.value)}
+            placeholder={index === 0 ? "Tên phân loại (vd: MÀU SẮC)" : "Tên phân loại (vd: SIZE)"}
+            className="w-64 border border-line bg-white px-3 py-2 text-sm focus:border-gold focus:outline-none"
+          />
+        </div>
+
+        {/* Options label */}
+        <div className="flex items-center gap-1">
+          <span className="text-sm text-ink">Tùy chọn</span>
+          <span className="h-1.5 w-1.5 rounded-full bg-error" />
+        </div>
+
+        {/* Options grid: 2 columns */}
+        <div className="space-y-2">
+          {rows.map(([leftIdx, rightIdx]) => (
+            <div key={leftIdx} className="grid grid-cols-2 gap-2">
+              {/* Left cell */}
+              <OptionCell
+                option={classification.options[leftIdx]}
+                optIdx={leftIdx}
+                isLast={leftIdx === classification.options.length - 1}
+                onNameChange={(v) => onOptionChange(leftIdx, "name", v)}
+                onDescChange={(v) => onOptionChange(leftIdx, "desc", v)}
+                onRemove={() => onRemoveOption(leftIdx)}
+              />
+
+              {/* Right cell */}
+              {rightIdx !== null ? (
+                <OptionCell
+                  option={classification.options[rightIdx]}
+                  optIdx={rightIdx}
+                  isLast={rightIdx === classification.options.length - 1}
+                  onNameChange={(v) => onOptionChange(rightIdx, "name", v)}
+                  onDescChange={(v) => onOptionChange(rightIdx, "desc", v)}
+                  onRemove={() => onRemoveOption(rightIdx)}
+                />
+              ) : (
+                <div />
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface OptionCellProps {
+  option: ClassOption;
+  optIdx: number;
+  isLast: boolean;
+  onNameChange: (v: string) => void;
+  onDescChange: (v: string) => void;
+  onRemove: () => void;
+}
+
+function OptionCell({ option, isLast, onNameChange, onDescChange, onRemove }: OptionCellProps) {
+  return (
+    <div className="flex items-center gap-1">
+      <input
+        value={option.name}
+        onChange={(e) => onNameChange(e.target.value)}
+        placeholder={isLast ? "Nhập" : ""}
+        className="min-w-0 flex-1 border border-line bg-white px-2 py-1.5 text-sm focus:border-gold focus:outline-none"
+      />
+      <input
+        value={option.desc}
+        onChange={(e) => onDescChange(e.target.value)}
+        placeholder="Thêm mô tả"
+        className="min-w-0 flex-1 border border-line bg-white px-2 py-1.5 text-sm text-muted focus:border-gold focus:outline-none"
+      />
+      {!isLast ? (
+        <button
+          type="button"
+          onClick={onRemove}
+          className="shrink-0 text-muted hover:text-error"
+          aria-label="Xóa tùy chọn"
+        >
+          <Trash2 size={14} />
+        </button>
+      ) : (
+        <span className="w-[14px] shrink-0" />
+      )}
+    </div>
   );
 }
