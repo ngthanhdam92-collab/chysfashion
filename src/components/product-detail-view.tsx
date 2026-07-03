@@ -14,12 +14,9 @@ export function ProductDetailView({ product }: { product: Product }) {
   // Start at index 0 = video (if exists), else first image
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const colorObj = product.colors.find((c) => c.name === selectedColor);
-  const variantImgs =
-    colorObj?.images && colorObj.images.length > 0 ? colorObj.images : [];
-
-  // Màu có ảnh riêng → dùng ảnh biến thể; không có → dùng ảnh sản phẩm
-  const gallery = variantImgs.length > 0 ? variantImgs : product.images;
+  // Gallery luôn là ảnh sản phẩm (bìa + chi tiết)
+  // Ảnh biến thể màu chỉ dùng trong bộ chọn màu ở purchase panel
+  const gallery = product.images;
 
   const hasVideo = !!product.videoUrl;
 
