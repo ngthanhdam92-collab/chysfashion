@@ -153,10 +153,15 @@ export function ProductCard({ product }: { product: Product }) {
       <Link href={`/san-pham/${product.slug}`} className="mt-2 block space-y-1">
         <p className="text-[11px] tracking-label uppercase text-muted">{product.categoryLabel}</p>
         <h3 className="text-sm text-ink transition-colors group-hover:text-gold-dark">{product.name}</h3>
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-ink">{formatVnd(price)}</span>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm font-bold text-ink">{formatVnd(price)}</span>
           {compareAtPrice && compareAtPrice > price && (
-            <span className="text-xs text-muted line-through">{formatVnd(compareAtPrice)}</span>
+            <>
+              <span className="rounded-full bg-blue-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                -{Math.round((1 - price / compareAtPrice) * 100)}%
+              </span>
+              <span className="text-xs text-muted line-through">{formatVnd(compareAtPrice)}</span>
+            </>
           )}
         </div>
       </Link>
