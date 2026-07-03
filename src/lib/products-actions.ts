@@ -30,13 +30,43 @@ function buildProductPayload(formData: FormData, slug: string) {
   const compareAtPriceRaw = formData.get("compareAtPrice");
   const compareAtPrice = compareAtPriceRaw ? Number(compareAtPriceRaw) : null;
 
+  // Phân loại hàng: [{color, size, price, stock, sku}] — do form tạo từ Màu × Size
+  let variants: { color: string; size: string; price: number; stock: number; sku: string }[] = [];
+  try {
+    const parsed = JSON.parse(String(formData.get("variants") || "[]"));
+    if (Array.isArray(parsed)) {
+      variants = parsed
+        .filter((v) => v && typeof v.color === "string" && typeof v.size === "string")
+        .map((v) => ({
+          color: v.color,
+          size: v.size,
+          price: Math.max(0, Number(v.price) || 0),
+          stock: Math.max(0, Math.floor(Number(v.stock) || 0)),
+          sku: String(v.sku || ""),
+        }));
+    }
+  } catch {
+    variants = [];
+  }
+
+  // Có phân loại: tổng kho = cộng các phân loại, giá hiển thị = giá thấp nhất trong phân loại
+  const hasVariants = variants.length > 0;
+  const totalStock = hasVariants
+    ? variants.reduce((sum, v) => sum + v.stock, 0)
+    : Math.max(0, Number(formData.get("stock") || 0));
+  const variantPrices = variants.map((v) => v.price).filter((p) => p > 0);
+  const displayPrice =
+    hasVariants && variantPrices.length > 0 ? Math.min(...variantPrices) : price;
+
+  const videoUrl = String(formData.get("videoUrl") || "").trim() || null;
+
   return {
     slug,
     name: String(formData.get("name") || ""),
     category: String(formData.get("category") || ""),
     category_label: String(formData.get("categoryLabel") || ""),
     gender: String(formData.get("gender") || "unisex"),
-    price,
+    price: displayPrice,
     compare_at_price: compareAtPrice,
     colors: parseColors(String(formData.get("colors") || "")),
     sizes: parseLines(String(formData.get("sizes") || "")),
@@ -47,7 +77,9 @@ function buildProductPayload(formData: FormData, slug: string) {
     rating: Number(formData.get("rating") || 5),
     review_count: Number(formData.get("reviewCount") || 0),
     images: keptImages,
-    stock: Math.max(0, Number(formData.get("stock") || 0)),
+    stock: totalStock,
+    variants,
+    video_url: videoUrl,
   };
 }
 

@@ -1,4 +1,4 @@
-import { Product } from "./types";
+import { Product, ProductVariant } from "./types";
 import { createPublicClient } from "./supabase/public";
 
 interface ProductRow {
@@ -20,6 +20,8 @@ interface ProductRow {
   review_count: number;
   images: string[];
   stock: number;
+  variants: ProductVariant[] | null;
+  video_url: string | null;
 }
 
 function mapRow(row: ProductRow): Product {
@@ -43,6 +45,8 @@ function mapRow(row: ProductRow): Product {
     images: row.images ?? [],
     // Cột stock có thể chưa tồn tại nếu chưa chạy migration — coi như còn hàng
     stock: row.stock ?? 100,
+    variants: row.variants ?? [],
+    videoUrl: row.video_url ?? null,
   };
 }
 

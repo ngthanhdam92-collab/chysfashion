@@ -33,6 +33,16 @@ interface ProductFormProps {
   action: (formData: FormData) => Promise<{ error: string } | void>;
 }
 
+interface VariantValue {
+  price: string;
+  stock: string;
+  sku: string;
+}
+
+function variantKey(color: string, size: string) {
+  return `${color}__${size}`;
+}
+
 export function ProductForm({ product, categories, action }: ProductFormProps) {
   const [keptImages, setKeptImages] = useState<string[]>(product?.images ?? []);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +57,113 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
   );
   const [customColorName, setCustomColorName] = useState("");
   const [customColorHex, setCustomColorHex] = useState("#a9843f");
+
+  // ===== Phân loại hàng (giá/kho/SKU riêng theo Màu × Size) =====
+  const [variantsEnabled, setVariantsEnabled] = useState(
+    (product?.variants?.length ?? 0) > 0
+  );
+  const [variantData, setVariantData] = useState<Record<string, VariantValue>>(() => {
+    const initial: Record<string, VariantValue> = {};
+    for (const v of product?.variants ?? []) {
+      initial[variantKey(v.color, v.size)] = {
+        price: v.price ? String(v.price) : "",
+        stock: String(v.stock ?? 0),
+        sku: v.sku ?? "",
+      };
+    }
+    return initial;
+  });
+  const [bulkPrice, setBulkPrice] = useState("");
+  const [bulkStock, setBulkStock] = useState("");
+  const [bulkSku, setBulkSku] = useState("");
+
+  const variantCombos = variantsEnabled
+    ? selectedColors.flatMap((color) =>
+        selectedSizes.map((size) => ({ color: color.name, size }))
+      )
+    : [];
+
+  function getVariant(color: string, size: string): VariantValue {
+    return variantData[variantKey(color, size)] ?? { price: "", stock: "0", sku: "" };
+  }
+
+  function setVariantField(color: string, size: string, field: keyof VariantValue, value: string) {
+    const key = variantKey(color, size);
+    setVariantData((data) => ({
+      ...data,
+      [key]: { ...getVariant(color, size), ...data[key], [field]: value },
+    }));
+  }
+
+  function applyBulk() {
+    setVariantData((data) => {
+      const next = { ...data };
+      for (const combo of variantCombos) {
+        const key = variantKey(combo.color, combo.size);
+        const current = next[key] ?? { price: "", stock: "0", sku: "" };
+        next[key] = {
+          price: bulkPrice !== "" ? bulkPrice : current.price,
+          stock: bulkStock !== "" ? bulkStock : current.stock,
+          sku: bulkSku !== "" ? bulkSku : current.sku,
+        };
+      }
+      return next;
+    });
+  }
+
+  const variantsJson = JSON.stringify(
+    variantCombos.map((combo) => {
+      const v = getVariant(combo.color, combo.size);
+      return {
+        color: combo.color,
+        size: combo.size,
+        price: Number(v.price) || 0,
+        stock: Math.max(0, Math.floor(Number(v.stock) || 0)),
+        sku: v.sku,
+      };
+    })
+  );
+
+  const totalVariantStock = variantCombos.reduce(
+    (sum, combo) => sum + (Math.floor(Number(getVariant(combo.color, combo.size).stock)) || 0),
+    0
+  );
+
+  // ===== Video sản phẩm =====
+  const [videoUrl, setVideoUrl] = useState<string>(product?.videoUrl ?? "");
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+
+  async function handleVideoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 30 * 1024 * 1024) {
+      setError("Video tối đa 30MB. Vui lòng nén video nhỏ hơn.");
+      e.target.value = "";
+      return;
+    }
+
+    setUploadingVideo(true);
+    setError(null);
+    const supabase = createClient();
+    const ext = file.name.split(".").pop();
+    const path = `videos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error: uploadError } = await supabase.storage
+      .from("product-media")
+      .upload(path, file);
+
+    if (uploadError) {
+      setError(`Không thể tải video: ${uploadError.message}`);
+    } else {
+      const { data } = supabase.storage.from("product-media").getPublicUrl(path);
+      setVideoUrl(data.publicUrl);
+    }
+    setUploadingVideo(false);
+    e.target.value = "";
+  }
+
+  function makeCover(url: string) {
+    setKeptImages((imgs) => [url, ...imgs.filter((u) => u !== url)]);
+  }
 
   // Gộp bảng màu mặc định với các màu tùy chỉnh đã lưu trên sản phẩm (khi sửa)
   const paletteColors = [
@@ -228,17 +345,23 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
 
         <div>
           <label className="text-xs text-muted" htmlFor="stock">
-            Số lượng tồn kho *
+            Số lượng tồn kho {variantsEnabled ? "" : "*"}
           </label>
-          <input
-            id="stock"
-            name="stock"
-            type="number"
-            min={0}
-            required
-            defaultValue={product?.stock ?? 0}
-            className="mt-1 w-full border border-line bg-white px-3 py-2.5 text-sm focus:border-gold focus:outline-none"
-          />
+          {variantsEnabled ? (
+            <p className="mt-2.5 text-sm text-ink">
+              Tổng theo bảng phân loại: <span className="font-medium">{totalVariantStock}</span>
+            </p>
+          ) : (
+            <input
+              id="stock"
+              name="stock"
+              type="number"
+              min={0}
+              required
+              defaultValue={product?.stock ?? 0}
+              className="mt-1 w-full border border-line bg-white px-3 py-2.5 text-sm focus:border-gold focus:outline-none"
+            />
+          )}
           <p className="mt-1 text-xs text-muted">
             Về 0 sẽ hiện &quot;Hết hàng&quot; trên website. Tự trừ khi khách đặt hàng.
           </p>
@@ -373,6 +496,135 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
         </div>
 
         <div className="sm:col-span-2">
+          <input type="hidden" name="variants" value={variantsEnabled ? variantsJson : "[]"} />
+          <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-ink">
+            <input
+              type="checkbox"
+              checked={variantsEnabled}
+              onChange={(e) => setVariantsEnabled(e.target.checked)}
+            />
+            Bật phân loại hàng — đặt giá, kho hàng, SKU riêng cho từng Màu × Size
+          </label>
+
+          {variantsEnabled && variantCombos.length > 0 && (
+            <div className="mt-4 space-y-3">
+              <div className="flex flex-wrap items-end gap-2 border border-line bg-cream/40 p-3">
+                <div>
+                  <label className="text-xs text-muted" htmlFor="bulkPrice">
+                    Giá (đ)
+                  </label>
+                  <input
+                    id="bulkPrice"
+                    type="number"
+                    min={0}
+                    value={bulkPrice}
+                    onChange={(e) => setBulkPrice(e.target.value)}
+                    placeholder="149000"
+                    className="mt-1 w-32 border border-line bg-white px-3 py-2 text-sm focus:border-gold focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted" htmlFor="bulkStock">
+                    Kho hàng
+                  </label>
+                  <input
+                    id="bulkStock"
+                    type="number"
+                    min={0}
+                    value={bulkStock}
+                    onChange={(e) => setBulkStock(e.target.value)}
+                    placeholder="100"
+                    className="mt-1 w-28 border border-line bg-white px-3 py-2 text-sm focus:border-gold focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted" htmlFor="bulkSku">
+                    SKU phân loại
+                  </label>
+                  <input
+                    id="bulkSku"
+                    value={bulkSku}
+                    onChange={(e) => setBulkSku(e.target.value)}
+                    placeholder="OP11"
+                    className="mt-1 w-32 border border-line bg-white px-3 py-2 text-sm focus:border-gold focus:outline-none"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={applyBulk}
+                  className="bg-gold px-4 py-2 text-[12px] tracking-label uppercase text-paper hover:bg-gold-dark"
+                >
+                  Áp dụng cho tất cả phân loại
+                </button>
+              </div>
+
+              <div className="overflow-x-auto border border-line">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-line bg-cream/40 text-left text-xs uppercase tracking-label text-muted">
+                      <th className="px-3 py-2.5">Màu sắc</th>
+                      <th className="px-3 py-2.5">Size</th>
+                      <th className="px-3 py-2.5">Giá (đ) *</th>
+                      <th className="px-3 py-2.5">Kho hàng *</th>
+                      <th className="px-3 py-2.5">SKU phân loại</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {variantCombos.map((combo) => {
+                      const v = getVariant(combo.color, combo.size);
+                      return (
+                        <tr
+                          key={variantKey(combo.color, combo.size)}
+                          className="border-b border-line last:border-0"
+                        >
+                          <td className="px-3 py-2 text-ink">{combo.color}</td>
+                          <td className="px-3 py-2 text-ink">{combo.size}</td>
+                          <td className="px-3 py-2">
+                            <input
+                              type="number"
+                              min={0}
+                              value={v.price}
+                              onChange={(e) =>
+                                setVariantField(combo.color, combo.size, "price", e.target.value)
+                              }
+                              className="w-28 border border-line bg-white px-2 py-1.5 text-sm focus:border-gold focus:outline-none"
+                            />
+                          </td>
+                          <td className="px-3 py-2">
+                            <input
+                              type="number"
+                              min={0}
+                              value={v.stock}
+                              onChange={(e) =>
+                                setVariantField(combo.color, combo.size, "stock", e.target.value)
+                              }
+                              className="w-24 border border-line bg-white px-2 py-1.5 text-sm focus:border-gold focus:outline-none"
+                            />
+                          </td>
+                          <td className="px-3 py-2">
+                            <input
+                              value={v.sku}
+                              onChange={(e) =>
+                                setVariantField(combo.color, combo.size, "sku", e.target.value)
+                              }
+                              className="w-32 border border-line bg-white px-2 py-1.5 text-sm focus:border-gold focus:outline-none"
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-xs text-muted">
+                Giá hiển thị trên website sẽ tự lấy giá thấp nhất trong bảng; tổng tồn kho tự
+                cộng từ các phân loại. Khách đặt phân loại nào thì kho phân loại đó tự trừ.
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="sm:col-span-2">
           <label className="text-xs text-muted" htmlFor="description">
             Mô tả sản phẩm
           </label>
@@ -413,20 +665,42 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
       </div>
 
       <div>
-        <label className="text-xs text-muted">Ảnh sản phẩm</label>
+        <label className="text-xs text-muted">
+          Ảnh sản phẩm — ảnh đầu tiên là ảnh bìa hiển thị ngoài danh sách
+        </label>
         <div className="mt-2 flex flex-wrap gap-3">
-          {keptImages.map((url) => (
-            <div key={url} className="relative h-24 w-20 overflow-hidden border border-line">
-              <Image src={url} alt="" fill sizes="80px" className="object-cover" />
-              <input type="hidden" name="keptImages" value={url} />
-              <button
-                type="button"
-                onClick={() => setKeptImages((imgs) => imgs.filter((u) => u !== url))}
-                className="absolute right-0.5 top-0.5 rounded-full bg-ink/70 p-0.5 text-paper"
-                aria-label="Xóa ảnh"
+          {keptImages.map((url, index) => (
+            <div key={url} className="w-24">
+              <div
+                className={`relative h-28 w-24 overflow-hidden border ${
+                  index === 0 ? "border-2 border-gold" : "border-line"
+                }`}
               >
-                <X size={12} />
-              </button>
+                <Image src={url} alt="" fill sizes="96px" className="object-cover" />
+                <input type="hidden" name="keptImages" value={url} />
+                {index === 0 && (
+                  <span className="absolute bottom-0 left-0 right-0 bg-gold/90 py-0.5 text-center text-[10px] uppercase text-paper">
+                    Ảnh bìa
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setKeptImages((imgs) => imgs.filter((u) => u !== url))}
+                  className="absolute right-0.5 top-0.5 rounded-full bg-ink/70 p-0.5 text-paper"
+                  aria-label="Xóa ảnh"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+              {index > 0 && (
+                <button
+                  type="button"
+                  onClick={() => makeCover(url)}
+                  className="mt-1 w-full text-center text-[11px] text-muted hover:text-gold-dark"
+                >
+                  Đặt làm ảnh bìa
+                </button>
+              )}
             </div>
           ))}
         </div>
@@ -441,11 +715,41 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
         {uploading && <p className="mt-2 text-xs text-muted">Đang tải ảnh lên...</p>}
       </div>
 
+      <div>
+        <label className="text-xs text-muted">
+          Video sản phẩm (tuỳ chọn) — MP4, tối đa 30MB
+        </label>
+        <input type="hidden" name="videoUrl" value={videoUrl} />
+        {videoUrl ? (
+          <div className="mt-2 flex items-start gap-3">
+            <video src={videoUrl} controls className="h-40 border border-line bg-ink/5" />
+            <button
+              type="button"
+              onClick={() => setVideoUrl("")}
+              className="flex items-center gap-1.5 border border-line px-3 py-2 text-sm text-muted hover:border-error hover:text-error"
+            >
+              <X size={14} /> Xóa video
+            </button>
+          </div>
+        ) : (
+          <input
+            type="file"
+            accept="video/mp4,video/webm,video/quicktime"
+            disabled={uploadingVideo}
+            onChange={handleVideoChange}
+            className="mt-2 block text-sm"
+          />
+        )}
+        {uploadingVideo && (
+          <p className="mt-2 text-xs text-muted">Đang tải video lên (có thể mất một lúc)...</p>
+        )}
+      </div>
+
       {error && <p className="text-sm text-error">{error}</p>}
 
       <button
         type="submit"
-        disabled={submitting || uploading}
+        disabled={submitting || uploading || uploadingVideo}
         className="bg-ink px-6 py-3 text-[12px] tracking-label uppercase text-paper transition-colors hover:bg-ink/85 disabled:opacity-50"
       >
         {submitting ? "Đang lưu..." : "Lưu sản phẩm"}

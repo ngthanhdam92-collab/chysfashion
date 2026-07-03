@@ -59,6 +59,14 @@ export default async function ProductDetailPage({ params }: Params) {
                   <ProductImagePlaceholder key={i} seed={`${product.id}-${i}`} />
                 ))}
           </div>
+          {product.videoUrl && (
+            <video
+              src={product.videoUrl}
+              controls
+              playsInline
+              className="mt-3 w-full bg-ink/5"
+            />
+          )}
         </div>
 
         <div>

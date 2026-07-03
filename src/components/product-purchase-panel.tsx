@@ -14,7 +14,16 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
   const [size, setSize] = useState(product.sizes[0]);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
-  const outOfStock = product.stock === 0;
+
+  // Có phân loại hàng: giá và tồn kho tính theo tổ hợp Màu × Size đang chọn
+  const hasVariants = product.variants.length > 0;
+  const selectedVariant = hasVariants
+    ? product.variants.find((v) => v.color === color && v.size === size)
+    : undefined;
+  const price =
+    selectedVariant && selectedVariant.price > 0 ? selectedVariant.price : product.price;
+  const availableStock = hasVariants ? selectedVariant?.stock ?? 0 : product.stock;
+  const outOfStock = availableStock === 0;
 
   function handleAddToCart() {
     addItem(
@@ -22,7 +31,7 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
         productId: product.id,
         slug: product.slug,
         name: product.name,
-        price: product.price,
+        price,
         color,
         size,
       },
@@ -45,9 +54,7 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
       <h1 className="mt-2 font-serif text-3xl text-ink">{product.name}</h1>
 
       <div className="mt-4 flex items-center gap-3">
-        <span className="text-xl font-medium text-ink">
-          {formatVnd(product.price)}
-        </span>
+        <span className="text-xl font-medium text-ink">{formatVnd(price)}</span>
         {product.compareAtPrice && (
           <span className="text-sm text-muted line-through">
             {formatVnd(product.compareAtPrice)}
@@ -115,15 +122,15 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
             <span className="w-10 text-center text-sm">{quantity}</span>
             <button
               aria-label="Tăng số lượng"
-              onClick={() => setQuantity((q) => Math.min(product.stock, q + 1))}
+              onClick={() => setQuantity((q) => Math.min(Math.max(1, availableStock), q + 1))}
               className="p-3 hover:bg-cream"
             >
               <Plus size={14} />
             </button>
           </div>
-          {product.stock > 0 && product.stock <= 5 && (
+          {availableStock > 0 && availableStock <= 5 && (
             <span className="text-xs text-gold-dark">
-              Chỉ còn {product.stock} sản phẩm
+              Chỉ còn {availableStock} sản phẩm
             </span>
           )}
         </div>
@@ -132,7 +139,9 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
       {outOfStock ? (
         <div className="mt-9">
           <div className="w-full border border-line bg-cream/60 px-6 py-3.5 text-center text-[12px] tracking-label uppercase text-muted">
-            Hết hàng — sẽ sớm có lại
+            {hasVariants && product.stock > 0
+              ? "Phân loại này tạm hết — vui lòng chọn màu/size khác"
+              : "Hết hàng — sẽ sớm có lại"}
           </div>
         </div>
       ) : (

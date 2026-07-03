@@ -3,6 +3,14 @@ export interface ProductColor {
   hex: string;
 }
 
+export interface ProductVariant {
+  color: string;
+  size: string;
+  price: number;
+  stock: number;
+  sku: string;
+}
+
 export interface Product {
   id: string;
   slug: string;
@@ -22,6 +30,8 @@ export interface Product {
   reviewCount: number;
   images: string[];
   stock: number;
+  variants: ProductVariant[];
+  videoUrl: string | null;
 }
 
 export interface OrderItem {
