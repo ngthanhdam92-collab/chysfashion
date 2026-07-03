@@ -18,12 +18,8 @@ export function ProductDetailView({ product }: { product: Product }) {
   const variantImgs =
     colorObj?.images && colorObj.images.length > 0 ? colorObj.images : [];
 
-  // Gallery images: variant images first, then product detail images (deduped)
-  const variantSet = new Set(variantImgs);
-  const gallery = [
-    ...variantImgs,
-    ...product.images.filter((img) => !variantSet.has(img)),
-  ];
+  // Màu có ảnh riêng → dùng ảnh biến thể; không có → dùng ảnh sản phẩm
+  const gallery = variantImgs.length > 0 ? variantImgs : product.images;
 
   const hasVideo = !!product.videoUrl;
 
