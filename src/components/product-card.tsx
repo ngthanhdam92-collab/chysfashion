@@ -151,7 +151,6 @@ export function ProductCard({ product }: { product: Product }) {
 
       {/* ── CARD INFO ── */}
       <Link href={`/san-pham/${product.slug}`} className="mt-2 block space-y-1">
-        <p className="text-[11px] tracking-label uppercase text-muted">{product.categoryLabel}</p>
         <h3 className="text-sm text-ink transition-colors group-hover:text-gold-dark">{product.name}</h3>
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-bold text-ink">{formatVnd(price)}</span>
