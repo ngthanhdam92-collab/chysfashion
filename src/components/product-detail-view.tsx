@@ -14,6 +14,12 @@ export function ProductDetailView({ product }: { product: Product }) {
   // Start at index 0 = video (if exists), else first image
   const [activeIndex, setActiveIndex] = useState(0);
 
+  // When a color is selected and has variant images, override the main display
+  // with that color's variant image (clicking a thumbnail clears this override)
+  const [colorOverrideSrc, setColorOverrideSrc] = useState<string | null>(
+    () => product.colors[0]?.images?.[0] ?? null
+  );
+
   // Gallery luôn là ảnh sản phẩm (bìa + chi tiết)
   // Ảnh biến thể màu chỉ dùng trong bộ chọn màu ở purchase panel
   const gallery = product.images;
@@ -23,21 +29,31 @@ export function ProductDetailView({ product }: { product: Product }) {
   // Slide order: [video (index 0), image0 (index 1), image1 (index 2), ...]
   // If no video: [image0 (index 0), image1 (index 1), ...]
   const totalSlides = (hasVideo ? 1 : 0) + gallery.length;
-  const isVideoSlide = hasVideo && activeIndex === 0;
+  // Color override suppresses video: if a color variant image is active, show it instead
+  const isVideoSlide = !colorOverrideSrc && hasVideo && activeIndex === 0;
   // imageIndex in gallery array: when video is first, images start at index 1
   const galleryIndex = hasVideo ? activeIndex - 1 : activeIndex;
-  const mainSrc = !isVideoSlide ? (gallery[galleryIndex] ?? gallery[0] ?? null) : null;
+  const galleryMainSrc = !isVideoSlide ? (gallery[galleryIndex] ?? gallery[0] ?? null) : null;
+  // Color variant overrides gallery image (cleared when user manually picks a thumbnail)
+  const mainSrc = !isVideoSlide ? (colorOverrideSrc ?? galleryMainSrc) : null;
 
   function handleColorChange(color: string) {
     setSelectedColor(color);
-    // Keep on video if currently on video, otherwise go to first image
-    setActiveIndex((i) => (hasVideo && i === 0 ? 0 : hasVideo ? 1 : 0));
+    const colorObj = product.colors.find((c) => c.name === color);
+    setColorOverrideSrc(colorObj?.images?.[0] ?? null);
+  }
+
+  function handleThumbSelect(index: number) {
+    setColorOverrideSrc(null); // user manually navigates gallery → clear color override
+    setActiveIndex(index);
   }
 
   function prev() {
+    setColorOverrideSrc(null);
     setActiveIndex((i) => (i > 0 ? i - 1 : totalSlides - 1));
   }
   function next() {
+    setColorOverrideSrc(null);
     setActiveIndex((i) => (i < totalSlides - 1 ? i + 1 : 0));
   }
 
@@ -45,10 +61,10 @@ export function ProductDetailView({ product }: { product: Product }) {
     gallery,
     hasVideo,
     videoUrl: product.videoUrl ?? "",
-    activeIndex,
+    activeIndex: colorOverrideSrc ? -1 : activeIndex, // no thumb highlighted when override active
     isVideoSlide,
     productName: product.name,
-    onSelect: setActiveIndex,
+    onSelect: handleThumbSelect,
   };
 
   return (
