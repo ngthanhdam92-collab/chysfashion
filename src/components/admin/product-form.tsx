@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { X, Plus, Trash2 } from "lucide-react";
 import { Product } from "@/lib/types";
@@ -118,8 +118,7 @@ export function ProductForm({ product, categories, allProducts = [], action }: P
   const [relatedSearch, setRelatedSearch] = useState("");
 
   // ===== Bảng thông số size =====
-  type ChartField = keyof Omit<SizeChartRow, never>;
-  type ChartCellState = Record<string, string>; // field -> value string
+  type ChartCellState = Record<string, string>;
   const [sizeChartState, setSizeChartState] = useState<Record<string, ChartCellState>>(() => {
     const existing = product?.sizeChart ?? {};
     const init: Record<string, ChartCellState> = {};

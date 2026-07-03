@@ -1,5 +1,6 @@
 import { Product, ProductVariant } from "./types";
 import { createPublicClient } from "./supabase/public";
+import type { SizeChartRow } from "./size-chart";
 
 interface ProductRow {
   id: string;
@@ -50,7 +51,7 @@ function mapRow(row: ProductRow): Product {
     variants: row.variants ?? [],
     videoUrl: row.video_url ?? null,
     relatedProductIds: row.related_product_ids ?? [],
-    sizeChart: (row.size_chart ?? {}) as Record<string, Partial<import("./size-chart").SizeChartRow>>,
+    sizeChart: (row.size_chart ?? {}) as Record<string, Partial<SizeChartRow>>,
   };
 }
 

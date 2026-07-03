@@ -1,3 +1,5 @@
+import type { SizeChartRow } from "./size-chart";
+
 export interface ProductColor {
   name: string;
   hex: string;
@@ -35,7 +37,7 @@ export interface Product {
   variants: ProductVariant[];
   videoUrl: string | null;
   relatedProductIds: string[];
-  sizeChart: Record<string, Partial<import("./size-chart").SizeChartRow>>;
+  sizeChart: Record<string, Partial<SizeChartRow>>;
 }
 
 export interface OrderItem {
