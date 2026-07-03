@@ -23,6 +23,7 @@ interface ProductRow {
   variants: ProductVariant[] | null;
   video_url: string | null;
   related_product_ids: string[] | null;
+  size_chart: Record<string, unknown> | null;
 }
 
 function mapRow(row: ProductRow): Product {
@@ -49,6 +50,7 @@ function mapRow(row: ProductRow): Product {
     variants: row.variants ?? [],
     videoUrl: row.video_url ?? null,
     relatedProductIds: row.related_product_ids ?? [],
+    sizeChart: (row.size_chart ?? {}) as Record<string, Partial<import("./size-chart").SizeChartRow>>,
   };
 }
 

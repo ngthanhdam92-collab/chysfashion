@@ -6,6 +6,7 @@ import { Minus, Plus, Check, X, Ruler } from "lucide-react";
 import { Product } from "@/lib/types";
 import { formatVnd } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
+import { DEFAULT_SIZE_CHART, mergeWithDefault, recommendSize, SizeChartRow } from "@/lib/size-chart";
 
 interface Props {
   product: Product;
@@ -148,6 +149,7 @@ export function ProductPurchasePanel({ product, selectedColor, onColorChange }: 
       {showSizeGuide && (
         <SizeGuideModal
           sizes={product.sizes}
+          sizeChart={product.sizeChart ?? {}}
           onClose={() => setShowSizeGuide(false)}
           onSelectSize={(s) => { setSize(s); setShowSizeGuide(false); }}
         />
@@ -244,66 +246,24 @@ function StarRating({ rating }: { rating: number }) {
 
 // ── Size Guide ───────────────────────────────────────────────────────────────
 
-interface SizeInfo {
-  heightMin: number; heightMax: number;
-  weightMin: number; weightMax: number;
-  chest: number; bodyLength: number;
-  sleeveLength: number; bicep: number; cuff: number; neck: number;
-}
-
-const SIZE_CHART: Record<string, SizeInfo> = {
-  XS:    { heightMin: 145, heightMax: 155, weightMin: 40, weightMax: 48,  chest: 45, bodyLength: 63, sleeveLength: 33,   bicep: 18.2, cuff: 15,   neck: 14.5 },
-  S:     { heightMin: 155, heightMax: 160, weightMin: 48, weightMax: 55,  chest: 47, bodyLength: 65, sleeveLength: 34.5, bicep: 19.6, cuff: 16,   neck: 16   },
-  M:     { heightMin: 160, heightMax: 165, weightMin: 55, weightMax: 62,  chest: 49, bodyLength: 67, sleeveLength: 36,   bicep: 20.4, cuff: 16.5, neck: 15.5 },
-  L:     { heightMin: 165, heightMax: 172, weightMin: 62, weightMax: 69,  chest: 51, bodyLength: 69, sleeveLength: 37,   bicep: 21.2, cuff: 17,   neck: 15   },
-  XL:    { heightMin: 172, heightMax: 177, weightMin: 69, weightMax: 76,  chest: 53, bodyLength: 71, sleeveLength: 39,   bicep: 22,   cuff: 17,   neck: 16.5 },
-  "2XL": { heightMin: 177, heightMax: 183, weightMin: 76, weightMax: 85,  chest: 55, bodyLength: 73, sleeveLength: 40.5, bicep: 22.8, cuff: 18,   neck: 17   },
-  "3XL": { heightMin: 183, heightMax: 195, weightMin: 85, weightMax: 100, chest: 57, bodyLength: 75, sleeveLength: 42,   bicep: 24,   cuff: 19,   neck: 17.5 },
-};
-
-function recommendSize(height: number, weight: number, availableSizes: string[]): string | null {
-  const available = availableSizes.filter((s) => SIZE_CHART[s]);
-  if (available.length === 0) return null;
-
-  // Priority: height
-  let matched = available.find((s) => {
-    const d = SIZE_CHART[s];
-    return height >= d.heightMin && height < d.heightMax;
-  });
-
-  // Clamp to edges if outside all ranges
-  if (!matched) {
-    matched = height < SIZE_CHART[available[0]].heightMin
-      ? available[0]
-      : available[available.length - 1];
-  }
-
-  // If weight suggests a bigger size, go up one
-  const matchedInfo = SIZE_CHART[matched];
-  if (weight > matchedInfo.weightMax) {
-    const idx = available.indexOf(matched);
-    if (idx < available.length - 1) matched = available[idx + 1];
-  }
-
-  return matched;
-}
-
 interface SizeGuideModalProps {
   sizes: string[];
+  sizeChart: Record<string, Partial<SizeChartRow>>;
   onClose: () => void;
   onSelectSize: (size: string) => void;
 }
 
-function SizeGuideModal({ sizes, onClose, onSelectSize }: SizeGuideModalProps) {
+function SizeGuideModal({ sizes, sizeChart, onClose, onSelectSize }: SizeGuideModalProps) {
   const [height, setHeight] = useState(170);
   const [weight, setWeight] = useState(60);
   const [result, setResult] = useState<string | null>(null);
   const [calculated, setCalculated] = useState(false);
 
-  const chartSizes = sizes.filter((s) => SIZE_CHART[s]);
+  // Sizes that have chart data (product custom or default fallback)
+  const chartSizes = sizes.filter((s) => sizeChart[s] || DEFAULT_SIZE_CHART[s]);
 
   function calculate() {
-    const r = recommendSize(height, weight, sizes);
+    const r = recommendSize(height, weight, sizes, sizeChart);
     setResult(r);
     setCalculated(true);
   }
@@ -313,12 +273,9 @@ function SizeGuideModal({ sizes, onClose, onSelectSize }: SizeGuideModalProps) {
       className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-ink/50" onClick={onClose} />
 
-      {/* Panel */}
       <div className="relative z-10 max-h-[90vh] w-full overflow-y-auto bg-white sm:max-w-2xl">
-        {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-white px-5 py-4">
           <h2 className="text-base font-bold text-ink">Hướng dẫn chọn size</h2>
           <button type="button" onClick={onClose} className="text-muted hover:text-ink">
@@ -326,7 +283,7 @@ function SizeGuideModal({ sizes, onClose, onSelectSize }: SizeGuideModalProps) {
           </button>
         </div>
 
-        <div className="px-5 py-5 space-y-6">
+        <div className="space-y-6 px-5 py-5">
           {/* Calculator */}
           <div>
             <div className="grid grid-cols-2 gap-3">
@@ -334,9 +291,7 @@ function SizeGuideModal({ sizes, onClose, onSelectSize }: SizeGuideModalProps) {
                 <label className="mb-1.5 block text-xs text-muted">Chiều cao</label>
                 <div className="flex items-center border border-line">
                   <input
-                    type="number"
-                    value={height}
-                    min={140} max={210}
+                    type="number" value={height} min={140} max={210}
                     onChange={(e) => { setHeight(Number(e.target.value)); setCalculated(false); }}
                     className="min-w-0 flex-1 px-3 py-2.5 text-sm focus:outline-none"
                   />
@@ -347,9 +302,7 @@ function SizeGuideModal({ sizes, onClose, onSelectSize }: SizeGuideModalProps) {
                 <label className="mb-1.5 block text-xs text-muted">Cân nặng</label>
                 <div className="flex items-center border border-line">
                   <input
-                    type="number"
-                    value={weight}
-                    min={30} max={150}
+                    type="number" value={weight} min={30} max={150}
                     onChange={(e) => { setWeight(Number(e.target.value)); setCalculated(false); }}
                     className="min-w-0 flex-1 px-3 py-2.5 text-sm focus:outline-none"
                   />
@@ -359,8 +312,7 @@ function SizeGuideModal({ sizes, onClose, onSelectSize }: SizeGuideModalProps) {
             </div>
 
             <button
-              type="button"
-              onClick={calculate}
+              type="button" onClick={calculate}
               className="mt-3 bg-ink px-5 py-2.5 text-[11px] tracking-label uppercase text-paper hover:bg-ink/85"
             >
               Tính toán
@@ -371,12 +323,12 @@ function SizeGuideModal({ sizes, onClose, onSelectSize }: SizeGuideModalProps) {
                 {result ? (
                   <>
                     <p className="text-sm text-ink">
-                      Gợi ý size phù hợp: <span className="font-bold text-blue-600 text-base">{result}</span>
+                      Gợi ý size phù hợp:{" "}
+                      <span className="text-base font-bold text-blue-600">{result}</span>
                     </p>
                     {sizes.includes(result) ? (
                       <button
-                        type="button"
-                        onClick={() => onSelectSize(result)}
+                        type="button" onClick={() => onSelectSize(result)}
                         className="shrink-0 bg-ink px-4 py-1.5 text-[11px] tracking-label uppercase text-paper hover:bg-ink/85"
                       >
                         Chọn size này
@@ -395,59 +347,50 @@ function SizeGuideModal({ sizes, onClose, onSelectSize }: SizeGuideModalProps) {
           {/* Size chart table */}
           {chartSizes.length > 0 && (
             <div>
-              <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-ink">
+              <p className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-ink">
                 Thông số sản phẩm
               </p>
-              <p className="mb-2 text-[11px] text-muted italic">
+              <p className="mb-3 text-[11px] italic text-muted">
                 *Thông số khi trải phẳng, có thể chênh lệch so với số đo cơ thể.
               </p>
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse text-sm">
                   <thead>
                     <tr className="border-b-2 border-ink bg-cream">
-                      <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-label text-muted w-36">
+                      <th className="w-36 px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-label text-muted">
                         Thông số
                       </th>
                       {chartSizes.map((s) => (
-                        <th
-                          key={s}
-                          className={`px-3 py-2.5 text-center text-[12px] font-bold ${
-                            result === s ? "bg-blue-600 text-white" : "text-ink"
-                          }`}
-                        >
+                        <th key={s} className={`px-3 py-2.5 text-center text-[12px] font-bold ${result === s ? "bg-blue-600 text-white" : "text-ink"}`}>
                           {s}
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {[
-                      { label: "Chiều cao (cm)", key: "height" as const },
-                      { label: "Cân nặng (kg)",  key: "weight" as const },
-                      { label: "Dài thân trước", key: "bodyLength" as const },
-                      { label: "1/2 ngang ngực", key: "chest" as const },
-                      { label: "Dài tay",         key: "sleeveLength" as const },
-                      { label: "Rộng bắp tay",    key: "bicep" as const },
-                      { label: "Rộng cửa tay",    key: "cuff" as const },
-                      { label: "Ngang cổ",         key: "neck" as const },
-                    ].map(({ label, key }, rowIdx) => (
+                    {(
+                      [
+                        { label: "Chiều cao (cm)", key: "height" },
+                        { label: "Cân nặng (kg)",  key: "weight" },
+                        { label: "Dài thân trước", key: "bodyLength" },
+                        { label: "1/2 ngang ngực", key: "chest" },
+                        { label: "Dài tay",         key: "sleeveLength" },
+                        { label: "Rộng bắp tay",    key: "bicep" },
+                        { label: "Rộng cửa tay",    key: "cuff" },
+                        { label: "Ngang cổ",         key: "neck" },
+                      ] as { label: string; key: string }[]
+                    ).map(({ label, key }, rowIdx) => (
                       <tr key={key} className={`border-b border-line ${rowIdx % 2 === 0 ? "" : "bg-cream/50"}`}>
                         <td className="px-3 py-2 text-xs text-muted">{label}</td>
                         {chartSizes.map((s) => {
-                          const d = SIZE_CHART[s];
-                          const val = key === "height"
-                            ? `${d.heightMin}–${d.heightMax}`
-                            : key === "weight"
-                            ? `${d.weightMin}–${d.weightMax}`
-                            : d[key];
+                          const d = mergeWithDefault(sizeChart, s);
+                          const val =
+                            key === "height" ? `${d.heightMin}–${d.heightMax}`
+                            : key === "weight" ? `${d.weightMin}–${d.weightMax}`
+                            : (d as Record<string, unknown>)[key];
                           return (
-                            <td
-                              key={s}
-                              className={`px-3 py-2 text-center text-sm ${
-                                result === s ? "font-semibold text-blue-600" : "text-ink"
-                              }`}
-                            >
-                              {val}
+                            <td key={s} className={`px-3 py-2 text-center text-sm ${result === s ? "font-semibold text-blue-600" : "text-ink"}`}>
+                              {val as string}
                             </td>
                           );
                         })}
@@ -460,9 +403,9 @@ function SizeGuideModal({ sizes, onClose, onSelectSize }: SizeGuideModalProps) {
           )}
 
           {/* Tips */}
-          <div className="rounded border border-line bg-cream/60 px-4 py-3 text-xs text-muted space-y-1">
+          <div className="space-y-1 rounded border border-line bg-cream/60 px-4 py-3 text-xs text-muted">
             <p className="font-semibold text-ink">Trường hợp số đo nằm trong khoảng giữa các size:</p>
-            <ul className="mt-1 space-y-1 list-disc list-inside">
+            <ul className="mt-1 list-inside list-disc space-y-1">
               <li>Với áo thun, hãy ưu tiên theo chiều cao</li>
               <li>Ví dụ: chiều cao theo size L nhưng cân nặng theo size M → chọn L</li>
               <li>97% khách hàng đã chọn đúng size theo cách này</li>

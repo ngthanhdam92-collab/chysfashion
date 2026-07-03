@@ -35,6 +35,7 @@ export interface Product {
   variants: ProductVariant[];
   videoUrl: string | null;
   relatedProductIds: string[];
+  sizeChart: Record<string, Partial<import("./size-chart").SizeChartRow>>;
 }
 
 export interface OrderItem {

@@ -6,6 +6,7 @@ import { X, Plus, Trash2 } from "lucide-react";
 import { Product } from "@/lib/types";
 import { Category } from "@/lib/categories";
 import { createClient } from "@/lib/supabase/client";
+import { DEFAULT_SIZE_CHART, SizeChartRow } from "@/lib/size-chart";
 
 interface ProductFormProps {
   product?: Product;
@@ -115,6 +116,31 @@ export function ProductForm({ product, categories, allProducts = [], action }: P
   // ===== Gợi ý xem thêm =====
   const [relatedIds, setRelatedIds] = useState<string[]>(product?.relatedProductIds ?? []);
   const [relatedSearch, setRelatedSearch] = useState("");
+
+  // ===== Bảng thông số size =====
+  type ChartField = keyof Omit<SizeChartRow, never>;
+  type ChartCellState = Record<string, string>; // field -> value string
+  const [sizeChartState, setSizeChartState] = useState<Record<string, ChartCellState>>(() => {
+    const existing = product?.sizeChart ?? {};
+    const init: Record<string, ChartCellState> = {};
+    for (const s of product?.sizes ?? []) {
+      const def = DEFAULT_SIZE_CHART[s];
+      const custom = (existing[s] ?? {}) as Partial<SizeChartRow>;
+      init[s] = {
+        heightMin:    String(custom.heightMin    ?? def?.heightMin    ?? ""),
+        heightMax:    String(custom.heightMax    ?? def?.heightMax    ?? ""),
+        weightMin:    String(custom.weightMin    ?? def?.weightMin    ?? ""),
+        weightMax:    String(custom.weightMax    ?? def?.weightMax    ?? ""),
+        bodyLength:   String(custom.bodyLength   ?? def?.bodyLength   ?? ""),
+        chest:        String(custom.chest        ?? def?.chest        ?? ""),
+        sleeveLength: String(custom.sleeveLength ?? def?.sleeveLength ?? ""),
+        bicep:        String(custom.bicep        ?? def?.bicep        ?? ""),
+        cuff:         String(custom.cuff         ?? def?.cuff         ?? ""),
+        neck:         String(custom.neck         ?? def?.neck         ?? ""),
+      };
+    }
+    return init;
+  });
 
   const cls0Options = (classifications[0]?.options ?? []).filter((o) => o.name.trim());
   const cls1Options = (classifications[1]?.options ?? []).filter((o) => o.name.trim());
@@ -238,6 +264,57 @@ export function ProductForm({ product, categories, allProducts = [], action }: P
   const sizesValue = cls1Options.map((o) => o.name).join("\n");
   const variantImagesJson = JSON.stringify(variantImages);
   const relatedIdsJson = JSON.stringify(relatedIds);
+
+  // Sync size chart when cls1 sizes change — add rows for new sizes, keep existing
+  const currentSizeNames = cls1Options.map((o) => o.name);
+  for (const s of currentSizeNames) {
+    if (!sizeChartState[s]) {
+      const def = DEFAULT_SIZE_CHART[s];
+      setSizeChartState((prev) => ({
+        ...prev,
+        [s]: {
+          heightMin:    String(def?.heightMin    ?? ""),
+          heightMax:    String(def?.heightMax    ?? ""),
+          weightMin:    String(def?.weightMin    ?? ""),
+          weightMax:    String(def?.weightMax    ?? ""),
+          bodyLength:   String(def?.bodyLength   ?? ""),
+          chest:        String(def?.chest        ?? ""),
+          sleeveLength: String(def?.sleeveLength ?? ""),
+          bicep:        String(def?.bicep        ?? ""),
+          cuff:         String(def?.cuff         ?? ""),
+          neck:         String(def?.neck         ?? ""),
+        },
+      }));
+    }
+  }
+
+  // Serialize only sizes that exist in the current classification
+  const sizeChartJson = JSON.stringify(
+    Object.fromEntries(
+      currentSizeNames.map((s) => {
+        const row = sizeChartState[s] ?? {};
+        return [s, {
+          heightMin:    Number(row.heightMin)    || 0,
+          heightMax:    Number(row.heightMax)    || 0,
+          weightMin:    Number(row.weightMin)    || 0,
+          weightMax:    Number(row.weightMax)    || 0,
+          bodyLength:   Number(row.bodyLength)   || 0,
+          chest:        Number(row.chest)        || 0,
+          sleeveLength: Number(row.sleeveLength) || 0,
+          bicep:        Number(row.bicep)        || 0,
+          cuff:         Number(row.cuff)         || 0,
+          neck:         Number(row.neck)         || 0,
+        }];
+      })
+    )
+  );
+
+  function setSizeChartCell(size: string, field: string, value: string) {
+    setSizeChartState((prev) => ({
+      ...prev,
+      [size]: { ...(prev[size] ?? {}), [field]: value },
+    }));
+  }
 
   // Products available to pick (exclude self)
   const pickableProducts = allProducts.filter((p) => p.id !== product?.id);
@@ -884,6 +961,70 @@ export function ProductForm({ product, categories, allProducts = [], action }: P
           </p>
         )}
       </div>
+
+      {/* ===== BẢNG THÔNG SỐ SIZE ===== */}
+      <input type="hidden" name="sizeChart" value={sizeChartJson} />
+      {currentSizeNames.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="h-2 w-2 rounded-full bg-blue-500" />
+            <span className="text-sm font-medium text-ink">Bảng thông số size</span>
+            <span className="text-xs text-muted">(dùng trong Hướng dẫn chọn size)</span>
+          </div>
+          <p className="mb-3 text-xs text-muted">
+            Điền thông số cho từng size. Tự động điền mặc định nếu size là S/M/L/XL/2XL/3XL.
+          </p>
+          <div className="overflow-x-auto border border-line">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-line bg-cream/40 text-left text-[10px] uppercase tracking-label text-muted">
+                  <th className="px-3 py-2.5 sticky left-0 bg-cream/40">Size</th>
+                  <th className="px-3 py-2.5 whitespace-nowrap">Cao min (cm)</th>
+                  <th className="px-3 py-2.5 whitespace-nowrap">Cao max (cm)</th>
+                  <th className="px-3 py-2.5 whitespace-nowrap">Nặng min (kg)</th>
+                  <th className="px-3 py-2.5 whitespace-nowrap">Nặng max (kg)</th>
+                  <th className="px-3 py-2.5 whitespace-nowrap">Dài thân</th>
+                  <th className="px-3 py-2.5 whitespace-nowrap">½ Ngực</th>
+                  <th className="px-3 py-2.5 whitespace-nowrap">Dài tay</th>
+                  <th className="px-3 py-2.5 whitespace-nowrap">Bắp tay</th>
+                  <th className="px-3 py-2.5 whitespace-nowrap">Cửa tay</th>
+                  <th className="px-3 py-2.5 whitespace-nowrap">Ngang cổ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentSizeNames.map((s, i) => {
+                  const row = sizeChartState[s] ?? {};
+                  const cell = (field: string) => (
+                    <input
+                      type="number"
+                      step="0.1"
+                      min={0}
+                      value={row[field] ?? ""}
+                      onChange={(e) => setSizeChartCell(s, field, e.target.value)}
+                      className="w-16 border border-line bg-white px-1.5 py-1 text-xs focus:border-gold focus:outline-none"
+                    />
+                  );
+                  return (
+                    <tr key={s} className={`border-b border-line last:border-0 ${i % 2 === 0 ? "" : "bg-cream/30"}`}>
+                      <td className="px-3 py-2 font-semibold text-ink sticky left-0 bg-white">{s}</td>
+                      <td className="px-3 py-2">{cell("heightMin")}</td>
+                      <td className="px-3 py-2">{cell("heightMax")}</td>
+                      <td className="px-3 py-2">{cell("weightMin")}</td>
+                      <td className="px-3 py-2">{cell("weightMax")}</td>
+                      <td className="px-3 py-2">{cell("bodyLength")}</td>
+                      <td className="px-3 py-2">{cell("chest")}</td>
+                      <td className="px-3 py-2">{cell("sleeveLength")}</td>
+                      <td className="px-3 py-2">{cell("bicep")}</td>
+                      <td className="px-3 py-2">{cell("cuff")}</td>
+                      <td className="px-3 py-2">{cell("neck")}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {error && <p className="text-sm text-error">{error}</p>}
 

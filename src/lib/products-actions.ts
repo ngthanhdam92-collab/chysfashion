@@ -86,6 +86,13 @@ function buildProductPayload(formData: FormData, slug: string) {
     if (Array.isArray(parsed)) relatedProductIds = parsed.filter((v) => typeof v === "string");
   } catch {}
 
+  let sizeChart: Record<string, unknown> = {};
+  try {
+    const raw = String(formData.get("sizeChart") || "{}");
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) sizeChart = parsed;
+  } catch {}
+
   return {
     slug,
     name: String(formData.get("name") || ""),
@@ -110,6 +117,7 @@ function buildProductPayload(formData: FormData, slug: string) {
     variants,
     video_url: videoUrl,
     related_product_ids: relatedProductIds,
+    size_chart: sizeChart,
   };
 }
 
