@@ -815,6 +815,70 @@ export function ProductForm({ product, categories, allProducts = [], action }: P
             </div>
           )}
 
+          {/* ── Bảng thông số size ── */}
+          <input type="hidden" name="sizeChart" value={sizeChartJson} />
+          {currentSizeNames.length > 0 && (
+            <div className="mt-5 border border-line bg-white">
+              <div className="flex items-center gap-2 border-b border-line px-4 py-3">
+                <span className="h-2 w-2 rounded-full bg-blue-500" />
+                <span className="text-sm font-medium text-ink">Bảng thông số size</span>
+                <span className="text-xs text-muted">(hiển thị trong Hướng dẫn chọn size)</span>
+              </div>
+              <div className="px-4 py-3">
+                <p className="mb-3 text-xs text-muted">
+                  Tự động điền mặc định cho size S/M/L/XL/2XL/3XL. Chỉnh lại theo đúng sản phẩm của bạn.
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-line bg-cream/40 text-[10px] uppercase tracking-label text-muted">
+                        <th className="px-3 py-2 text-left">Size</th>
+                        <th className="px-3 py-2 whitespace-nowrap">Cao min</th>
+                        <th className="px-3 py-2 whitespace-nowrap">Cao max</th>
+                        <th className="px-3 py-2 whitespace-nowrap">Nặng min</th>
+                        <th className="px-3 py-2 whitespace-nowrap">Nặng max</th>
+                        <th className="px-3 py-2 whitespace-nowrap">Dài thân</th>
+                        <th className="px-3 py-2 whitespace-nowrap">½ Ngực</th>
+                        <th className="px-3 py-2 whitespace-nowrap">Dài tay</th>
+                        <th className="px-3 py-2 whitespace-nowrap">Bắp tay</th>
+                        <th className="px-3 py-2 whitespace-nowrap">Cửa tay</th>
+                        <th className="px-3 py-2 whitespace-nowrap">Ngang cổ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {currentSizeNames.map((s, i) => {
+                        const row = sizeChartState[s] ?? {};
+                        const cell = (field: string) => (
+                          <input
+                            type="number" step="0.1" min={0}
+                            value={row[field] ?? ""}
+                            onChange={(e) => setSizeChartCell(s, field, e.target.value)}
+                            className="w-14 border border-line bg-white px-1.5 py-1 text-xs focus:border-gold focus:outline-none"
+                          />
+                        );
+                        return (
+                          <tr key={s} className={`border-b border-line last:border-0 ${i % 2 === 0 ? "" : "bg-cream/30"}`}>
+                            <td className="px-3 py-2 font-semibold text-ink">{s}</td>
+                            <td className="px-3 py-2">{cell("heightMin")}</td>
+                            <td className="px-3 py-2">{cell("heightMax")}</td>
+                            <td className="px-3 py-2">{cell("weightMin")}</td>
+                            <td className="px-3 py-2">{cell("weightMax")}</td>
+                            <td className="px-3 py-2">{cell("bodyLength")}</td>
+                            <td className="px-3 py-2">{cell("chest")}</td>
+                            <td className="px-3 py-2">{cell("sleeveLength")}</td>
+                            <td className="px-3 py-2">{cell("bicep")}</td>
+                            <td className="px-3 py-2">{cell("cuff")}</td>
+                            <td className="px-3 py-2">{cell("neck")}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Fallback price/stock khi không có phân loại */}
           {variantCombos.length === 0 && (
             <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -961,70 +1025,6 @@ export function ProductForm({ product, categories, allProducts = [], action }: P
           </p>
         )}
       </div>
-
-      {/* ===== BẢNG THÔNG SỐ SIZE ===== */}
-      <input type="hidden" name="sizeChart" value={sizeChartJson} />
-      {currentSizeNames.length > 0 && (
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="h-2 w-2 rounded-full bg-blue-500" />
-            <span className="text-sm font-medium text-ink">Bảng thông số size</span>
-            <span className="text-xs text-muted">(dùng trong Hướng dẫn chọn size)</span>
-          </div>
-          <p className="mb-3 text-xs text-muted">
-            Điền thông số cho từng size. Tự động điền mặc định nếu size là S/M/L/XL/2XL/3XL.
-          </p>
-          <div className="overflow-x-auto border border-line">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-line bg-cream/40 text-left text-[10px] uppercase tracking-label text-muted">
-                  <th className="px-3 py-2.5 sticky left-0 bg-cream/40">Size</th>
-                  <th className="px-3 py-2.5 whitespace-nowrap">Cao min (cm)</th>
-                  <th className="px-3 py-2.5 whitespace-nowrap">Cao max (cm)</th>
-                  <th className="px-3 py-2.5 whitespace-nowrap">Nặng min (kg)</th>
-                  <th className="px-3 py-2.5 whitespace-nowrap">Nặng max (kg)</th>
-                  <th className="px-3 py-2.5 whitespace-nowrap">Dài thân</th>
-                  <th className="px-3 py-2.5 whitespace-nowrap">½ Ngực</th>
-                  <th className="px-3 py-2.5 whitespace-nowrap">Dài tay</th>
-                  <th className="px-3 py-2.5 whitespace-nowrap">Bắp tay</th>
-                  <th className="px-3 py-2.5 whitespace-nowrap">Cửa tay</th>
-                  <th className="px-3 py-2.5 whitespace-nowrap">Ngang cổ</th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentSizeNames.map((s, i) => {
-                  const row = sizeChartState[s] ?? {};
-                  const cell = (field: string) => (
-                    <input
-                      type="number"
-                      step="0.1"
-                      min={0}
-                      value={row[field] ?? ""}
-                      onChange={(e) => setSizeChartCell(s, field, e.target.value)}
-                      className="w-16 border border-line bg-white px-1.5 py-1 text-xs focus:border-gold focus:outline-none"
-                    />
-                  );
-                  return (
-                    <tr key={s} className={`border-b border-line last:border-0 ${i % 2 === 0 ? "" : "bg-cream/30"}`}>
-                      <td className="px-3 py-2 font-semibold text-ink sticky left-0 bg-white">{s}</td>
-                      <td className="px-3 py-2">{cell("heightMin")}</td>
-                      <td className="px-3 py-2">{cell("heightMax")}</td>
-                      <td className="px-3 py-2">{cell("weightMin")}</td>
-                      <td className="px-3 py-2">{cell("weightMax")}</td>
-                      <td className="px-3 py-2">{cell("bodyLength")}</td>
-                      <td className="px-3 py-2">{cell("chest")}</td>
-                      <td className="px-3 py-2">{cell("sleeveLength")}</td>
-                      <td className="px-3 py-2">{cell("bicep")}</td>
-                      <td className="px-3 py-2">{cell("cuff")}</td>
-                      <td className="px-3 py-2">{cell("neck")}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
 
       {error && <p className="text-sm text-error">{error}</p>}
 
