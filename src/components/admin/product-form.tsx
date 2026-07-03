@@ -611,15 +611,16 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
         </label>
       </div>
 
+      {/* ===== ẢNH SẢN PHẨM ===== */}
       <div>
         <label className="text-xs text-muted">
           Ảnh sản phẩm — ảnh đầu tiên là ảnh bìa hiển thị ngoài danh sách
         </label>
         <div className="mt-2 flex flex-wrap gap-3">
           {keptImages.map((url, index) => (
-            <div key={url} className="w-24">
+            <div key={url} className="group relative h-24 w-24 shrink-0">
               <div
-                className={`relative h-28 w-24 overflow-hidden border ${
+                className={`relative h-24 w-24 overflow-hidden border ${
                   index === 0 ? "border-2 border-gold" : "border-line"
                 }`}
               >
@@ -630,66 +631,91 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
                     Ảnh bìa
                   </span>
                 )}
+              </div>
+              {/* Overlay actions on hover */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-ink/50 opacity-0 transition-opacity group-hover:opacity-100">
+                {index > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => makeCover(url)}
+                    className="rounded bg-white/90 px-1.5 py-0.5 text-[10px] text-ink hover:bg-white"
+                  >
+                    Đặt bìa
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => setKeptImages((imgs) => imgs.filter((u) => u !== url))}
-                  className="absolute right-0.5 top-0.5 rounded-full bg-ink/70 p-0.5 text-paper"
+                  className="rounded bg-error/90 px-1.5 py-0.5 text-[10px] text-white hover:bg-error"
                   aria-label="Xóa ảnh"
                 >
-                  <X size={12} />
+                  Xóa
                 </button>
               </div>
-              {index > 0 && (
-                <button
-                  type="button"
-                  onClick={() => makeCover(url)}
-                  className="mt-1 w-full text-center text-[11px] text-muted hover:text-gold-dark"
-                >
-                  Đặt làm ảnh bìa
-                </button>
-              )}
             </div>
           ))}
+
+          {/* Add image button */}
+          <label
+            className={`flex h-24 w-24 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 border border-dashed border-line bg-white text-muted transition-colors hover:border-gold hover:text-gold-dark ${
+              uploading ? "pointer-events-none opacity-50" : ""
+            }`}
+          >
+            <Plus size={24} strokeWidth={1.5} />
+            <span className="text-[11px]">{uploading ? "Đang tải..." : "Thêm ảnh"}</span>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              disabled={uploading}
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          </label>
         </div>
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          disabled={uploading}
-          onChange={handleFileChange}
-          className="mt-3 block text-sm"
-        />
-        {uploading && <p className="mt-2 text-xs text-muted">Đang tải ảnh lên...</p>}
       </div>
 
+      {/* ===== VIDEO SẢN PHẨM ===== */}
       <div>
         <label className="text-xs text-muted">
           Video sản phẩm (tuỳ chọn) — MP4, tối đa 30MB
         </label>
         <input type="hidden" name="videoUrl" value={videoUrl} />
-        {videoUrl ? (
-          <div className="mt-2 flex items-start gap-3">
-            <video src={videoUrl} controls className="h-40 border border-line bg-ink/5" />
-            <button
-              type="button"
-              onClick={() => setVideoUrl("")}
-              className="flex items-center gap-1.5 border border-line px-3 py-2 text-sm text-muted hover:border-error hover:text-error"
+        <div className="mt-2 flex flex-wrap gap-3">
+          {videoUrl ? (
+            <div className="group relative h-24 w-24 shrink-0">
+              <video
+                src={videoUrl}
+                className="h-24 w-24 border border-line object-cover bg-ink/5"
+              />
+              <div className="absolute inset-0 flex items-center justify-center bg-ink/50 opacity-0 transition-opacity group-hover:opacity-100">
+                <button
+                  type="button"
+                  onClick={() => setVideoUrl("")}
+                  className="rounded bg-error/90 px-1.5 py-0.5 text-[10px] text-white hover:bg-error"
+                >
+                  Xóa
+                </button>
+              </div>
+            </div>
+          ) : (
+            <label
+              className={`flex h-24 w-24 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 border border-dashed border-line bg-white text-muted transition-colors hover:border-gold hover:text-gold-dark ${
+                uploadingVideo ? "pointer-events-none opacity-50" : ""
+              }`}
             >
-              <X size={14} /> Xóa video
-            </button>
-          </div>
-        ) : (
-          <input
-            type="file"
-            accept="video/mp4,video/webm,video/quicktime"
-            disabled={uploadingVideo}
-            onChange={handleVideoChange}
-            className="mt-2 block text-sm"
-          />
-        )}
-        {uploadingVideo && (
-          <p className="mt-2 text-xs text-muted">Đang tải video lên (có thể mất một lúc)...</p>
-        )}
+              <Plus size={24} strokeWidth={1.5} />
+              <span className="text-[11px]">{uploadingVideo ? "Đang tải..." : "Thêm video"}</span>
+              <input
+                type="file"
+                accept="video/mp4,video/webm,video/quicktime"
+                disabled={uploadingVideo}
+                onChange={handleVideoChange}
+                className="hidden"
+              />
+            </label>
+          )}
+        </div>
       </div>
 
       {error && <p className="text-sm text-error">{error}</p>}
