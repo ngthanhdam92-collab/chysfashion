@@ -1,9 +1,7 @@
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { getProductBySlug, getRelatedProducts } from "@/lib/products";
-import { ProductImagePlaceholder } from "@/components/product-image-placeholder";
-import { ProductPurchasePanel } from "@/components/product-purchase-panel";
+import { ProductDetailView } from "@/components/product-detail-view";
 import { ProductCard } from "@/components/product-card";
 
 interface Params {
@@ -22,57 +20,14 @@ export default async function ProductDetailPage({ params }: Params) {
   if (!product) notFound();
 
   const related = await getRelatedProducts(product);
-  const gallery = product.images.length > 0 ? product.images : null;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-      <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-16">
-        <div>
-          {gallery ? (
-            <div className="relative aspect-[3/4] w-full overflow-hidden bg-cream">
-              <Image
-                src={gallery[0]}
-                alt={product.name}
-                fill
-                sizes="(min-width: 1024px) 50vw, 100vw"
-                className="object-cover"
-                priority
-              />
-            </div>
-          ) : (
-            <ProductImagePlaceholder seed={product.id} />
-          )}
-          <div className="mt-3 grid grid-cols-4 gap-3">
-            {gallery
-              ? gallery.slice(0, 4).map((src, i) => (
-                  <div key={src} className="relative aspect-[3/4] overflow-hidden bg-cream">
-                    <Image
-                      src={src}
-                      alt={`${product.name} ${i + 1}`}
-                      fill
-                      sizes="25vw"
-                      className="object-cover"
-                    />
-                  </div>
-                ))
-              : [0, 1, 2, 3].map((i) => (
-                  <ProductImagePlaceholder key={i} seed={`${product.id}-${i}`} />
-                ))}
-          </div>
-          {product.videoUrl && (
-            <video
-              src={product.videoUrl}
-              controls
-              playsInline
-              className="mt-3 w-full bg-ink/5"
-            />
-          )}
-        </div>
+      <ProductDetailView product={product} />
 
-        <div>
-          <ProductPurchasePanel product={product} />
-
-          <div className="mt-10 divide-y divide-line border-t border-line">
+      <div className="mt-10 lg:grid lg:grid-cols-2 lg:gap-16">
+        <div className="lg:col-start-2">
+          <div className="divide-y divide-line border-t border-line">
             <details open className="group py-4">
               <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium text-ink">
                 Mô tả sản phẩm

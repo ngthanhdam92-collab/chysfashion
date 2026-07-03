@@ -7,23 +7,39 @@ import { Product } from "@/lib/types";
 import { formatVnd } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
 
-export function ProductPurchasePanel({ product }: { product: Product }) {
+interface Props {
+  product: Product;
+  selectedColor?: string;
+  onColorChange?: (color: string) => void;
+}
+
+export function ProductPurchasePanel({ product, selectedColor, onColorChange }: Props) {
   const router = useRouter();
   const { addItem } = useCart();
-  const [color, setColor] = useState(product.colors[0].name);
-  const [size, setSize] = useState(product.sizes[0]);
+  const [color, setColor] = useState(selectedColor ?? product.colors[0]?.name ?? "");
+  const [size, setSize] = useState(product.sizes[0] ?? "");
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+
+  // Sync color when parent changes it
+  const activeColor = selectedColor ?? color;
 
   // Có phân loại hàng: giá và tồn kho tính theo tổ hợp Màu × Size đang chọn
   const hasVariants = product.variants.length > 0;
   const selectedVariant = hasVariants
-    ? product.variants.find((v) => v.color === color && v.size === size)
+    ? product.variants.find((v) => v.color === activeColor && v.size === size)
     : undefined;
   const price =
     selectedVariant && selectedVariant.price > 0 ? selectedVariant.price : product.price;
+  const compareAtPrice =
+    selectedVariant?.compareAtPrice ?? product.compareAtPrice;
   const availableStock = hasVariants ? selectedVariant?.stock ?? 0 : product.stock;
   const outOfStock = availableStock === 0;
+
+  function handleColorSelect(name: string) {
+    setColor(name);
+    onColorChange?.(name);
+  }
 
   function handleAddToCart() {
     addItem(
@@ -32,7 +48,7 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
         slug: product.slug,
         name: product.name,
         price,
-        color,
+        color: activeColor,
         size,
       },
       quantity
@@ -55,9 +71,9 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
 
       <div className="mt-4 flex items-center gap-3">
         <span className="text-xl font-medium text-ink">{formatVnd(price)}</span>
-        {product.compareAtPrice && (
+        {compareAtPrice && compareAtPrice > price && (
           <span className="text-sm text-muted line-through">
-            {formatVnd(product.compareAtPrice)}
+            {formatVnd(compareAtPrice)}
           </span>
         )}
       </div>
@@ -66,24 +82,26 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
         ★ {product.rating.toFixed(1)} · {product.reviewCount} đánh giá
       </p>
 
-      <div className="mt-8">
-        <p className="text-[12px] tracking-label uppercase text-ink">
-          Màu sắc — <span className="normal-case text-muted">{color}</span>
-        </p>
-        <div className="mt-3 flex gap-3">
-          {product.colors.map((c) => (
-            <button
-              key={c.name}
-              onClick={() => setColor(c.name)}
-              aria-label={c.name}
-              className={`h-9 w-9 rounded-full border-2 transition-all ${
-                color === c.name ? "border-gold" : "border-transparent"
-              }`}
-              style={{ backgroundColor: c.hex }}
-            />
-          ))}
+      {product.colors.length > 0 && (
+        <div className="mt-8">
+          <p className="text-[12px] tracking-label uppercase text-ink">
+            Màu sắc — <span className="normal-case text-muted">{activeColor}</span>
+          </p>
+          <div className="mt-3 flex flex-wrap gap-3">
+            {product.colors.map((c) => (
+              <button
+                key={c.name}
+                onClick={() => handleColorSelect(c.name)}
+                aria-label={c.name}
+                className={`h-9 w-9 rounded-full border-2 transition-all ${
+                  activeColor === c.name ? "border-gold" : "border-transparent"
+                }`}
+                style={{ backgroundColor: c.hex }}
+              />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="mt-8">
         <p className="text-[12px] tracking-label uppercase text-ink">
