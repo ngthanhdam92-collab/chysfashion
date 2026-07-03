@@ -15,7 +15,6 @@ export function ProductCard({ product }: { product: Product }) {
 
   const [selectedColor, setSelectedColor] = useState(product.colors[0]?.name ?? "");
   const [selectedSize, setSelectedSize] = useState(product.sizes[0] ?? "");
-  const [hovered, setHovered] = useState(false);
   const [added, setAdded] = useState(false);
 
   // Price per selected variant
@@ -57,11 +56,7 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <div className="group">
       {/* ── IMAGE AREA ── */}
-      <div
-        className="relative overflow-hidden"
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-      >
+      <div className="relative overflow-hidden group/img">
         {/* Image — click → product page */}
         <Link href={`/san-pham/${product.slug}`} className="block">
           {activeCover ? (
@@ -104,20 +99,16 @@ export function ProductCard({ product }: { product: Product }) {
           </div>
         )}
 
-        {/* ── QUICK-ADD PANEL ── slides up on hover */}
+        {/* ── QUICK-ADD PANEL ── always visible on mobile, slides up on desktop hover */}
         {canQuickAdd && (
-          <div
-            className={`absolute inset-x-0 bottom-0 bg-white/92 px-3 pb-3 pt-2.5 backdrop-blur-sm transition-transform duration-300 ${
-              hovered ? "translate-y-0" : "translate-y-full"
-            }`}
-          >
-            <p className="mb-2.5 text-center text-[10px] tracking-label uppercase text-muted">
+          <div className="absolute inset-x-0 bottom-0 bg-white/92 px-2 pb-2 pt-2 backdrop-blur-sm transition-transform duration-300 [@media(hover:hover)]:translate-y-full [@media(hover:hover)]:group-hover/img:translate-y-0 sm:px-3 sm:pb-3 sm:pt-2.5">
+            <p className="mb-2 hidden text-center text-[10px] tracking-label uppercase text-muted sm:mb-2.5 [@media(hover:hover)]:block">
               Thêm nhanh vào giỏ hàng +
             </p>
 
             {/* Sizes */}
             {product.sizes.length > 0 && (
-              <div className="mb-2 flex flex-wrap justify-center gap-1.5">
+              <div className="mb-1.5 flex flex-wrap justify-center gap-1 sm:mb-2 sm:gap-1.5">
                 {product.sizes.map((s) => (
                   <button
                     key={s}
@@ -127,7 +118,7 @@ export function ProductCard({ product }: { product: Product }) {
                       e.stopPropagation();
                       setSelectedSize(s);
                     }}
-                    className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+                    className={`rounded-full border px-2 py-0.5 text-[11px] transition-colors sm:px-3 sm:py-1 sm:text-xs ${
                       selectedSize === s
                         ? "border-ink bg-ink text-paper"
                         : "border-line text-ink hover:border-ink"
@@ -141,7 +132,7 @@ export function ProductCard({ product }: { product: Product }) {
 
             {/* Colors — only when multiple options */}
             {product.colors.length > 1 && (
-              <div className="mb-2 flex flex-wrap justify-center gap-1.5">
+              <div className="mb-1.5 flex flex-wrap justify-center gap-1 sm:mb-2 sm:gap-1.5">
                 {product.colors.map((c) => {
                   const img = c.images?.[0];
                   const isActive = selectedColor === c.name;
@@ -187,7 +178,7 @@ export function ProductCard({ product }: { product: Product }) {
             <button
               type="button"
               onClick={handleAddToCart}
-              className={`w-full py-2 text-[11px] tracking-label uppercase transition-colors ${
+              className={`w-full py-1.5 text-[10px] tracking-label uppercase transition-colors sm:py-2 sm:text-[11px] ${
                 added
                   ? "bg-green-600 text-white"
                   : "bg-ink text-paper hover:bg-ink/85"
