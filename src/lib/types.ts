@@ -8,6 +8,7 @@ export interface ProductVariant {
   color: string;
   size: string;
   price: number;
+  compareAtPrice?: number;
   stock: number;
   sku: string;
 }

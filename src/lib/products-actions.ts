@@ -37,12 +37,14 @@ function parseLines(raw: string): string[] {
 
 function buildProductPayload(formData: FormData, slug: string) {
   const keptImages = formData.getAll("keptImages").map(String);
-  const price = Number(formData.get("price"));
-  const compareAtPriceRaw = formData.get("compareAtPrice");
-  const compareAtPrice = compareAtPriceRaw ? Number(compareAtPriceRaw) : null;
+  // Fallback price/stock for products without classifications
+  const fallbackPrice = Number(formData.get("price") || 0);
+  const fallbackCompareAtPriceRaw = formData.get("compareAtPrice");
+  const fallbackCompareAtPrice = fallbackCompareAtPriceRaw ? Number(fallbackCompareAtPriceRaw) : null;
+  const fallbackStock = Math.max(0, Number(formData.get("stock") || 0));
 
-  // Phân loại hàng: [{color, size, price, stock, sku}] — do form tạo từ Màu × Size
-  let variants: { color: string; size: string; price: number; stock: number; sku: string }[] = [];
+  // Phân loại hàng — each variant can carry its own price, compareAtPrice, stock, sku
+  let variants: { color: string; size: string; price: number; compareAtPrice?: number; stock: number; sku: string }[] = [];
   try {
     const parsed = JSON.parse(String(formData.get("variants") || "[]"));
     if (Array.isArray(parsed)) {
@@ -52,6 +54,7 @@ function buildProductPayload(formData: FormData, slug: string) {
           color: v.color,
           size: v.size,
           price: Math.max(0, Number(v.price) || 0),
+          ...(v.compareAtPrice ? { compareAtPrice: Math.max(0, Number(v.compareAtPrice) || 0) } : {}),
           stock: Math.max(0, Math.floor(Number(v.stock) || 0)),
           sku: String(v.sku || ""),
         }));
@@ -60,14 +63,19 @@ function buildProductPayload(formData: FormData, slug: string) {
     variants = [];
   }
 
-  // Có phân loại: tổng kho = cộng các phân loại, giá hiển thị = giá thấp nhất trong phân loại
+  // Display price = min variant price; display compareAtPrice = min variant compareAtPrice
   const hasVariants = variants.length > 0;
   const totalStock = hasVariants
     ? variants.reduce((sum, v) => sum + v.stock, 0)
-    : Math.max(0, Number(formData.get("stock") || 0));
+    : fallbackStock;
   const variantPrices = variants.map((v) => v.price).filter((p) => p > 0);
-  const displayPrice =
-    hasVariants && variantPrices.length > 0 ? Math.min(...variantPrices) : price;
+  const displayPrice = hasVariants && variantPrices.length > 0 ? Math.min(...variantPrices) : fallbackPrice;
+  const variantComparePrices = variants
+    .map((v) => v.compareAtPrice)
+    .filter((p): p is number => typeof p === "number" && p > 0);
+  const displayCompareAtPrice = hasVariants && variantComparePrices.length > 0
+    ? Math.min(...variantComparePrices)
+    : fallbackCompareAtPrice;
 
   const videoUrl = String(formData.get("videoUrl") || "").trim() || null;
 
@@ -78,7 +86,7 @@ function buildProductPayload(formData: FormData, slug: string) {
     category_label: String(formData.get("categoryLabel") || ""),
     gender: String(formData.get("gender") || "unisex"),
     price: displayPrice,
-    compare_at_price: compareAtPrice,
+    compare_at_price: displayCompareAtPrice,
     colors: parseColors(
       String(formData.get("colors") || ""),
       String(formData.get("variantImages") || "{}")
