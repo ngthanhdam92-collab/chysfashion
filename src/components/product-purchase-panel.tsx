@@ -64,7 +64,7 @@ export function ProductPurchasePanel({ product, selectedColor, onColorChange }: 
 
   return (
     <div>
-      <h1 className="font-serif text-3xl text-ink">{product.name}</h1>
+      <h1 className="text-2xl font-bold leading-snug text-ink">{product.name}</h1>
 
       {/* Stars */}
       <div className="mt-2 flex items-center gap-2">
