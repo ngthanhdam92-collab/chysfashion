@@ -15,8 +15,15 @@ export function ProductDetailView({ product }: { product: Product }) {
 
   const colorObj = product.colors.find((c) => c.name === selectedColor);
   const variantImgs =
-    colorObj?.images && colorObj.images.length > 0 ? colorObj.images : null;
-  const gallery = variantImgs ?? (product.images.length > 0 ? product.images : []);
+    colorObj?.images && colorObj.images.length > 0 ? colorObj.images : [];
+
+  // Gallery = ảnh biến thể của màu đang chọn (nếu có) + ảnh chi tiết sản phẩm
+  // Loại trùng: nếu một URL đã có trong variantImgs thì không thêm lại từ product.images
+  const variantSet = new Set(variantImgs);
+  const gallery = [
+    ...variantImgs,
+    ...product.images.filter((img) => !variantSet.has(img)),
+  ];
 
   const hasVideo = !!product.videoUrl;
   const totalSlides = gallery.length + (hasVideo ? 1 : 0);
