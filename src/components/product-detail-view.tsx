@@ -11,14 +11,14 @@ export function ProductDetailView({ product }: { product: Product }) {
   const [selectedColor, setSelectedColor] = useState(
     product.colors[0]?.name ?? ""
   );
+  // Start at index 0 = video (if exists), else first image
   const [activeIndex, setActiveIndex] = useState(0);
 
   const colorObj = product.colors.find((c) => c.name === selectedColor);
   const variantImgs =
     colorObj?.images && colorObj.images.length > 0 ? colorObj.images : [];
 
-  // Gallery = ảnh biến thể của màu đang chọn (nếu có) + ảnh chi tiết sản phẩm
-  // Loại trùng: nếu một URL đã có trong variantImgs thì không thêm lại từ product.images
+  // Gallery images: variant images first, then product detail images (deduped)
   const variantSet = new Set(variantImgs);
   const gallery = [
     ...variantImgs,
@@ -26,11 +26,19 @@ export function ProductDetailView({ product }: { product: Product }) {
   ];
 
   const hasVideo = !!product.videoUrl;
-  const totalSlides = gallery.length + (hasVideo ? 1 : 0);
+
+  // Slide order: [video (index 0), image0 (index 1), image1 (index 2), ...]
+  // If no video: [image0 (index 0), image1 (index 1), ...]
+  const totalSlides = (hasVideo ? 1 : 0) + gallery.length;
+  const isVideoSlide = hasVideo && activeIndex === 0;
+  // imageIndex in gallery array: when video is first, images start at index 1
+  const galleryIndex = hasVideo ? activeIndex - 1 : activeIndex;
+  const mainSrc = !isVideoSlide ? (gallery[galleryIndex] ?? gallery[0] ?? null) : null;
 
   function handleColorChange(color: string) {
     setSelectedColor(color);
-    setActiveIndex(0);
+    // Keep on video if currently on video, otherwise go to first image
+    setActiveIndex((i) => (hasVideo && i === 0 ? 0 : hasVideo ? 1 : 0));
   }
 
   function prev() {
@@ -40,26 +48,25 @@ export function ProductDetailView({ product }: { product: Product }) {
     setActiveIndex((i) => (i < totalSlides - 1 ? i + 1 : 0));
   }
 
-  const isVideoSlide = hasVideo && activeIndex === gallery.length;
-  const mainSrc = !isVideoSlide ? (gallery[activeIndex] ?? gallery[0] ?? null) : null;
+  const thumbProps = {
+    gallery,
+    hasVideo,
+    videoUrl: product.videoUrl ?? "",
+    activeIndex,
+    isVideoSlide,
+    productName: product.name,
+    onSelect: setActiveIndex,
+  };
 
   return (
     <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-16">
       {/* ===== GALLERY ===== */}
       <div>
 
-        {/* ── Desktop layout: thumb column LEFT + main image ── */}
+        {/* ── Desktop: thumb column LEFT + main image ── */}
         <div className="hidden lg:flex lg:gap-2.5">
           {totalSlides > 1 && (
-            <ThumbList
-              gallery={gallery}
-              hasVideo={hasVideo}
-              activeIndex={activeIndex}
-              isVideoSlide={isVideoSlide}
-              productName={product.name}
-              onSelect={setActiveIndex}
-              className="flex w-[72px] shrink-0 flex-col gap-2"
-            />
+            <ThumbList {...thumbProps} className="flex w-[72px] shrink-0 flex-col gap-2" />
           )}
           <div className="relative min-w-0 flex-1">
             <MainMedia isVideoSlide={isVideoSlide} mainSrc={mainSrc} videoUrl={product.videoUrl} productName={product.name} productId={product.id} activeIndex={activeIndex} />
@@ -67,20 +74,12 @@ export function ProductDetailView({ product }: { product: Product }) {
           </div>
         </div>
 
-        {/* ── Mobile layout: main image fills width, thumbs overlaid inside ── */}
+        {/* ── Mobile: full-width image, thumbs overlaid inside top-left ── */}
         <div className="relative lg:hidden">
           <MainMedia isVideoSlide={isVideoSlide} mainSrc={mainSrc} videoUrl={product.videoUrl} productName={product.name} productId={product.id} activeIndex={activeIndex} />
           {totalSlides > 1 && (
             <div className="absolute left-2 top-2 z-10">
-              <ThumbList
-                gallery={gallery}
-                hasVideo={hasVideo}
-                activeIndex={activeIndex}
-                isVideoSlide={isVideoSlide}
-                productName={product.name}
-                onSelect={setActiveIndex}
-                className="flex w-[48px] flex-col gap-1.5"
-              />
+              <ThumbList {...thumbProps} className="flex w-[48px] flex-col gap-1.5" />
             </div>
           )}
           <NavOverlay show={totalSlides > 1} prev={prev} next={next} index={activeIndex} total={totalSlides} />
@@ -104,6 +103,7 @@ export function ProductDetailView({ product }: { product: Product }) {
 interface ThumbListProps {
   gallery: string[];
   hasVideo: boolean;
+  videoUrl: string;
   activeIndex: number;
   isVideoSlide: boolean;
   productName: string;
@@ -111,34 +111,54 @@ interface ThumbListProps {
   className?: string;
 }
 
-function ThumbList({ gallery, hasVideo, activeIndex, isVideoSlide, productName, onSelect, className }: ThumbListProps) {
+function ThumbList({ gallery, hasVideo, videoUrl, activeIndex, isVideoSlide, productName, onSelect, className }: ThumbListProps) {
   return (
     <div className={className}>
-      {gallery.map((src, i) => (
-        <button
-          key={src}
-          type="button"
-          onClick={() => onSelect(i)}
-          className={`relative aspect-[3/4] w-full shrink-0 overflow-hidden border-2 transition-colors ${
-            activeIndex === i ? "border-gold" : "border-transparent hover:border-line"
-          }`}
-        >
-          <Image src={src} alt={`${productName} ${i + 1}`} fill sizes="72px" className="object-cover" />
-        </button>
-      ))}
+      {/* Video thumbnail FIRST */}
       {hasVideo && (
         <button
           type="button"
-          onClick={() => onSelect(gallery.length)}
-          className={`relative aspect-[3/4] w-full shrink-0 overflow-hidden border-2 transition-colors flex items-center justify-center bg-ink/10 ${
+          onClick={() => onSelect(0)}
+          className={`relative aspect-[3/4] w-full shrink-0 overflow-hidden border-2 transition-colors ${
             isVideoSlide ? "border-gold" : "border-transparent hover:border-line"
           }`}
         >
-          <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4 text-ink/50">
-            <path d="M8 5v14l11-7z" />
-          </svg>
+          {/* Show first frame of video via preload="metadata" */}
+          <video
+            src={videoUrl}
+            preload="metadata"
+            muted
+            playsInline
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          {/* Play icon overlay */}
+          <div className="absolute inset-0 flex items-center justify-center bg-ink/20">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-paper/80">
+              <svg viewBox="0 0 24 24" fill="currentColor" className="h-3 w-3 text-ink">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </div>
+          </div>
         </button>
       )}
+
+      {/* Image thumbnails */}
+      {gallery.map((src, i) => {
+        // When video is first, image i lives at slide index i+1
+        const slideIndex = hasVideo ? i + 1 : i;
+        return (
+          <button
+            key={src}
+            type="button"
+            onClick={() => onSelect(slideIndex)}
+            className={`relative aspect-[3/4] w-full shrink-0 overflow-hidden border-2 transition-colors ${
+              activeIndex === slideIndex ? "border-gold" : "border-transparent hover:border-line"
+            }`}
+          >
+            <Image src={src} alt={`${productName} ${i + 1}`} fill sizes="72px" className="object-cover" />
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -146,7 +166,7 @@ function ThumbList({ gallery, hasVideo, activeIndex, isVideoSlide, productName, 
 interface MainMediaProps {
   isVideoSlide: boolean;
   mainSrc: string | null;
-  videoUrl?: string;
+  videoUrl?: string | null;
   productName: string;
   productId: string;
   activeIndex: number;
@@ -156,7 +176,6 @@ function MainMedia({ isVideoSlide, mainSrc, videoUrl, productName, productId, ac
   if (isVideoSlide && videoUrl) {
     return (
       <video
-        // key forces remount → autoPlay fires on every activation
         key={`video-${activeIndex}`}
         src={videoUrl}
         autoPlay
@@ -197,13 +216,11 @@ function NavOverlay({ show, prev, next, index, total }: NavOverlayProps) {
   if (!show) return null;
   return (
     <>
-      {/* Counter */}
       <div className="pointer-events-none absolute bottom-4 left-0 right-0 flex justify-center">
         <span className="rounded-full bg-ink/50 px-2.5 py-0.5 text-[11px] text-paper backdrop-blur-sm">
           {index + 1} / {total}
         </span>
       </div>
-      {/* Arrows */}
       <div className="absolute bottom-4 right-4 flex gap-2">
         <button
           type="button"
