@@ -116,19 +116,21 @@ export function ProductPurchasePanel({ product, selectedColor, onColorChange }: 
       )}
 
       <div className="mt-8">
-        <div className="flex items-center justify-between">
-          <p className="text-[12px] tracking-label uppercase text-ink">
-            Kích thước — <span className="normal-case font-medium">{size}</span>
-          </p>
+        <p className="text-[12px] tracking-label uppercase text-ink">
+          Kích thước — <span className="normal-case font-medium">{size}</span>
+        </p>
+
+        {product.sizes.length > 0 && (
           <button
             type="button"
             onClick={() => setShowSizeGuide(true)}
-            className="flex items-center gap-1 text-[11px] text-blue-600 underline underline-offset-2 hover:text-blue-700"
+            className="mt-2 flex items-center gap-1.5 text-sm text-blue-600 underline underline-offset-2 hover:text-blue-700"
           >
-            <Ruler size={12} />
+            <Ruler size={14} />
             Hướng dẫn chọn size
           </button>
-        </div>
+        )}
+
         <div className="mt-3 flex flex-wrap gap-2">
           {product.sizes.map((s) => (
             <button
