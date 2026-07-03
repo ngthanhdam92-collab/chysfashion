@@ -5,15 +5,26 @@ import { redirect } from "next/navigation";
 import { createClient } from "./supabase/server";
 import { ProductColor } from "./types";
 import { slugify } from "./slugify";
+import { createPublicClient } from "./supabase/public";
 
-function parseColors(raw: string): ProductColor[] {
+function parseColors(raw: string, variantImagesJson: string): ProductColor[] {
+  let variantImages: Record<string, string[]> = {};
+  try {
+    variantImages = JSON.parse(variantImagesJson || "{}");
+  } catch {}
+
   return raw
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line) => {
       const [name, hex] = line.split(",").map((s) => s.trim());
-      return { name: name || "Màu", hex: hex || "#171310" };
+      const colorName = name || "Màu";
+      return {
+        name: colorName,
+        hex: hex || "#171310",
+        images: variantImages[colorName] ?? [],
+      };
     });
 }
 
@@ -68,7 +79,10 @@ function buildProductPayload(formData: FormData, slug: string) {
     gender: String(formData.get("gender") || "unisex"),
     price: displayPrice,
     compare_at_price: compareAtPrice,
-    colors: parseColors(String(formData.get("colors") || "")),
+    colors: parseColors(
+      String(formData.get("colors") || ""),
+      String(formData.get("variantImages") || "{}")
+    ),
     sizes: parseLines(String(formData.get("sizes") || "")),
     description: String(formData.get("description") || ""),
     details: parseLines(String(formData.get("details") || "")),
@@ -125,6 +139,38 @@ export async function deleteProduct(id: string) {
     return { error: error.message };
   }
   revalidatePath("/san-pham");
+  revalidatePath("/admin/products");
+  return { success: true };
+}
+
+export async function updateVariantImages(
+  productId: string,
+  variantImages: Record<string, string[]>
+) {
+  const pub = createPublicClient();
+  const { data } = await pub
+    .from("products")
+    .select("colors, slug")
+    .eq("id", productId)
+    .maybeSingle();
+
+  if (!data) return { error: "Không tìm thấy sản phẩm" };
+
+  const colors = ((data.colors ?? []) as ProductColor[]).map((c) => ({
+    ...c,
+    images: variantImages[c.name] ?? c.images ?? [],
+  }));
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("products")
+    .update({ colors })
+    .eq("id", productId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/san-pham");
+  revalidatePath(`/san-pham/${data.slug}`);
   revalidatePath("/admin/products");
   return { success: true };
 }
