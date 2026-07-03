@@ -25,11 +25,12 @@ interface ProductRow {
   video_url: string | null;
   related_product_ids: string[] | null;
   size_chart_id: string | null;
-  // Present only when queried with size_charts join
-  size_charts?: { data: Record<string, unknown> } | null;
 }
 
-function mapRow(row: ProductRow): Product {
+function mapRow(
+  row: ProductRow,
+  sizeChartData?: Record<string, unknown>
+): Product {
   return {
     id: row.id,
     slug: row.slug,
@@ -52,9 +53,24 @@ function mapRow(row: ProductRow): Product {
     variants: row.variants ?? [],
     videoUrl: row.video_url ?? null,
     relatedProductIds: row.related_product_ids ?? [],
-    sizeChartId: (row.size_chart_id as string | null) ?? null,
-    sizeChart: (row.size_charts?.data ?? {}) as Record<string, Partial<SizeChartRow>>,
+    sizeChartId: row.size_chart_id ?? null,
+    sizeChart: (sizeChartData ?? {}) as Record<string, Partial<SizeChartRow>>,
   };
+}
+
+// Fetch size chart data for a product row using a separate query.
+// More reliable than PostgREST embedding which requires schema cache refresh.
+async function fetchSizeChart(
+  sizeChartId: string | null
+): Promise<Record<string, unknown>> {
+  if (!sizeChartId) return {};
+  const supabase = createPublicClient();
+  const { data } = await supabase
+    .from("size_charts")
+    .select("data")
+    .eq("id", sizeChartId)
+    .maybeSingle();
+  return (data?.data as Record<string, unknown>) ?? {};
 }
 
 export interface ProductFilters {
@@ -88,42 +104,44 @@ export async function getAllProducts(filters?: ProductFilters): Promise<Product[
     return [];
   }
 
-  let rows = (data as ProductRow[]).map(mapRow);
+  let rows = (data as ProductRow[]).map((r) => mapRow(r));
   if (filters?.hasDiscount) {
     rows = rows.filter((p) => !!p.compareAtPrice);
   }
   return rows;
 }
 
-// Detail queries join the size_charts table so product.sizeChart is populated
 export async function getProductBySlug(slug: string): Promise<Product | undefined> {
   const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("products")
-    .select("*, size_charts(data)")
+    .select("*")
     .eq("slug", slug)
     .maybeSingle();
 
   if (error || !data) return undefined;
-  return mapRow(data as ProductRow);
+  const row = data as ProductRow;
+  const sizeChartData = await fetchSizeChart(row.size_chart_id);
+  return mapRow(row, sizeChartData);
 }
 
 export async function getProductById(id: string): Promise<Product | undefined> {
   const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("products")
-    .select("*, size_charts(data)")
+    .select("*")
     .eq("id", id)
     .maybeSingle();
 
   if (error || !data) return undefined;
-  return mapRow(data as ProductRow);
+  const row = data as ProductRow;
+  const sizeChartData = await fetchSizeChart(row.size_chart_id);
+  return mapRow(row, sizeChartData);
 }
 
 export async function getRelatedProducts(product: Product, limit = 4): Promise<Product[]> {
   const supabase = createPublicClient();
 
-  // Use manually curated list if available
   if (product.relatedProductIds.length > 0) {
     const ids = product.relatedProductIds.slice(0, limit);
     const { data, error } = await supabase
@@ -131,12 +149,10 @@ export async function getRelatedProducts(product: Product, limit = 4): Promise<P
       .select("*")
       .in("id", ids);
     if (error || !data) return [];
-    // Preserve the manual order
     const map = new Map((data as ProductRow[]).map((r) => [r.id, mapRow(r)]));
     return ids.map((id) => map.get(id)).filter(Boolean) as Product[];
   }
 
-  // Fallback: auto-suggest by same category
   const { data, error } = await supabase
     .from("products")
     .select("*")
@@ -146,7 +162,7 @@ export async function getRelatedProducts(product: Product, limit = 4): Promise<P
 
   if (error || !data) return [];
 
-  const rows = (data as ProductRow[]).map(mapRow);
+  const rows = (data as ProductRow[]).map((r) => mapRow(r));
   const sameCategory = rows.filter((p) => p.category === product.category);
   const others = rows.filter((p) => p.category !== product.category);
   return [...sameCategory, ...others].slice(0, limit);
