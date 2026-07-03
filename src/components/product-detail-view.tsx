@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Product } from "@/lib/types";
+import { formatVnd } from "@/lib/utils";
 import { ProductImagePlaceholder } from "@/components/product-image-placeholder";
 import { ProductPurchasePanel } from "@/components/product-purchase-panel";
 
-export function ProductDetailView({ product }: { product: Product }) {
+export function ProductDetailView({ product, suggestedProducts }: { product: Product; suggestedProducts?: Product[] }) {
   const [selectedColor, setSelectedColor] = useState(
     product.colors[0]?.name ?? ""
   );
@@ -95,13 +97,16 @@ export function ProductDetailView({ product }: { product: Product }) {
         </div>
       </div>
 
-      {/* ===== PURCHASE PANEL ===== */}
-      <div>
+      {/* ===== PURCHASE PANEL + SUGGESTIONS ===== */}
+      <div className="space-y-8">
         <ProductPurchasePanel
           product={product}
           selectedColor={selectedColor}
           onColorChange={handleColorChange}
         />
+        {suggestedProducts && suggestedProducts.length > 0 && (
+          <RelatedSuggestions products={suggestedProducts} />
+        )}
       </div>
     </div>
   );
@@ -249,5 +254,55 @@ function NavOverlay({ show, prev, next, index, total }: NavOverlayProps) {
         </button>
       </div>
     </>
+  );
+}
+
+// ── Related Suggestions ─────────────────────────────────────────────────────
+
+function RelatedSuggestions({ products }: { products: Product[] }) {
+  const list = products.slice(0, 4);
+  return (
+    <div className="border border-line">
+      <div className="border-b border-line px-4 py-3">
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-ink">
+          Gợi ý xem thêm
+        </p>
+      </div>
+      <div className="grid grid-cols-2 divide-x divide-y divide-line">
+        {list.map((p) => {
+          const cover = p.images[0];
+          const discount =
+            p.compareAtPrice && p.compareAtPrice > p.price
+              ? Math.round((1 - p.price / p.compareAtPrice) * 100)
+              : null;
+          return (
+            <Link
+              key={p.id}
+              href={`/san-pham/${p.slug}`}
+              className="group flex gap-3 p-3 transition-colors hover:bg-cream"
+            >
+              <div className="relative h-16 w-12 shrink-0 overflow-hidden bg-cream">
+                {cover ? (
+                  <Image src={cover} alt={p.name} fill sizes="48px" className="object-cover" />
+                ) : (
+                  <div className="h-full w-full bg-line" />
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="line-clamp-2 text-[11px] leading-snug text-ink group-hover:text-gold-dark">
+                  {p.name}
+                </p>
+                <p className="mt-1 text-[11px] font-bold text-ink">{formatVnd(p.price)}</p>
+                {discount && (
+                  <span className="mt-0.5 inline-block rounded-full bg-blue-600 px-1.5 py-0.5 text-[9px] font-semibold text-white">
+                    -{discount}%
+                  </span>
+                )}
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
   );
 }

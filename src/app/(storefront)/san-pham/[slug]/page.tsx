@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { getProductBySlug, getRelatedProducts } from "@/lib/products";
 import { ProductDetailView } from "@/components/product-detail-view";
-import { ProductCard } from "@/components/product-card";
 
 interface Params {
   params: Promise<{ slug: string }>;
@@ -23,7 +22,7 @@ export default async function ProductDetailPage({ params }: Params) {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-      <ProductDetailView product={product} />
+      <ProductDetailView product={product} suggestedProducts={related} />
 
       <div className="mt-10 lg:grid lg:grid-cols-2 lg:gap-16">
         <div className="lg:col-start-2">
@@ -72,18 +71,6 @@ export default async function ProductDetailPage({ params }: Params) {
         </div>
       </div>
 
-      {related.length > 0 && (
-        <div className="mt-20">
-          <h2 className="font-serif text-2xl text-ink sm:text-3xl">
-            Có thể bạn cũng thích
-          </h2>
-          <div className="mt-8 grid grid-cols-2 gap-x-5 gap-y-10 lg:grid-cols-4">
-            {related.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
