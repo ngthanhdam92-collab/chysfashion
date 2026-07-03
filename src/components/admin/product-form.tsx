@@ -61,6 +61,15 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  // ===== Color hex map (color name → hex) =====
+  const [colorHexes, setColorHexes] = useState<Record<string, string>>(() => {
+    const map: Record<string, string> = {};
+    for (const c of product?.colors ?? []) {
+      map[c.name] = c.hex || "#ffffff";
+    }
+    return map;
+  });
+
   // ===== Phân loại hàng =====
   const [classifications, setClassifications] = useState<Classification[]>(() => {
     const existingColors = product?.colors ?? [];
@@ -167,6 +176,17 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
   }
 
   function updateOption(clsIdx: number, optIdx: number, field: keyof ClassOption, value: string) {
+    // Migrate hex when color name changes
+    if (clsIdx === 0 && field === "name") {
+      const oldName = classifications[0].options[optIdx]?.name ?? "";
+      if (oldName && oldName !== value) {
+        setColorHexes((prev) => {
+          const next = { ...prev, [value]: prev[oldName] ?? "#ffffff" };
+          delete next[oldName];
+          return next;
+        });
+      }
+    }
     setClassifications((cls) =>
       cls.map((c, i) => {
         if (i !== clsIdx) return c;
@@ -182,6 +202,12 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
   }
 
   function removeOption(clsIdx: number, optIdx: number) {
+    if (clsIdx === 0) {
+      const name = classifications[0].options[optIdx]?.name ?? "";
+      if (name) {
+        setColorHexes((prev) => { const next = { ...prev }; delete next[name]; return next; });
+      }
+    }
     setClassifications((cls) =>
       cls.map((c, i) => {
         if (i !== clsIdx) return c;
@@ -203,7 +229,7 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
     setClassifications((cls) => cls.filter((_, i) => i !== idx));
   }
 
-  const colorsValue = cls0Options.map((o) => `${o.name},#000000`).join("\n");
+  const colorsValue = cls0Options.map((o) => `${o.name},${colorHexes[o.name] ?? "#ffffff"}`).join("\n");
   const sizesValue = cls1Options.map((o) => o.name).join("\n");
   const variantImagesJson = JSON.stringify(variantImages);
 
@@ -505,6 +531,8 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
                 key={clsIdx}
                 index={clsIdx}
                 classification={cls}
+                colorHexes={clsIdx === 0 ? colorHexes : undefined}
+                onColorHexChange={clsIdx === 0 ? (name, hex) => setColorHexes((p) => ({ ...p, [name]: hex })) : undefined}
                 onNameChange={(v) => updateClsName(clsIdx, v)}
                 onOptionChange={(optIdx, field, v) => updateOption(clsIdx, optIdx, field, v)}
                 onRemoveOption={(optIdx) => removeOption(clsIdx, optIdx)}
@@ -773,6 +801,8 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
 interface ClassificationPanelProps {
   index: number;
   classification: Classification;
+  colorHexes?: Record<string, string>;
+  onColorHexChange?: (name: string, hex: string) => void;
   onNameChange: (v: string) => void;
   onOptionChange: (optIdx: number, field: keyof ClassOption, v: string) => void;
   onRemoveOption: (optIdx: number) => void;
@@ -782,6 +812,8 @@ interface ClassificationPanelProps {
 function ClassificationPanel({
   index,
   classification,
+  colorHexes,
+  onColorHexChange,
   onNameChange,
   onOptionChange,
   onRemoveOption,
@@ -820,6 +852,8 @@ function ClassificationPanel({
               <OptionCell
                 option={classification.options[leftIdx]}
                 isLast={leftIdx === classification.options.length - 1}
+                colorHex={colorHexes ? (colorHexes[classification.options[leftIdx].name] ?? "#ffffff") : undefined}
+                onColorHexChange={onColorHexChange ? (hex) => onColorHexChange(classification.options[leftIdx].name, hex) : undefined}
                 onNameChange={(v) => onOptionChange(leftIdx, "name", v)}
                 onDescChange={(v) => onOptionChange(leftIdx, "desc", v)}
                 onRemove={() => onRemoveOption(leftIdx)}
@@ -828,6 +862,8 @@ function ClassificationPanel({
                 <OptionCell
                   option={classification.options[rightIdx]}
                   isLast={rightIdx === classification.options.length - 1}
+                  colorHex={colorHexes ? (colorHexes[classification.options[rightIdx].name] ?? "#ffffff") : undefined}
+                  onColorHexChange={onColorHexChange ? (hex) => onColorHexChange(classification.options[rightIdx].name, hex) : undefined}
                   onNameChange={(v) => onOptionChange(rightIdx, "name", v)}
                   onDescChange={(v) => onOptionChange(rightIdx, "desc", v)}
                   onRemove={() => onRemoveOption(rightIdx)}
@@ -846,26 +882,46 @@ function ClassificationPanel({
 interface OptionCellProps {
   option: ClassOption;
   isLast: boolean;
+  colorHex?: string;
+  onColorHexChange?: (hex: string) => void;
   onNameChange: (v: string) => void;
   onDescChange: (v: string) => void;
   onRemove: () => void;
 }
 
-function OptionCell({ option, isLast, onNameChange, onDescChange, onRemove }: OptionCellProps) {
+function OptionCell({ option, isLast, colorHex, onColorHexChange, onNameChange, onDescChange, onRemove }: OptionCellProps) {
   return (
     <div className="flex items-center gap-1">
+      {colorHex !== undefined && (
+        <div className="relative shrink-0">
+          <div
+            className="h-7 w-7 cursor-pointer rounded-full border border-line"
+            style={{ backgroundColor: colorHex }}
+            title="Chọn màu"
+          />
+          <input
+            type="color"
+            value={colorHex}
+            onChange={(e) => onColorHexChange?.(e.target.value)}
+            className="absolute inset-0 h-full w-full cursor-pointer rounded-full opacity-0"
+            title="Chọn màu"
+          />
+        </div>
+      )}
       <input
         value={option.name}
         onChange={(e) => onNameChange(e.target.value)}
         placeholder={isLast ? "Nhập" : ""}
         className="min-w-0 flex-1 border border-line bg-white px-2 py-1.5 text-sm focus:border-gold focus:outline-none"
       />
-      <input
-        value={option.desc}
-        onChange={(e) => onDescChange(e.target.value)}
-        placeholder="Thêm mô tả"
-        className="min-w-0 flex-1 border border-line bg-white px-2 py-1.5 text-sm text-muted focus:border-gold focus:outline-none"
-      />
+      {colorHex === undefined && (
+        <input
+          value={option.desc}
+          onChange={(e) => onDescChange(e.target.value)}
+          placeholder="Thêm mô tả"
+          className="min-w-0 flex-1 border border-line bg-white px-2 py-1.5 text-sm text-muted focus:border-gold focus:outline-none"
+        />
+      )}
       {!isLast ? (
         <button type="button" onClick={onRemove} className="shrink-0 text-muted hover:text-error">
           <Trash2 size={14} />

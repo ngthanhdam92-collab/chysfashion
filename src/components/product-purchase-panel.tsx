@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Minus, Plus, Check } from "lucide-react";
 import { Product } from "@/lib/types";
@@ -86,38 +85,23 @@ export function ProductPurchasePanel({ product, selectedColor, onColorChange }: 
       {product.colors.length > 0 && (
         <div className="mt-8">
           <p className="text-[12px] tracking-label uppercase text-ink">
-            Phân loại — <span className="normal-case font-medium text-ink">{activeColor}</span>
+            Màu sắc — <span className="normal-case font-medium text-ink">{activeColor}</span>
           </p>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-3 flex flex-wrap gap-2.5">
             {product.colors.map((c) => {
-              const thumb = c.images?.[0];
               const isActive = activeColor === c.name;
-              return thumb ? (
-                // Có ảnh biến thể → hiển thị thumbnail
+              return (
                 <button
                   key={c.name}
                   onClick={() => handleColorSelect(c.name)}
-                  aria-label={c.name}
                   title={c.name}
-                  className={`relative h-14 w-14 overflow-hidden border-2 transition-all ${
-                    isActive ? "border-gold" : "border-line hover:border-ink"
-                  }`}
-                >
-                  <Image src={thumb} alt={c.name} fill sizes="56px" className="object-cover" />
-                </button>
-              ) : (
-                // Không có ảnh → hiển thị text button
-                <button
-                  key={c.name}
-                  onClick={() => handleColorSelect(c.name)}
-                  className={`border px-3 py-2 text-sm transition-colors ${
+                  className={`h-8 w-14 rounded-full border-2 transition-all ${
                     isActive
-                      ? "border-ink bg-ink text-paper"
-                      : "border-line text-ink hover:border-ink"
+                      ? "border-gold shadow-sm ring-2 ring-gold/30"
+                      : "border-transparent ring-1 ring-line hover:ring-ink"
                   }`}
-                >
-                  {c.name}
-                </button>
+                  style={{ backgroundColor: c.hex || "#cccccc" }}
+                />
               );
             })}
           </div>

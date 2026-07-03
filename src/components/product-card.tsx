@@ -43,7 +43,7 @@ export function ProductCard({ product }: { product: Product }) {
     setTimeout(() => setAdded(false), 1600);
   }
 
-  const colorThumbs = product.colors.filter((c) => c.images && c.images.length > 0);
+  const colorSwatches = product.colors;
 
   return (
     <div className="group">
@@ -127,10 +127,10 @@ export function ProductCard({ product }: { product: Product }) {
         )}
       </div>
 
-      {/* ── COLOR THUMBNAILS — always visible below image ── */}
-      {colorThumbs.length > 0 && (
+      {/* ── COLOR SWATCHES — always visible below image ── */}
+      {colorSwatches.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5">
-          {colorThumbs.map((c) => {
+          {colorSwatches.map((c) => {
             const isActive = selectedColor === c.name;
             return (
               <button
@@ -138,12 +138,11 @@ export function ProductCard({ product }: { product: Product }) {
                 type="button"
                 title={c.name}
                 onClick={() => setSelectedColor(c.name)}
-                className={`relative h-6 w-6 overflow-hidden rounded-full border-2 transition-colors ${
+                className={`h-5 w-5 rounded-full border-2 transition-colors ${
                   isActive ? "border-gold" : "border-transparent ring-1 ring-line"
                 }`}
-              >
-                <Image src={c.images![0]} alt={c.name} fill sizes="24px" className="object-cover" />
-              </button>
+                style={{ backgroundColor: c.hex || "#cccccc" }}
+              />
             );
           })}
         </div>
