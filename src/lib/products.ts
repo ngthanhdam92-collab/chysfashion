@@ -22,6 +22,7 @@ interface ProductRow {
   stock: number;
   variants: ProductVariant[] | null;
   video_url: string | null;
+  related_product_ids: string[] | null;
 }
 
 function mapRow(row: ProductRow): Product {
@@ -47,6 +48,7 @@ function mapRow(row: ProductRow): Product {
     stock: row.stock ?? 100,
     variants: row.variants ?? [],
     videoUrl: row.video_url ?? null,
+    relatedProductIds: row.related_product_ids ?? [],
   };
 }
 
@@ -114,6 +116,21 @@ export async function getProductById(id: string): Promise<Product | undefined> {
 
 export async function getRelatedProducts(product: Product, limit = 4): Promise<Product[]> {
   const supabase = createPublicClient();
+
+  // Use manually curated list if available
+  if (product.relatedProductIds.length > 0) {
+    const ids = product.relatedProductIds.slice(0, limit);
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .in("id", ids);
+    if (error || !data) return [];
+    // Preserve the manual order
+    const map = new Map((data as ProductRow[]).map((r) => [r.id, mapRow(r)]));
+    return ids.map((id) => map.get(id)).filter(Boolean) as Product[];
+  }
+
+  // Fallback: auto-suggest by same category
   const { data, error } = await supabase
     .from("products")
     .select("*")

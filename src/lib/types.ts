@@ -34,6 +34,7 @@ export interface Product {
   stock: number;
   variants: ProductVariant[];
   videoUrl: string | null;
+  relatedProductIds: string[];
 }
 
 export interface OrderItem {

@@ -79,6 +79,13 @@ function buildProductPayload(formData: FormData, slug: string) {
 
   const videoUrl = String(formData.get("videoUrl") || "").trim() || null;
 
+  let relatedProductIds: string[] = [];
+  try {
+    const raw = String(formData.get("relatedProductIds") || "[]");
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) relatedProductIds = parsed.filter((v) => typeof v === "string");
+  } catch {}
+
   return {
     slug,
     name: String(formData.get("name") || ""),
@@ -102,6 +109,7 @@ function buildProductPayload(formData: FormData, slug: string) {
     stock: totalStock,
     variants,
     video_url: videoUrl,
+    related_product_ids: relatedProductIds,
   };
 }
 

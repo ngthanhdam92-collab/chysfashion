@@ -10,6 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 interface ProductFormProps {
   product?: Product;
   categories: Category[];
+  allProducts?: Product[];
   action: (formData: FormData) => Promise<{ error: string } | void>;
 }
 
@@ -38,7 +39,7 @@ function emptyOption(): ClassOption {
   return { name: "", desc: "" };
 }
 
-export function ProductForm({ product, categories, action }: ProductFormProps) {
+export function ProductForm({ product, categories, allProducts = [], action }: ProductFormProps) {
   // ===== Ảnh sản phẩm =====
   const [keptImages, setKeptImages] = useState<string[]>(product?.images ?? []);
   const [uploading, setUploading] = useState(false);
@@ -110,6 +111,10 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
   const [bulkCompareAtPrice, setBulkCompareAtPrice] = useState("");
   const [bulkStock, setBulkStock] = useState("");
   const [bulkSku, setBulkSku] = useState("");
+
+  // ===== Gợi ý xem thêm =====
+  const [relatedIds, setRelatedIds] = useState<string[]>(product?.relatedProductIds ?? []);
+  const [relatedSearch, setRelatedSearch] = useState("");
 
   const cls0Options = (classifications[0]?.options ?? []).filter((o) => o.name.trim());
   const cls1Options = (classifications[1]?.options ?? []).filter((o) => o.name.trim());
@@ -232,6 +237,15 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
   const colorsValue = cls0Options.map((o) => `${o.name},${colorHexes[o.name] ?? "#ffffff"}`).join("\n");
   const sizesValue = cls1Options.map((o) => o.name).join("\n");
   const variantImagesJson = JSON.stringify(variantImages);
+  const relatedIdsJson = JSON.stringify(relatedIds);
+
+  // Products available to pick (exclude self)
+  const pickableProducts = allProducts.filter((p) => p.id !== product?.id);
+  const searchLower = relatedSearch.trim().toLowerCase();
+  const searchResults = searchLower
+    ? pickableProducts.filter((p) => p.name.toLowerCase().includes(searchLower)).slice(0, 8)
+    : [];
+  const selectedRelated = pickableProducts.filter((p) => relatedIds.includes(p.id));
 
   // Upload handlers
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -782,6 +796,93 @@ export function ProductForm({ product, categories, action }: ProductFormProps) {
           <input type="checkbox" name="isBestSeller" defaultChecked={product?.isBestSeller} />
           Bán chạy
         </label>
+      </div>
+
+      {/* ===== GỢI Ý XEM THÊM ===== */}
+      <input type="hidden" name="relatedProductIds" value={relatedIdsJson} />
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <span className="h-2 w-2 rounded-full bg-gold" />
+          <span className="text-sm font-medium text-ink">Gợi ý xem thêm</span>
+          <span className="text-xs text-muted">(hiển thị trong trang sản phẩm)</span>
+        </div>
+
+        {/* Selected products */}
+        {selectedRelated.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-2">
+            {selectedRelated.map((p) => (
+              <div key={p.id} className="flex items-center gap-1.5 border border-line bg-white pl-1.5 pr-2 py-1">
+                {p.images[0] && (
+                  <div className="relative h-8 w-6 shrink-0 overflow-hidden">
+                    <Image src={p.images[0]} alt="" fill sizes="24px" className="object-cover" />
+                  </div>
+                )}
+                <span className="max-w-[140px] truncate text-xs text-ink">{p.name}</span>
+                <button
+                  type="button"
+                  onClick={() => setRelatedIds((ids) => ids.filter((id) => id !== p.id))}
+                  className="shrink-0 text-muted hover:text-error"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Search input */}
+        {relatedIds.length < 8 && (
+          <div className="relative">
+            <input
+              type="text"
+              value={relatedSearch}
+              onChange={(e) => setRelatedSearch(e.target.value)}
+              placeholder="Tìm kiếm sản phẩm để thêm..."
+              className="w-full border border-line bg-white px-3 py-2 text-sm focus:border-gold focus:outline-none"
+            />
+            {searchResults.length > 0 && (
+              <div className="absolute z-20 top-full left-0 right-0 border border-t-0 border-line bg-white shadow-lg">
+                {searchResults.map((p) => {
+                  const alreadyPicked = relatedIds.includes(p.id);
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      disabled={alreadyPicked}
+                      onClick={() => {
+                        if (!alreadyPicked) setRelatedIds((ids) => [...ids, p.id]);
+                        setRelatedSearch("");
+                      }}
+                      className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors ${
+                        alreadyPicked
+                          ? "bg-cream text-muted cursor-default"
+                          : "hover:bg-cream text-ink"
+                      }`}
+                    >
+                      {p.images[0] && (
+                        <div className="relative h-10 w-7 shrink-0 overflow-hidden">
+                          <Image src={p.images[0]} alt="" fill sizes="28px" className="object-cover" />
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{p.name}</p>
+                        <p className="text-xs text-muted">{p.categoryLabel}</p>
+                      </div>
+                      {alreadyPicked && (
+                        <span className="ml-auto shrink-0 text-xs text-muted">Đã chọn</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+        {relatedIds.length === 0 && relatedSearch.trim() === "" && (
+          <p className="mt-1.5 text-xs text-muted">
+            Nhập tên sản phẩm để tìm kiếm và thêm vào danh sách gợi ý. Tối đa 8 sản phẩm.
+          </p>
+        )}
       </div>
 
       {error && <p className="text-sm text-error">{error}</p>}
