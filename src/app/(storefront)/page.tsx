@@ -3,7 +3,7 @@ import { Truck, RotateCcw, ShieldCheck, Gem } from "lucide-react";
 import { CtaButton } from "@/components/cta-button";
 import { ProductCard } from "@/components/product-card";
 import { ProductImagePlaceholder } from "@/components/product-image-placeholder";
-import { HeroBanner } from "@/components/hero-banner";
+import { HeroBannerSlider } from "@/components/hero-banner-slider";
 import { getAllProducts } from "@/lib/products";
 import { getActiveBanners } from "@/lib/banners";
 
@@ -27,13 +27,11 @@ export default async function HomePage() {
   ]);
   const bestSellers = products.filter((p) => p.isBestSeller).slice(0, 4);
   const newArrivals = products.filter((p) => p.isNew).slice(0, 4);
-  const heroBanner = activeBanners[0] ?? null;
-
   return (
     <div>
       {/* Hero */}
-      {heroBanner ? (
-        <HeroBanner banner={heroBanner} />
+      {activeBanners.length > 0 ? (
+        <HeroBannerSlider banners={activeBanners} />
       ) : (
         <section className="relative flex min-h-[78vh] items-center overflow-hidden bg-gradient-to-br from-white via-white to-cream">
           <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:px-8">
