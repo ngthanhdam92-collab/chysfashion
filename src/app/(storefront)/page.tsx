@@ -8,6 +8,7 @@ import { getAllProducts } from "@/lib/products";
 import { getActiveBanners } from "@/lib/banners";
 import { getCategories } from "@/lib/categories";
 import { getHomepageSettings } from "@/lib/homepage-settings";
+import { getActiveStories } from "@/lib/stories";
 import { CtaButton } from "@/components/cta-button";
 
 const USPS = [
@@ -24,11 +25,12 @@ const COLLECTION_GRADIENTS = [
 ];
 
 export default async function HomePage() {
-  const [products, activeBanners, allCategories, settings] = await Promise.all([
+  const [products, activeBanners, allCategories, settings, stories] = await Promise.all([
     getAllProducts(),
     getActiveBanners(),
     getCategories(),
     getHomepageSettings(),
+    getActiveStories(),
   ]);
 
   const featuredCategories = settings.featuredCategoryValues
@@ -82,7 +84,7 @@ export default async function HomePage() {
       {/* ── 2. STORY CIRCLES + NAM/NỮ TOGGLE + CATEGORY CARDS ── */}
       {allCategories.length > 0 && (
         <div className="mx-auto max-w-7xl">
-          <HomepageCategorySection categories={allCategories} />
+          <HomepageCategorySection categories={allCategories} stories={stories} />
         </div>
       )}
 

@@ -3,42 +3,44 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ProductImagePlaceholder } from "@/components/product-image-placeholder";
+import { StoryCircles } from "@/components/story-circles";
 import type { Category } from "@/lib/categories";
+import type { Story } from "@/lib/stories";
 
 interface Props {
   categories: Category[];
+  stories: Story[];
 }
 
-export function HomepageCategorySection({ categories }: Props) {
+export function HomepageCategorySection({ categories, stories }: Props) {
   const [gender, setGender] = useState<"nam" | "nu">("nam");
-
   const displayCats = categories.slice(0, 6);
 
   return (
     <section className="py-8 sm:py-12">
-      {/* ── Story circles ── */}
-      <div className="flex gap-4 overflow-x-auto px-4 pb-2 sm:justify-center sm:overflow-visible sm:px-6 lg:px-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {categories.map((cat) => (
-          <Link
-            key={cat.id}
-            href={`/san-pham?category=${cat.value}`}
-            className="flex shrink-0 flex-col items-center gap-1.5"
-          >
-            {/* Gradient ring border */}
-            <div className="flex h-[62px] w-[62px] items-center justify-center rounded-full bg-gradient-to-br from-gold via-amber-400 to-rose-400 p-[2.5px]">
-              <div className="h-full w-full overflow-hidden rounded-full bg-cream">
-                <ProductImagePlaceholder
-                  seed={cat.value}
-                  className="h-full w-full"
-                />
+      {/* ── Story circles (feedback KH) hoặc category circles ── */}
+      {stories.length > 0 ? (
+        <StoryCircles stories={stories} />
+      ) : (
+        <div className="flex gap-4 overflow-x-auto px-4 pb-2 sm:justify-center sm:overflow-visible sm:px-6 lg:px-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {categories.map((cat) => (
+            <Link
+              key={cat.id}
+              href={`/san-pham?category=${cat.value}`}
+              className="flex shrink-0 flex-col items-center gap-1.5"
+            >
+              <div className="flex h-[62px] w-[62px] items-center justify-center rounded-full bg-gradient-to-br from-gold via-amber-400 to-rose-400 p-[2.5px]">
+                <div className="h-full w-full overflow-hidden rounded-full bg-cream">
+                  <ProductImagePlaceholder seed={cat.value} className="h-full w-full" />
+                </div>
               </div>
-            </div>
-            <span className="w-[62px] text-center text-[9px] uppercase leading-tight tracking-wide text-ink line-clamp-2">
-              {cat.label}
-            </span>
-          </Link>
-        ))}
-      </div>
+              <span className="w-[62px] text-center text-[9px] uppercase leading-tight tracking-wide text-ink line-clamp-2">
+                {cat.label}
+              </span>
+            </Link>
+          ))}
+        </div>
+      )}
 
       {/* ── Gender toggle ── */}
       <div className="mt-6 flex justify-center gap-2">
@@ -46,9 +48,7 @@ export function HomepageCategorySection({ categories }: Props) {
           type="button"
           onClick={() => setGender("nam")}
           className={`rounded-full px-7 py-2 text-sm font-semibold transition-colors ${
-            gender === "nam"
-              ? "bg-ink text-paper"
-              : "border border-line text-ink hover:border-ink"
+            gender === "nam" ? "bg-ink text-paper" : "border border-line text-ink hover:border-ink"
           }`}
         >
           NAM
@@ -57,9 +57,7 @@ export function HomepageCategorySection({ categories }: Props) {
           type="button"
           onClick={() => setGender("nu")}
           className={`rounded-full px-7 py-2 text-sm font-semibold transition-colors ${
-            gender === "nu"
-              ? "bg-ink text-paper"
-              : "border border-line text-ink hover:border-ink"
+            gender === "nu" ? "bg-ink text-paper" : "border border-line text-ink hover:border-ink"
           }`}
         >
           NỮ
