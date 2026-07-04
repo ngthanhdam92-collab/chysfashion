@@ -17,6 +17,7 @@ export default async function AdminCategoriesPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-line text-left text-xs uppercase tracking-label text-muted">
+              <th className="px-4 py-3">Ảnh</th>
               <th className="px-4 py-3">Tên danh mục</th>
               <th className="px-4 py-3">Đường dẫn (value)</th>
               <th className="px-4 py-3 text-right">Thao tác</th>

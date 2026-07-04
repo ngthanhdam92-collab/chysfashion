@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { ProductImagePlaceholder } from "@/components/product-image-placeholder";
 import { StoryCircles } from "@/components/story-circles";
@@ -30,8 +31,12 @@ export function HomepageCategorySection({ categories, stories }: Props) {
               className="flex shrink-0 flex-col items-center gap-1.5"
             >
               <div className="flex h-[62px] w-[62px] items-center justify-center rounded-full bg-gradient-to-br from-gold via-amber-400 to-rose-400 p-[2.5px]">
-                <div className="h-full w-full overflow-hidden rounded-full bg-cream">
-                  <ProductImagePlaceholder seed={cat.value} className="h-full w-full" />
+                <div className="relative h-full w-full overflow-hidden rounded-full bg-cream">
+                  {cat.imageUrl ? (
+                    <Image src={cat.imageUrl} alt={cat.label} fill className="object-cover" sizes="62px" />
+                  ) : (
+                    <ProductImagePlaceholder seed={cat.value} className="h-full w-full" />
+                  )}
                 </div>
               </div>
               <span className="w-[62px] text-center text-[9px] uppercase leading-tight tracking-wide text-ink line-clamp-2">
@@ -75,10 +80,20 @@ export function HomepageCategorySection({ categories, stories }: Props) {
             >
               <div className="relative w-full overflow-hidden rounded-2xl bg-gradient-to-b from-slate-100 to-slate-200">
                 <div className="aspect-[3/4]">
-                  <ProductImagePlaceholder
-                    seed={cat.value}
-                    className="h-full w-full transition-transform duration-500 group-hover:scale-105"
-                  />
+                  {cat.imageUrl ? (
+                    <Image
+                      src={cat.imageUrl}
+                      alt={cat.label}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      sizes="(min-width: 640px) 17vw, 130px"
+                    />
+                  ) : (
+                    <ProductImagePlaceholder
+                      seed={cat.value}
+                      className="h-full w-full transition-transform duration-500 group-hover:scale-105"
+                    />
+                  )}
                 </div>
               </div>
               <span className="text-center text-[11px] font-semibold uppercase tracking-widest text-ink">

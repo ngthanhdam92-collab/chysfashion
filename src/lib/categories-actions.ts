@@ -41,6 +41,21 @@ export async function updateCategory(id: string, formData: FormData): Promise<Ac
   return { success: true };
 }
 
+export async function updateCategoryImage(id: string, imageUrl: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("categories")
+    .update({ image_url: imageUrl })
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/categories");
+  revalidatePath("/");
+  revalidatePath("/san-pham");
+  return { success: true };
+}
+
 export async function deleteCategory(id: string): Promise<ActionResult> {
   const supabase = await createClient();
   const { error } = await supabase.from("categories").delete().eq("id", id);

@@ -1,16 +1,21 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Pencil, Trash2, Check, X } from "lucide-react";
+import { useState, useTransition, useRef } from "react";
+import Image from "next/image";
+import { Pencil, Trash2, Check, X, Camera, Loader2 } from "lucide-react";
 import { Category } from "@/lib/categories";
-import { updateCategory, deleteCategory } from "@/lib/categories-actions";
+import { updateCategory, deleteCategory, updateCategoryImage } from "@/lib/categories-actions";
+import { createClient } from "@/lib/supabase/client";
 
 export function CategoryRow({ category }: { category: Category }) {
   const [editing, setEditing] = useState(false);
   const [label, setLabel] = useState(category.label);
+  const [imageUrl, setImageUrl] = useState(category.imageUrl ?? "");
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function handleSave() {
     const formData = new FormData();
@@ -30,16 +35,77 @@ export function CategoryRow({ category }: { category: Category }) {
     startTransition(async () => {
       const result = await deleteCategory(category.id);
       if (result && "error" in result) {
-        setError(
-          "Không thể xóa — có thể đang có sản phẩm dùng danh mục này."
-        );
+        setError("Không thể xóa — có thể đang có sản phẩm dùng danh mục này.");
         setConfirmingDelete(false);
       }
     });
   }
 
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setError(null);
+    try {
+      const supabase = createClient();
+      const ext = file.name.split(".").pop();
+      const path = `categories/${category.id}-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("product-media")
+        .upload(path, file, { upsert: true });
+      if (upErr) throw new Error(upErr.message);
+      const { data } = supabase.storage.from("product-media").getPublicUrl(path);
+      const url = data.publicUrl;
+      const result = await updateCategoryImage(category.id, url);
+      if (result && "error" in result) throw new Error(result.error);
+      setImageUrl(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload thất bại");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
   return (
     <tr className="border-b border-line last:border-0">
+      {/* Ảnh đại diện */}
+      <td className="px-4 py-3 w-16">
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="group relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-line bg-surface transition-colors hover:border-gold"
+          title="Click để đổi ảnh"
+        >
+          {uploading ? (
+            <Loader2 size={16} className="animate-spin text-muted" />
+          ) : imageUrl ? (
+            <>
+              <Image
+                src={imageUrl}
+                alt={category.label}
+                fill
+                className="object-cover"
+                sizes="48px"
+              />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                <Camera size={14} className="text-white" />
+              </div>
+            </>
+          ) : (
+            <Camera size={16} className="text-muted group-hover:text-gold-dark" />
+          )}
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleImageUpload}
+        />
+      </td>
+
+      {/* Tên danh mục */}
       <td className="px-4 py-3">
         {editing ? (
           <input
@@ -53,7 +119,11 @@ export function CategoryRow({ category }: { category: Category }) {
         )}
         {error && <p className="mt-1 text-xs text-error">{error}</p>}
       </td>
+
+      {/* Value */}
       <td className="px-4 py-3 text-muted">{category.value}</td>
+
+      {/* Thao tác */}
       <td className="px-4 py-3">
         <div className="flex items-center justify-end gap-2">
           {editing ? (
@@ -69,10 +139,7 @@ export function CategoryRow({ category }: { category: Category }) {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setEditing(false);
-                  setLabel(category.label);
-                }}
+                onClick={() => { setEditing(false); setLabel(category.label); }}
                 className="p-1.5 text-muted hover:text-ink"
                 aria-label="Hủy"
               >

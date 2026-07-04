@@ -4,6 +4,7 @@ export interface Category {
   id: string;
   value: string;
   label: string;
+  imageUrl: string | null;
 }
 
 export async function getCategories(): Promise<Category[]> {
@@ -18,5 +19,10 @@ export async function getCategories(): Promise<Category[]> {
     return [];
   }
 
-  return data as Category[];
+  return data.map((r) => ({
+    id: r.id,
+    value: r.value,
+    label: r.label,
+    imageUrl: r.image_url ?? null,
+  }));
 }
