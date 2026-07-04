@@ -11,17 +11,26 @@ import type { Story } from "@/lib/stories";
 interface Props {
   categories: Category[];
   stories: Story[];
+  featuredOrder: string[];
 }
 
-export function HomepageCategorySection({ categories, stories }: Props) {
+export function HomepageCategorySection({ categories, stories, featuredOrder }: Props) {
   const [gender, setGender] = useState<"nam" | "nu">("nam");
 
   const displayCats = useMemo(() => {
-    const filtered = categories.filter((cat) =>
+    // Sort by admin-defined order first, fall back to DB order for unlisted ones
+    const ordered =
+      featuredOrder.length > 0
+        ? featuredOrder
+            .map((v) => categories.find((c) => c.value === v))
+            .filter((c): c is Category => c !== undefined)
+        : categories;
+
+    const filtered = ordered.filter((cat) =>
       gender === "nam" ? cat.gender !== "nu" : cat.gender !== "nam"
     );
     return filtered.slice(0, 6);
-  }, [categories, gender]);
+  }, [categories, gender, featuredOrder]);
 
   return (
     <section className="py-8 sm:py-12">

@@ -84,7 +84,11 @@ export default async function HomePage() {
       {/* ── 2. STORY CIRCLES + NAM/NỮ TOGGLE + CATEGORY CARDS ── */}
       {allCategories.length > 0 && (
         <div className="mx-auto max-w-7xl">
-          <HomepageCategorySection categories={allCategories} stories={stories} />
+          <HomepageCategorySection
+            categories={allCategories}
+            stories={stories}
+            featuredOrder={settings.featuredCategoryValues}
+          />
         </div>
       )}
 
