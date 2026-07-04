@@ -193,3 +193,19 @@ export async function updateVariantImages(
   revalidatePath("/admin/products");
   return { success: true };
 }
+
+export async function updateProductFlag(
+  id: string,
+  flag: "is_bestseller" | "is_new",
+  value: boolean
+) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("products")
+    .update({ [flag]: value })
+    .eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/");
+  revalidatePath("/admin/homepage");
+  return { success: true };
+}

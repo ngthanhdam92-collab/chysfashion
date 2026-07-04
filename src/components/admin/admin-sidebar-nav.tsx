@@ -11,6 +11,7 @@ import {
   Users,
   Ruler,
   Image,
+  LayoutTemplate,
 } from "lucide-react";
 
 const NAV_GROUPS = [
@@ -25,6 +26,7 @@ const NAV_GROUPS = [
       { href: "/admin/categories", label: "Danh mục", icon: Tag },
       { href: "/admin/size-charts", label: "Bảng size", icon: Ruler },
       { href: "/admin/banners", label: "Banner", icon: Image },
+      { href: "/admin/homepage", label: "Trang chủ", icon: LayoutTemplate },
       { href: "/admin/menu", label: "Menu điều hướng", icon: Menu },
     ],
   },

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Truck, RotateCcw, ShieldCheck, Gem } from "lucide-react";
 import { CtaButton } from "@/components/cta-button";
 import { ProductCard } from "@/components/product-card";
@@ -6,6 +7,7 @@ import { ProductImagePlaceholder } from "@/components/product-image-placeholder"
 import { HeroBannerSlider } from "@/components/hero-banner-slider";
 import { getAllProducts } from "@/lib/products";
 import { getActiveBanners } from "@/lib/banners";
+import { getActiveCategoryTiles } from "@/lib/category-tiles";
 
 const USPS = [
   { icon: Truck, title: "Miễn phí vận chuyển", desc: "Cho đơn hàng từ 500.000đ" },
@@ -14,19 +16,15 @@ const USPS = [
   { icon: Gem, title: "Thiết kế độc quyền", desc: "Giới hạn số lượng mỗi bộ sưu tập" },
 ];
 
-const CATEGORY_TILES = [
-  { label: "Thời trang Nam", href: "/san-pham?gender=nam", seed: "cat-nam" },
-  { label: "Thời trang Nữ", href: "/san-pham?gender=nu", seed: "cat-nu" },
-  { label: "Phụ kiện", href: "/san-pham?category=phu-kien", seed: "cat-pk" },
-];
 
 export default async function HomePage() {
-  const [products, activeBanners] = await Promise.all([
+  const [products, activeBanners, categoryTiles] = await Promise.all([
     getAllProducts(),
     getActiveBanners(),
+    getActiveCategoryTiles(),
   ]);
-  const bestSellers = products.filter((p) => p.isBestSeller).slice(0, 4);
-  const newArrivals = products.filter((p) => p.isNew).slice(0, 4);
+  const bestSellers = products.filter((p) => p.isBestSeller).slice(0, 8);
+  const newArrivals = products.filter((p) => p.isNew).slice(0, 8);
   return (
     <div>
       {/* Hero */}
@@ -79,30 +77,42 @@ export default async function HomePage() {
       </section>
 
       {/* Category tiles */}
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mb-8 flex items-end justify-between">
-          <h2 className="font-serif text-2xl text-ink sm:text-3xl">
-            Danh mục nổi bật
-          </h2>
-        </div>
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-          {CATEGORY_TILES.map((tile) => (
-            <Link key={tile.label} href={tile.href} className="group block">
-              <div className="relative overflow-hidden">
-                <ProductImagePlaceholder
-                  seed={tile.seed}
-                  className="transition-transform duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 flex items-end bg-gradient-to-t from-ink/50 via-transparent to-transparent p-5">
-                  <span className="text-[13px] tracking-label uppercase text-paper">
-                    {tile.label}
-                  </span>
+      {categoryTiles.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+          <div className="mb-8 flex items-end justify-between">
+            <h2 className="font-serif text-2xl text-ink sm:text-3xl">Danh mục nổi bật</h2>
+          </div>
+          <div className={`grid grid-cols-2 gap-5 ${categoryTiles.length >= 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+            {categoryTiles.map((tile) => (
+              <Link key={tile.id} href={tile.href} className="group block">
+                <div className="relative overflow-hidden">
+                  {tile.imageUrl ? (
+                    <div className="relative aspect-[3/4] w-full overflow-hidden">
+                      <Image
+                        src={tile.imageUrl}
+                        alt={tile.label}
+                        fill
+                        sizes="(min-width: 640px) 33vw, 50vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    </div>
+                  ) : (
+                    <ProductImagePlaceholder
+                      seed={tile.href}
+                      className="transition-transform duration-500 group-hover:scale-105"
+                    />
+                  )}
+                  <div className="absolute inset-0 flex items-end bg-gradient-to-t from-ink/50 via-transparent to-transparent p-5">
+                    <span className="text-[13px] tracking-label uppercase text-paper">
+                      {tile.label}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Best sellers */}
       <section className="bg-cream/60">
