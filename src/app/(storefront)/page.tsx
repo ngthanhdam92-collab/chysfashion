@@ -1,7 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Truck, RotateCcw, ShieldCheck, Gem } from "lucide-react";
-import { CtaButton } from "@/components/cta-button";
 import { ProductCard } from "@/components/product-card";
 import { ProductImagePlaceholder } from "@/components/product-image-placeholder";
 import { HeroBannerSlider } from "@/components/hero-banner-slider";
@@ -9,6 +7,7 @@ import { getAllProducts } from "@/lib/products";
 import { getActiveBanners } from "@/lib/banners";
 import { getCategories } from "@/lib/categories";
 import { getHomepageSettings } from "@/lib/homepage-settings";
+import { CtaButton } from "@/components/cta-button";
 
 const USPS = [
   { icon: Truck, title: "Miễn phí vận chuyển", desc: "Cho đơn hàng từ 500.000đ" },
@@ -17,6 +16,11 @@ const USPS = [
   { icon: Gem, title: "Thiết kế độc quyền", desc: "Giới hạn số lượng mỗi bộ sưu tập" },
 ];
 
+const COLLECTION_GRADIENTS = [
+  "from-slate-800 to-slate-600",
+  "from-stone-700 to-amber-700",
+  "from-emerald-800 to-teal-600",
+];
 
 export default async function HomePage() {
   const [products, activeBanners, allCategories, settings] = await Promise.all([
@@ -26,50 +30,45 @@ export default async function HomePage() {
     getHomepageSettings(),
   ]);
 
-  // Danh mục nổi bật — theo thứ tự đã lưu
   const featuredCategories = settings.featuredCategoryValues
     .map((v) => allCategories.find((c) => c.value === v))
     .filter(Boolean) as typeof allCategories;
 
-  // Sản phẩm bán chạy — gắn nhãn is_bestseller
-  const bestSellers = products.filter((p) => p.isBestSeller).slice(0, 8);
+  const collectionBanners = featuredCategories.slice(0, 3);
 
-  // Bộ sưu tập mới — lấy từ danh mục được chọn, ưu tiên is_new, fallback mới nhất
+  const bestSellers = products.filter((p) => p.isBestSeller).slice(0, 6);
+
   const newCollectionCat = settings.newCollectionCategory;
   const newArrivals = newCollectionCat
-    ? products
-        .filter((p) => p.category === newCollectionCat)
-        .slice(0, 8)
-    : products.filter((p) => p.isNew).slice(0, 8);
+    ? products.filter((p) => p.category === newCollectionCat).slice(0, 6)
+    : products.filter((p) => p.isNew).slice(0, 6);
+
+  const newCollectionLabel = newCollectionCat
+    ? allCategories.find((c) => c.value === newCollectionCat)?.label ?? "Bộ sưu tập mới"
+    : "Bộ sưu tập mới";
+
   return (
     <div>
-      {/* Hero */}
+      {/* ── 1. HERO BANNER ── */}
       {activeBanners.length > 0 ? (
         <HeroBannerSlider banners={activeBanners} />
       ) : (
-        <section className="relative flex min-h-[78vh] items-center overflow-hidden bg-gradient-to-br from-white via-white to-cream">
+        <section className="relative flex min-h-[72vh] items-center overflow-hidden bg-gradient-to-br from-white via-white to-cream">
           <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:px-8">
             <div className="flex flex-col justify-center">
-              <p className="text-[12px] tracking-label uppercase text-gold-dark">
+              <p className="text-[11px] tracking-label uppercase text-gold-dark">
                 Bộ sưu tập Thu Đông 2026
               </p>
               <h1 className="mt-4 font-serif text-4xl leading-tight text-ink sm:text-5xl lg:text-6xl">
-                Tối giản.
-                <br />
-                Tinh tế. Bền vững.
+                Tối giản.<br />Tinh tế. Bền vững.
               </h1>
               <p className="mt-5 max-w-md text-[15px] leading-relaxed text-ink/70">
                 CHYS Fashion mang đến những thiết kế tối giản, chất liệu cao cấp
-                được tuyển chọn kỹ lưỡng — dành cho những ai theo đuổi phong
-                cách sống tinh tế mỗi ngày.
+                được tuyển chọn kỹ lưỡng — dành cho những ai theo đuổi phong cách sống tinh tế mỗi ngày.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
-                <CtaButton href="/san-pham" variant="primary">
-                  Khám phá bộ sưu tập
-                </CtaButton>
-                <CtaButton href="/ve-chung-toi" variant="outline">
-                  Câu chuyện thương hiệu
-                </CtaButton>
+                <CtaButton href="/san-pham" variant="primary">Khám phá bộ sưu tập</CtaButton>
+                <CtaButton href="/ve-chung-toi" variant="outline">Câu chuyện thương hiệu</CtaButton>
               </div>
             </div>
             <div className="hidden lg:block">
@@ -79,12 +78,84 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* USP bar */}
-      <section className="border-b border-line bg-surface">
+      {/* ── 2. GENDER GATEWAY ── */}
+      <section className="grid grid-cols-2">
+        <Link
+          href="/san-pham"
+          className="group relative flex h-[220px] items-center justify-center overflow-hidden sm:h-[340px]"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-stone-800 via-stone-700 to-stone-500" />
+          <ProductImagePlaceholder
+            seed="nam-banner"
+            className="absolute inset-0 h-full w-full opacity-30 mix-blend-luminosity"
+          />
+          <div className="absolute inset-0 bg-black/25 transition-colors duration-300 group-hover:bg-black/40" />
+          <div className="relative flex flex-col items-center text-white">
+            <span className="text-[9px] tracking-[0.25em] uppercase opacity-70 sm:text-[11px]">
+              Men&apos;s Collection
+            </span>
+            <h2 className="mt-1 font-serif text-5xl font-bold tracking-widest sm:text-7xl">NAM</h2>
+            <span className="mt-5 border border-white/70 px-5 py-2 text-[10px] tracking-label uppercase transition-colors group-hover:bg-white group-hover:text-ink sm:px-7 sm:py-2.5">
+              MUA NGAY
+            </span>
+          </div>
+        </Link>
+
+        <Link
+          href="/san-pham"
+          className="group relative flex h-[220px] items-center justify-center overflow-hidden sm:h-[340px]"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-rose-400 via-rose-500 to-pink-700" />
+          <ProductImagePlaceholder
+            seed="nu-banner"
+            className="absolute inset-0 h-full w-full opacity-25 mix-blend-luminosity"
+          />
+          <div className="absolute inset-0 bg-black/15 transition-colors duration-300 group-hover:bg-black/30" />
+          <div className="relative flex flex-col items-center text-white">
+            <span className="text-[9px] tracking-[0.25em] uppercase opacity-70 sm:text-[11px]">
+              Women&apos;s Collection
+            </span>
+            <h2 className="mt-1 font-serif text-5xl font-bold tracking-widest sm:text-7xl">NỮ</h2>
+            <span className="mt-5 border border-white/70 px-5 py-2 text-[10px] tracking-label uppercase transition-colors group-hover:bg-white group-hover:text-ink sm:px-7 sm:py-2.5">
+              MUA NGAY
+            </span>
+          </div>
+        </Link>
+      </section>
+
+      {/* ── 3. COLLECTION BANNERS ── */}
+      {collectionBanners.length > 0 && (
+        <div>
+          {collectionBanners.map((cat, i) => (
+            <Link
+              key={cat.id}
+              href={`/san-pham?category=${cat.value}`}
+              className={`group relative flex items-center overflow-hidden bg-gradient-to-r ${COLLECTION_GRADIENTS[i]}`}
+            >
+              <div className="relative mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-8 sm:px-8 sm:py-10">
+                <div>
+                  <p className="text-[10px] tracking-label uppercase text-white/60">
+                    Bộ sưu tập
+                  </p>
+                  <h3 className="mt-1 font-serif text-2xl font-bold text-white sm:text-3xl">
+                    {cat.label}
+                  </h3>
+                </div>
+                <span className="shrink-0 border border-white/70 px-5 py-2.5 text-[11px] tracking-label uppercase text-white transition-colors group-hover:bg-white group-hover:text-ink">
+                  MUA NGAY
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {/* ── 4. USP BAR ── */}
+      <section className="border-y border-line bg-surface">
         <div className="mx-auto grid max-w-7xl grid-cols-2 gap-6 px-4 py-10 sm:px-6 lg:grid-cols-4 lg:px-8">
           {USPS.map(({ icon: Icon, title, desc }) => (
             <div key={title} className="flex flex-col items-center gap-2 text-center">
-              <Icon size={26} strokeWidth={1.5} className="text-gold-dark" />
+              <Icon size={24} strokeWidth={1.5} className="text-gold-dark" />
               <p className="text-sm font-medium text-ink">{title}</p>
               <p className="text-xs text-muted">{desc}</p>
             </div>
@@ -92,25 +163,28 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Danh mục nổi bật */}
+      {/* ── 5. CATEGORY TILES — 6 cột ── */}
       {featuredCategories.length > 0 && (
-        <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-          <div className="mb-8">
-            <h2 className="font-serif text-2xl text-ink sm:text-3xl">Danh mục nổi bật</h2>
-          </div>
-          <div className={`grid grid-cols-2 gap-5 ${featuredCategories.length >= 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
-            {featuredCategories.map((cat) => (
-              <Link key={cat.id} href={`/san-pham?category=${cat.value}`} className="group block">
-                <div className="relative overflow-hidden">
-                  <ProductImagePlaceholder
-                    seed={cat.value}
-                    className="transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 flex items-end bg-gradient-to-t from-ink/50 via-transparent to-transparent p-5">
-                    <span className="text-[13px] tracking-label uppercase text-paper">
-                      {cat.label}
-                    </span>
-                  </div>
+        <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+          <h2 className="mb-8 text-center font-serif text-xl text-ink sm:text-2xl">
+            CHYS Fashion — Thương Hiệu Thời Trang Chất Lượng Từ Việt Nam
+          </h2>
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+            {featuredCategories.slice(0, 6).map((cat) => (
+              <Link
+                key={cat.id}
+                href={`/san-pham?category=${cat.value}`}
+                className="group relative block aspect-square overflow-hidden"
+              >
+                <ProductImagePlaceholder
+                  seed={cat.value}
+                  className="absolute inset-0 h-full w-full transition-transform duration-500 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-ink/70 via-ink/20 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 p-3 text-center">
+                  <span className="text-[11px] font-semibold tracking-label uppercase text-white">
+                    {cat.label}
+                  </span>
                 </div>
               </Link>
             ))}
@@ -118,77 +192,77 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Best sellers */}
-      <section className="bg-cream/60">
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-          <div className="mb-8 flex items-end justify-between">
-            <h2 className="font-serif text-2xl text-ink sm:text-3xl">
-              Sản phẩm bán chạy
-            </h2>
+      {/* ── 6. SẢN PHẨM BÁN CHẠY — 6 cột ── */}
+      {bestSellers.length > 0 && (
+        <section className="bg-cream/50">
+          <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+            <div className="mb-8 flex items-end justify-between">
+              <h2 className="font-serif text-2xl text-ink sm:text-3xl">Sản phẩm bán chạy</h2>
+              <Link
+                href="/san-pham"
+                className="text-[11px] tracking-label uppercase text-ink hover:text-gold-dark"
+              >
+                Xem thêm →
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-6">
+              {bestSellers.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── 7. CAM KẾT KHÁCH HÀNG ── */}
+      <section className="bg-ink">
+        <div className="mx-auto max-w-7xl px-4 py-16 text-center sm:px-6 lg:px-8">
+          <p className="text-[11px] tracking-label uppercase text-gold">
+            Cam kết của chúng tôi
+          </p>
+          <h2 className="mt-3 font-serif text-2xl text-paper sm:text-3xl lg:text-4xl">
+            Trải nghiệm mua sắm 100% hài lòng
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-paper/60">
+            Hoàn tiền hoặc đổi hàng trong vòng 30 ngày — không cần lý do. Chất lượng sản phẩm
+            được kiểm định nghiêm ngặt trước khi đến tay bạn.
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-4">
+            <Link
+              href="/chinh-sach-doi-tra"
+              className="border border-paper/50 px-7 py-3 text-[11px] tracking-label uppercase text-paper transition-colors hover:border-paper hover:bg-paper hover:text-ink"
+            >
+              Chính sách đổi trả
+            </Link>
             <Link
               href="/san-pham"
-              className="text-[12px] tracking-label uppercase text-ink hover:text-gold-dark"
+              className="border border-gold bg-gold px-7 py-3 text-[11px] tracking-label uppercase text-paper transition-colors hover:bg-gold/90"
             >
-              Xem tất cả
+              Mua sắm ngay
             </Link>
           </div>
-          <div className="grid grid-cols-2 gap-x-5 gap-y-10 lg:grid-cols-4">
-            {bestSellers.map((product) => (
+        </div>
+      </section>
+
+      {/* ── 8. BỘ SƯU TẬP MỚI — 6 cột ── */}
+      {newArrivals.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+          <div className="mb-8 flex items-end justify-between">
+            <h2 className="font-serif text-2xl text-ink sm:text-3xl">{newCollectionLabel}</h2>
+            <Link
+              href={newCollectionCat ? `/san-pham?category=${newCollectionCat}` : "/san-pham"}
+              className="text-[11px] tracking-label uppercase text-ink hover:text-gold-dark"
+            >
+              Xem thêm →
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-6">
+            {newArrivals.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* New arrivals */}
-      {newArrivals.length > 0 && (
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mb-8 flex items-end justify-between">
-          <h2 className="font-serif text-2xl text-ink sm:text-3xl">
-            {newCollectionCat
-              ? allCategories.find((c) => c.value === newCollectionCat)?.label ?? "Bộ sưu tập mới"
-              : "Bộ sưu tập mới"}
-          </h2>
-          <Link
-            href="/san-pham?filter=moi"
-            className="text-[12px] tracking-label uppercase text-ink hover:text-gold-dark"
-          >
-            Xem tất cả
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 gap-x-5 gap-y-10 lg:grid-cols-4">
-          {newArrivals.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
-      </section>
+        </section>
       )}
-
-      {/* Brand story */}
-      <section className="bg-cream/50">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:px-8">
-          <ProductImagePlaceholder seed="story" className="order-2 lg:order-1" />
-          <div className="order-1 flex flex-col justify-center lg:order-2">
-            <p className="text-[12px] tracking-label uppercase text-gold-dark">
-              Câu chuyện thương hiệu
-            </p>
-            <h2 className="mt-4 font-serif text-3xl leading-tight text-ink sm:text-4xl">
-              Được tạo nên bởi sự tận tâm với từng đường kim mũi chỉ
-            </h2>
-            <p className="mt-5 max-w-lg text-[15px] leading-relaxed text-muted">
-              CHYS Fashion ra đời từ niềm tin rằng thời trang cao cấp không
-              cần phô trương — mà nằm ở chất liệu thật, đường may tỉ mỉ và
-              thiết kế vượt thời gian. Mỗi sản phẩm đều được chọn lọc kỹ lưỡng
-              để đồng hành cùng bạn trong nhiều năm tới.
-            </p>
-            <div className="mt-8">
-              <CtaButton href="/ve-chung-toi" variant="primary">
-                Tìm hiểu thêm
-              </CtaButton>
-            </div>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }
