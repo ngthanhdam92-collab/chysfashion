@@ -1,16 +1,20 @@
 import Link from "next/link";
-import Image from "next/image";
-import { Plus, Pencil } from "lucide-react";
-import { getAllCategoryTiles } from "@/lib/category-tiles";
+import { ShoppingBag } from "lucide-react";
+import { getCategories } from "@/lib/categories";
 import { getAllProducts } from "@/lib/products";
-import { DeleteCategoryTileButton } from "@/components/admin/delete-category-tile-button";
-import { HomepageProductPicker } from "@/components/admin/homepage-product-picker";
+import { getHomepageSettings } from "@/lib/homepage-settings";
+import { HomepageFeaturedCategories } from "@/components/admin/homepage-featured-categories";
+import { HomepageNewCollection } from "@/components/admin/homepage-new-collection";
 
 export default async function HomepagePage() {
-  const [tiles, products] = await Promise.all([
-    getAllCategoryTiles(),
+  const [categories, products, settings] = await Promise.all([
+    getCategories(),
     getAllProducts(),
+    getHomepageSettings(),
   ]);
+
+  const bestsellerCount = products.filter((p) => p.isBestSeller).length;
+  const newCount = products.filter((p) => p.isNew).length;
 
   return (
     <div className="space-y-10">
@@ -23,62 +27,17 @@ export default async function HomepagePage() {
 
       {/* ── DANH MỤC NỔI BẬT ── */}
       <section>
-        <div className="flex items-center justify-between border-b border-line pb-3">
-          <div>
-            <h2 className="font-semibold text-ink">Danh mục nổi bật</h2>
-            <p className="mt-0.5 text-xs text-muted">Các ô ảnh danh mục hiển thị ở trang chủ</p>
-          </div>
-          <Link
-            href="/admin/homepage/tiles/new"
-            className="flex items-center gap-2 bg-ink px-4 py-2 text-[12px] tracking-label uppercase text-paper hover:bg-ink/85"
-          >
-            <Plus size={14} /> Thêm ô
-          </Link>
+        <div className="border-b border-line pb-3">
+          <h2 className="font-semibold text-ink">Danh mục nổi bật</h2>
+          <p className="mt-0.5 text-xs text-muted">
+            Chọn các danh mục hiển thị trên trang chủ
+          </p>
         </div>
-
         <div className="mt-4">
-          {tiles.length === 0 ? (
-            <div className="rounded border border-dashed border-line px-6 py-10 text-center">
-              <p className="text-sm text-muted">Chưa có ô danh mục nào.</p>
-              <Link href="/admin/homepage/tiles/new" className="mt-2 inline-block text-sm text-blue-600 hover:underline">
-                Tạo ô đầu tiên
-              </Link>
-            </div>
-          ) : (
-            <div className="divide-y divide-line border border-line bg-white">
-              {tiles.map((t) => (
-                <div key={t.id} className="flex items-center gap-4 px-5 py-3">
-                  <div className="relative h-14 w-10 shrink-0 overflow-hidden bg-cream">
-                    {t.imageUrl ? (
-                      <Image src={t.imageUrl} alt={t.label} fill sizes="40px" className="object-cover" />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-[9px] text-stone">No img</div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-sm text-ink">{t.label}</p>
-                      <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
-                        t.isActive ? "bg-emerald-100 text-emerald-700" : "bg-line text-stone"
-                      }`}>
-                        {t.isActive ? "Hiển thị" : "Ẩn"}
-                      </span>
-                    </div>
-                    <p className="text-xs text-stone">Vị trí: {t.position} · {t.href}</p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1">
-                    <Link
-                      href={`/admin/homepage/tiles/${t.id}/edit`}
-                      className="flex items-center gap-1.5 border border-line px-3 py-1.5 text-xs text-ink hover:border-gold hover:text-gold-dark"
-                    >
-                      <Pencil size={12} /> Sửa
-                    </Link>
-                    <DeleteCategoryTileButton id={t.id} label={t.label} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <HomepageFeaturedCategories
+            categories={categories}
+            selected={settings.featuredCategoryValues}
+          />
         </div>
       </section>
 
@@ -87,11 +46,26 @@ export default async function HomepagePage() {
         <div className="border-b border-line pb-3">
           <h2 className="font-semibold text-ink">Sản phẩm bán chạy</h2>
           <p className="mt-0.5 text-xs text-muted">
-            Tích chọn sản phẩm để hiển thị trong mục &quot;Sản phẩm bán chạy&quot; ở trang chủ
+            Gắn nhãn &quot;Bán chạy&quot; trực tiếp trên từng sản phẩm để hiển thị ở mục này
           </p>
         </div>
-        <div className="mt-4">
-          <HomepageProductPicker products={products} flag="is_bestseller" label="Bán chạy" limit={8} />
+        <div className="mt-4 flex items-start gap-4 rounded border border-line bg-surface p-4">
+          <ShoppingBag size={20} className="mt-0.5 shrink-0 text-gold-dark" />
+          <div>
+            <p className="text-sm text-ink">
+              Hiện có <span className="font-semibold">{bestsellerCount}</span> sản phẩm được gắn nhãn <strong>Bán chạy</strong>
+              {" "}và <span className="font-semibold">{newCount}</span> sản phẩm gắn nhãn <strong>Mới</strong>.
+            </p>
+            <p className="mt-1 text-xs text-muted">
+              Vào trang chỉnh sửa từng sản phẩm → bật hoặc tắt nhãn &quot;Bán chạy&quot; / &quot;Sản phẩm mới&quot;.
+            </p>
+            <Link
+              href="/admin/products"
+              className="mt-2 inline-block text-sm text-blue-600 hover:underline"
+            >
+              Đi đến quản lý sản phẩm →
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -100,11 +74,14 @@ export default async function HomepagePage() {
         <div className="border-b border-line pb-3">
           <h2 className="font-semibold text-ink">Bộ sưu tập mới</h2>
           <p className="mt-0.5 text-xs text-muted">
-            Tích chọn sản phẩm để hiển thị trong mục &quot;Bộ sưu tập mới&quot; ở trang chủ
+            Chọn danh mục để hiển thị sản phẩm mới nhất trong mục &quot;Bộ sưu tập mới&quot;
           </p>
         </div>
         <div className="mt-4">
-          <HomepageProductPicker products={products} flag="is_new" label="Mới" limit={8} />
+          <HomepageNewCollection
+            categories={categories}
+            current={settings.newCollectionCategory}
+          />
         </div>
       </section>
     </div>

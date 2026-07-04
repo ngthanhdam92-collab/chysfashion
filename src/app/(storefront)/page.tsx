@@ -7,7 +7,8 @@ import { ProductImagePlaceholder } from "@/components/product-image-placeholder"
 import { HeroBannerSlider } from "@/components/hero-banner-slider";
 import { getAllProducts } from "@/lib/products";
 import { getActiveBanners } from "@/lib/banners";
-import { getActiveCategoryTiles } from "@/lib/category-tiles";
+import { getCategories } from "@/lib/categories";
+import { getHomepageSettings } from "@/lib/homepage-settings";
 
 const USPS = [
   { icon: Truck, title: "Miễn phí vận chuyển", desc: "Cho đơn hàng từ 500.000đ" },
@@ -18,13 +19,28 @@ const USPS = [
 
 
 export default async function HomePage() {
-  const [products, activeBanners, categoryTiles] = await Promise.all([
+  const [products, activeBanners, allCategories, settings] = await Promise.all([
     getAllProducts(),
     getActiveBanners(),
-    getActiveCategoryTiles(),
+    getCategories(),
+    getHomepageSettings(),
   ]);
+
+  // Danh mục nổi bật — theo thứ tự đã lưu
+  const featuredCategories = settings.featuredCategoryValues
+    .map((v) => allCategories.find((c) => c.value === v))
+    .filter(Boolean) as typeof allCategories;
+
+  // Sản phẩm bán chạy — gắn nhãn is_bestseller
   const bestSellers = products.filter((p) => p.isBestSeller).slice(0, 8);
-  const newArrivals = products.filter((p) => p.isNew).slice(0, 8);
+
+  // Bộ sưu tập mới — lấy từ danh mục được chọn, ưu tiên is_new, fallback mới nhất
+  const newCollectionCat = settings.newCollectionCategory;
+  const newArrivals = newCollectionCat
+    ? products
+        .filter((p) => p.category === newCollectionCat)
+        .slice(0, 8)
+    : products.filter((p) => p.isNew).slice(0, 8);
   return (
     <div>
       {/* Hero */}
@@ -76,35 +92,23 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Category tiles */}
-      {categoryTiles.length > 0 && (
+      {/* Danh mục nổi bật */}
+      {featuredCategories.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-          <div className="mb-8 flex items-end justify-between">
+          <div className="mb-8">
             <h2 className="font-serif text-2xl text-ink sm:text-3xl">Danh mục nổi bật</h2>
           </div>
-          <div className={`grid grid-cols-2 gap-5 ${categoryTiles.length >= 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
-            {categoryTiles.map((tile) => (
-              <Link key={tile.id} href={tile.href} className="group block">
+          <div className={`grid grid-cols-2 gap-5 ${featuredCategories.length >= 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+            {featuredCategories.map((cat) => (
+              <Link key={cat.id} href={`/san-pham?category=${cat.value}`} className="group block">
                 <div className="relative overflow-hidden">
-                  {tile.imageUrl ? (
-                    <div className="relative aspect-[3/4] w-full overflow-hidden">
-                      <Image
-                        src={tile.imageUrl}
-                        alt={tile.label}
-                        fill
-                        sizes="(min-width: 640px) 33vw, 50vw"
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                    </div>
-                  ) : (
-                    <ProductImagePlaceholder
-                      seed={tile.href}
-                      className="transition-transform duration-500 group-hover:scale-105"
-                    />
-                  )}
+                  <ProductImagePlaceholder
+                    seed={cat.value}
+                    className="transition-transform duration-500 group-hover:scale-105"
+                  />
                   <div className="absolute inset-0 flex items-end bg-gradient-to-t from-ink/50 via-transparent to-transparent p-5">
                     <span className="text-[13px] tracking-label uppercase text-paper">
-                      {tile.label}
+                      {cat.label}
                     </span>
                   </div>
                 </div>
@@ -137,10 +141,13 @@ export default async function HomePage() {
       </section>
 
       {/* New arrivals */}
+      {newArrivals.length > 0 && (
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="mb-8 flex items-end justify-between">
           <h2 className="font-serif text-2xl text-ink sm:text-3xl">
-            Bộ sưu tập mới
+            {newCollectionCat
+              ? allCategories.find((c) => c.value === newCollectionCat)?.label ?? "Bộ sưu tập mới"
+              : "Bộ sưu tập mới"}
           </h2>
           <Link
             href="/san-pham?filter=moi"
@@ -155,6 +162,7 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
+      )}
 
       {/* Brand story */}
       <section className="bg-cream/50">
