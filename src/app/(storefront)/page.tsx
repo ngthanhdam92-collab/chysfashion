@@ -91,11 +91,11 @@ export default async function HomePage() {
           />
           <div className="absolute inset-0 bg-black/25 transition-colors duration-300 group-hover:bg-black/40" />
           <div className="relative flex flex-col items-center text-white">
-            <span className="text-[9px] tracking-[0.25em] uppercase opacity-70 sm:text-[11px]">
+            <span className="hidden text-[11px] tracking-[0.25em] uppercase opacity-70 sm:block">
               Men&apos;s Collection
             </span>
-            <h2 className="mt-1 font-serif text-5xl font-bold tracking-widest sm:text-7xl">NAM</h2>
-            <span className="mt-5 border border-white/70 px-5 py-2 text-[10px] tracking-label uppercase transition-colors group-hover:bg-white group-hover:text-ink sm:px-7 sm:py-2.5">
+            <h2 className="mt-1 font-serif text-4xl font-bold tracking-widest sm:text-7xl">NAM</h2>
+            <span className="mt-4 whitespace-nowrap border border-white/70 px-4 py-2 text-[10px] tracking-label uppercase transition-colors group-hover:bg-white group-hover:text-ink sm:mt-5 sm:px-7 sm:py-2.5">
               MUA NGAY
             </span>
           </div>
@@ -112,11 +112,11 @@ export default async function HomePage() {
           />
           <div className="absolute inset-0 bg-black/15 transition-colors duration-300 group-hover:bg-black/30" />
           <div className="relative flex flex-col items-center text-white">
-            <span className="text-[9px] tracking-[0.25em] uppercase opacity-70 sm:text-[11px]">
+            <span className="hidden text-[11px] tracking-[0.25em] uppercase opacity-70 sm:block">
               Women&apos;s Collection
             </span>
-            <h2 className="mt-1 font-serif text-5xl font-bold tracking-widest sm:text-7xl">NỮ</h2>
-            <span className="mt-5 border border-white/70 px-5 py-2 text-[10px] tracking-label uppercase transition-colors group-hover:bg-white group-hover:text-ink sm:px-7 sm:py-2.5">
+            <h2 className="mt-1 font-serif text-4xl font-bold tracking-widest sm:text-7xl">NỮ</h2>
+            <span className="mt-4 whitespace-nowrap border border-white/70 px-4 py-2 text-[10px] tracking-label uppercase transition-colors group-hover:bg-white group-hover:text-ink sm:mt-5 sm:px-7 sm:py-2.5">
               MUA NGAY
             </span>
           </div>
