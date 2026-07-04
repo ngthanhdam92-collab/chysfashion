@@ -87,7 +87,7 @@ export function BannerForm({ banner, action }: BannerFormProps) {
               <>
                 <Upload size={24} className="text-muted" />
                 <span className="text-sm text-muted">Nhấn để chọn ảnh banner</span>
-                <span className="text-xs text-stone">JPG, PNG, WebP — khuyến nghị 1440×540px</span>
+                <span className="text-xs text-stone">JPG, PNG, WebP — khuyến nghị 1440×540px (desktop) · Mobile hiển thị toàn bộ ảnh</span>
               </>
             )}
             <input
