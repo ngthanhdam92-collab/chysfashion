@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { getBannerById } from "@/lib/banners";
 import { updateBanner } from "@/lib/banners-actions";
 import { BannerForm } from "@/components/admin/banner-form";
+import { getCategories } from "@/lib/categories";
+import { getAllProducts } from "@/lib/products";
 
 interface Params {
   params: Promise<{ id: string }>;
@@ -9,7 +11,11 @@ interface Params {
 
 export default async function EditBannerPage({ params }: Params) {
   const { id } = await params;
-  const banner = await getBannerById(id);
+  const [banner, categories, products] = await Promise.all([
+    getBannerById(id),
+    getCategories(),
+    getAllProducts(),
+  ]);
   if (!banner) notFound();
 
   const updateWithId = updateBanner.bind(null, id);
@@ -18,7 +24,12 @@ export default async function EditBannerPage({ params }: Params) {
     <div>
       <h1 className="mb-6 font-serif text-2xl text-ink">Sửa banner</h1>
       <div className="max-w-3xl border border-line bg-surface p-6">
-        <BannerForm banner={banner} action={updateWithId} />
+        <BannerForm
+          banner={banner}
+          categories={categories}
+          products={products}
+          action={updateWithId}
+        />
       </div>
     </div>
   );
