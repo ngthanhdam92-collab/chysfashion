@@ -3,7 +3,9 @@ import { Truck, RotateCcw, ShieldCheck, Gem } from "lucide-react";
 import { CtaButton } from "@/components/cta-button";
 import { ProductCard } from "@/components/product-card";
 import { ProductImagePlaceholder } from "@/components/product-image-placeholder";
+import { HeroBanner } from "@/components/hero-banner";
 import { getAllProducts } from "@/lib/products";
+import { getActiveBanners } from "@/lib/banners";
 
 const USPS = [
   { icon: Truck, title: "Miễn phí vận chuyển", desc: "Cho đơn hàng từ 500.000đ" },
@@ -19,43 +21,51 @@ const CATEGORY_TILES = [
 ];
 
 export default async function HomePage() {
-  const products = await getAllProducts();
+  const [products, activeBanners] = await Promise.all([
+    getAllProducts(),
+    getActiveBanners(),
+  ]);
   const bestSellers = products.filter((p) => p.isBestSeller).slice(0, 4);
   const newArrivals = products.filter((p) => p.isNew).slice(0, 4);
+  const heroBanner = activeBanners[0] ?? null;
 
   return (
     <div>
       {/* Hero */}
-      <section className="relative flex min-h-[78vh] items-center overflow-hidden bg-gradient-to-br from-white via-white to-cream">
-        <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:px-8">
-          <div className="flex flex-col justify-center">
-            <p className="text-[12px] tracking-label uppercase text-gold-dark">
-              Bộ sưu tập Thu Đông 2026
-            </p>
-            <h1 className="mt-4 font-serif text-4xl leading-tight text-ink sm:text-5xl lg:text-6xl">
-              Tối giản.
-              <br />
-              Tinh tế. Bền vững.
-            </h1>
-            <p className="mt-5 max-w-md text-[15px] leading-relaxed text-ink/70">
-              CHYS Fashion mang đến những thiết kế tối giản, chất liệu cao cấp
-              được tuyển chọn kỹ lưỡng — dành cho những ai theo đuổi phong
-              cách sống tinh tế mỗi ngày.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <CtaButton href="/san-pham" variant="primary">
-                Khám phá bộ sưu tập
-              </CtaButton>
-              <CtaButton href="/ve-chung-toi" variant="outline">
-                Câu chuyện thương hiệu
-              </CtaButton>
+      {heroBanner ? (
+        <HeroBanner banner={heroBanner} />
+      ) : (
+        <section className="relative flex min-h-[78vh] items-center overflow-hidden bg-gradient-to-br from-white via-white to-cream">
+          <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:px-8">
+            <div className="flex flex-col justify-center">
+              <p className="text-[12px] tracking-label uppercase text-gold-dark">
+                Bộ sưu tập Thu Đông 2026
+              </p>
+              <h1 className="mt-4 font-serif text-4xl leading-tight text-ink sm:text-5xl lg:text-6xl">
+                Tối giản.
+                <br />
+                Tinh tế. Bền vững.
+              </h1>
+              <p className="mt-5 max-w-md text-[15px] leading-relaxed text-ink/70">
+                CHYS Fashion mang đến những thiết kế tối giản, chất liệu cao cấp
+                được tuyển chọn kỹ lưỡng — dành cho những ai theo đuổi phong
+                cách sống tinh tế mỗi ngày.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <CtaButton href="/san-pham" variant="primary">
+                  Khám phá bộ sưu tập
+                </CtaButton>
+                <CtaButton href="/ve-chung-toi" variant="outline">
+                  Câu chuyện thương hiệu
+                </CtaButton>
+              </div>
+            </div>
+            <div className="hidden lg:block">
+              <ProductImagePlaceholder seed="hero" className="shadow-xl" />
             </div>
           </div>
-          <div className="hidden lg:block">
-            <ProductImagePlaceholder seed="hero" className="shadow-xl" />
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* USP bar */}
       <section className="border-b border-line bg-surface">

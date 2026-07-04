@@ -22,9 +22,8 @@ export function ProductDetailView({ product, suggestedProducts }: { product: Pro
     () => product.colors[0]?.images?.[0] ?? null
   );
 
-  // Gallery luôn là ảnh sản phẩm (bìa + chi tiết)
-  // Ảnh biến thể màu chỉ dùng trong bộ chọn màu ở purchase panel
-  const gallery = product.images;
+  // Gallery luôn là ảnh sản phẩm (bìa + chi tiết), lọc bỏ URL rỗng
+  const gallery = product.images.filter(Boolean);
 
   const hasVideo = !!product.videoUrl;
 
