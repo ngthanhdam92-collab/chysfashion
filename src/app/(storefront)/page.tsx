@@ -3,6 +3,7 @@ import { Truck, RotateCcw, ShieldCheck, Gem } from "lucide-react";
 import { ProductCard } from "@/components/product-card";
 import { ProductImagePlaceholder } from "@/components/product-image-placeholder";
 import { HeroBannerSlider } from "@/components/hero-banner-slider";
+import { HomepageCategorySection } from "@/components/homepage-category-section";
 import { getAllProducts } from "@/lib/products";
 import { getActiveBanners } from "@/lib/banners";
 import { getCategories } from "@/lib/categories";
@@ -78,50 +79,12 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* ── 2. GENDER GATEWAY ── */}
-      <section className="grid grid-cols-2">
-        <Link
-          href="/san-pham"
-          className="group relative flex h-[220px] items-center justify-center overflow-hidden sm:h-[340px]"
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-stone-800 via-stone-700 to-stone-500" />
-          <ProductImagePlaceholder
-            seed="nam-banner"
-            className="absolute inset-0 h-full w-full opacity-30 mix-blend-luminosity"
-          />
-          <div className="absolute inset-0 bg-black/25 transition-colors duration-300 group-hover:bg-black/40" />
-          <div className="relative flex flex-col items-center text-white">
-            <span className="hidden text-[11px] tracking-[0.25em] uppercase opacity-70 sm:block">
-              Men&apos;s Collection
-            </span>
-            <h2 className="mt-1 font-serif text-4xl font-bold tracking-widest sm:text-7xl">NAM</h2>
-            <span className="mt-4 whitespace-nowrap border border-white/70 px-4 py-2 text-[10px] tracking-label uppercase transition-colors group-hover:bg-white group-hover:text-ink sm:mt-5 sm:px-7 sm:py-2.5">
-              MUA NGAY
-            </span>
-          </div>
-        </Link>
-
-        <Link
-          href="/san-pham"
-          className="group relative flex h-[220px] items-center justify-center overflow-hidden sm:h-[340px]"
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-rose-400 via-rose-500 to-pink-700" />
-          <ProductImagePlaceholder
-            seed="nu-banner"
-            className="absolute inset-0 h-full w-full opacity-25 mix-blend-luminosity"
-          />
-          <div className="absolute inset-0 bg-black/15 transition-colors duration-300 group-hover:bg-black/30" />
-          <div className="relative flex flex-col items-center text-white">
-            <span className="hidden text-[11px] tracking-[0.25em] uppercase opacity-70 sm:block">
-              Women&apos;s Collection
-            </span>
-            <h2 className="mt-1 font-serif text-4xl font-bold tracking-widest sm:text-7xl">NỮ</h2>
-            <span className="mt-4 whitespace-nowrap border border-white/70 px-4 py-2 text-[10px] tracking-label uppercase transition-colors group-hover:bg-white group-hover:text-ink sm:mt-5 sm:px-7 sm:py-2.5">
-              MUA NGAY
-            </span>
-          </div>
-        </Link>
-      </section>
+      {/* ── 2. STORY CIRCLES + NAM/NỮ TOGGLE + CATEGORY CARDS ── */}
+      {allCategories.length > 0 && (
+        <div className="mx-auto max-w-7xl">
+          <HomepageCategorySection categories={allCategories} />
+        </div>
+      )}
 
       {/* ── 3. COLLECTION BANNERS ── */}
       {collectionBanners.length > 0 && (
@@ -163,36 +126,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── 5. CATEGORY TILES — 6 cột ── */}
-      {featuredCategories.length > 0 && (
-        <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-          <h2 className="mb-8 text-center font-serif text-xl text-ink sm:text-2xl">
-            CHYS Fashion — Thương Hiệu Thời Trang Chất Lượng Từ Việt Nam
-          </h2>
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
-            {featuredCategories.slice(0, 6).map((cat) => (
-              <Link
-                key={cat.id}
-                href={`/san-pham?category=${cat.value}`}
-                className="group relative block aspect-square overflow-hidden"
-              >
-                <ProductImagePlaceholder
-                  seed={cat.value}
-                  className="absolute inset-0 h-full w-full transition-transform duration-500 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-ink/70 via-ink/20 to-transparent" />
-                <div className="absolute inset-x-0 bottom-0 p-3 text-center">
-                  <span className="text-[11px] font-semibold tracking-label uppercase text-white">
-                    {cat.label}
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ── 6. SẢN PHẨM BÁN CHẠY — 6 cột ── */}
+      {/* ── 5. SẢN PHẨM BÁN CHẠY — 6 cột ── */}
       {bestSellers.length > 0 && (
         <section className="bg-cream/50">
           <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
@@ -214,7 +148,7 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* ── 7. CAM KẾT KHÁCH HÀNG ── */}
+      {/* ── 6. CAM KẾT KHÁCH HÀNG ── */}
       <section className="bg-ink">
         <div className="mx-auto max-w-7xl px-4 py-16 text-center sm:px-6 lg:px-8">
           <p className="text-[11px] tracking-label uppercase text-gold">
@@ -244,7 +178,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── 8. BỘ SƯU TẬP MỚI — 6 cột ── */}
+      {/* ── 7. BỘ SƯU TẬP MỚI — 6 cột ── */}
       {newArrivals.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
           <div className="mb-8 flex items-end justify-between">
