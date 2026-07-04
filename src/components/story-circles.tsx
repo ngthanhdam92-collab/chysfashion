@@ -37,9 +37,6 @@ export function StoryCircles({ stories }: Props) {
                 />
               </div>
             </div>
-            <span className="w-[62px] text-center text-[9px] uppercase leading-tight tracking-wide text-ink line-clamp-2">
-              {story.customerName || "Khách hàng"}
-            </span>
           </button>
         ))}
       </div>

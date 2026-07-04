@@ -43,7 +43,7 @@ export function HomepageCategorySection({ categories, stories }: Props) {
       )}
 
       {/* ── Gender toggle ── */}
-      <div className="mt-6 flex justify-center gap-2">
+      <div className="mt-6 flex justify-start gap-2 px-4 sm:px-6 lg:px-8">
         <button
           type="button"
           onClick={() => setGender("nam")}
