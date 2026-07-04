@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Truck, RotateCcw, ShieldCheck, Gem } from "lucide-react";
 import { ProductCard } from "@/components/product-card";
 import { ProductImagePlaceholder } from "@/components/product-image-placeholder";
@@ -99,20 +100,33 @@ export default async function HomePage() {
             <Link
               key={cat.id}
               href={`/san-pham?category=${cat.value}`}
-              className={`group relative flex items-center overflow-hidden bg-gradient-to-r ${COLLECTION_GRADIENTS[i]}`}
+              className="group relative flex min-h-[260px] items-end overflow-hidden sm:min-h-[320px]"
             >
-              <div className="relative mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-8 sm:px-8 sm:py-10">
-                <div>
-                  <p className="text-[10px] tracking-label uppercase text-white/60">
-                    Bộ sưu tập
-                  </p>
-                  <h3 className="mt-1 font-serif text-2xl font-bold text-white sm:text-3xl">
-                    {cat.label}
-                  </h3>
+              {/* Background: real image or gradient fallback */}
+              {cat.imageUrl ? (
+                <Image
+                  src={cat.imageUrl}
+                  alt={cat.label}
+                  fill
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  sizes="100vw"
+                />
+              ) : (
+                <div className={`absolute inset-0 bg-gradient-to-r ${COLLECTION_GRADIENTS[i]}`} />
+              )}
+              {/* Dark gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+
+              {/* Text + button — bottom left */}
+              <div className="relative w-full px-6 pb-8 sm:px-12 sm:pb-12 lg:px-20">
+                <h3 className="font-sans text-4xl font-black uppercase leading-none tracking-tight text-white sm:text-5xl lg:text-6xl">
+                  {cat.label}
+                </h3>
+                <div className="mt-5">
+                  <span className="inline-block rounded-full bg-white px-7 py-2.5 text-[13px] font-semibold uppercase tracking-wide text-ink transition-colors group-hover:bg-gold group-hover:text-white">
+                    MUA NGAY
+                  </span>
                 </div>
-                <span className="shrink-0 border border-white/70 px-5 py-2.5 text-[11px] tracking-label uppercase text-white transition-colors group-hover:bg-white group-hover:text-ink">
-                  MUA NGAY
-                </span>
               </div>
             </Link>
           ))}
