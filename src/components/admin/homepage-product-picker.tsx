@@ -17,7 +17,7 @@ export function HomepageProductPicker({ products, flag, label, limit = 8 }: Home
   const [states, setStates] = useState<Record<string, boolean>>(() => {
     const m: Record<string, boolean> = {};
     for (const p of products) {
-      m[p.id] = flag === "is_bestseller" ? p.isBestSeller : p.isNew;
+      m[p.id] = !!(flag === "is_bestseller" ? p.isBestSeller : p.isNew);
     }
     return m;
   });
