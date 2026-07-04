@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ProductImagePlaceholder } from "@/components/product-image-placeholder";
@@ -15,7 +15,13 @@ interface Props {
 
 export function HomepageCategorySection({ categories, stories }: Props) {
   const [gender, setGender] = useState<"nam" | "nu">("nam");
-  const displayCats = categories.slice(0, 6);
+
+  const displayCats = useMemo(() => {
+    const filtered = categories.filter((cat) =>
+      gender === "nam" ? cat.gender !== "nu" : cat.gender !== "nam"
+    );
+    return filtered.slice(0, 6);
+  }, [categories, gender]);
 
   return (
     <section className="py-8 sm:py-12">

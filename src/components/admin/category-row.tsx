@@ -4,13 +4,14 @@ import { useState, useTransition, useRef } from "react";
 import Image from "next/image";
 import { Pencil, Trash2, Check, X, Camera, Loader2 } from "lucide-react";
 import { Category } from "@/lib/categories";
-import { updateCategory, deleteCategory, updateCategoryImage } from "@/lib/categories-actions";
+import { updateCategory, deleteCategory, updateCategoryImage, updateCategoryGender } from "@/lib/categories-actions";
 import { createClient } from "@/lib/supabase/client";
 
 export function CategoryRow({ category }: { category: Category }) {
   const [editing, setEditing] = useState(false);
   const [label, setLabel] = useState(category.label);
   const [imageUrl, setImageUrl] = useState(category.imageUrl ?? "");
+  const [gender, setGender] = useState<"nam" | "nu" | "unisex">(category.gender);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -38,6 +39,14 @@ export function CategoryRow({ category }: { category: Category }) {
         setError("Không thể xóa — có thể đang có sản phẩm dùng danh mục này.");
         setConfirmingDelete(false);
       }
+    });
+  }
+
+  function handleGenderChange(newGender: "nam" | "nu" | "unisex") {
+    setGender(newGender);
+    startTransition(async () => {
+      const result = await updateCategoryGender(category.id, newGender);
+      if (result && "error" in result) setError(result.error);
     });
   }
 
@@ -122,6 +131,20 @@ export function CategoryRow({ category }: { category: Category }) {
 
       {/* Value */}
       <td className="px-4 py-3 text-muted">{category.value}</td>
+
+      {/* Giới tính */}
+      <td className="px-4 py-3">
+        <select
+          value={gender}
+          onChange={(e) => handleGenderChange(e.target.value as "nam" | "nu" | "unisex")}
+          disabled={isPending}
+          className="border border-line bg-white px-2 py-1 text-xs text-ink focus:border-gold focus:outline-none disabled:opacity-50"
+        >
+          <option value="unisex">Unisex</option>
+          <option value="nam">Nam</option>
+          <option value="nu">Nữ</option>
+        </select>
+      </td>
 
       {/* Thao tác */}
       <td className="px-4 py-3">

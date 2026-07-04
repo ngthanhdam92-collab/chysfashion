@@ -22,10 +22,16 @@ export function HomepageFeaturedCategories({ categories, selected }: Props) {
     setSaved(false);
   }
 
+  // Positions follow the visual list order (top = 1), not the order they were ticked
+  const orderedChecked = categories
+    .filter((cat) => checked.includes(cat.value))
+    .map((cat) => cat.value);
+
   function handleSave() {
     setError(null);
     startTransition(async () => {
-      const res = await saveFeaturedCategories(checked);
+      // Save in list order (top-to-bottom), not tick order
+      const res = await saveFeaturedCategories(orderedChecked);
       if (res?.error) setError(res.error);
       else setSaved(true);
     });
@@ -34,7 +40,7 @@ export function HomepageFeaturedCategories({ categories, selected }: Props) {
   return (
     <div>
       <p className="mb-3 text-xs text-muted">
-        Tick các danh mục muốn hiển thị — thứ tự hiển thị theo thứ tự tích bên dưới
+        Tick các danh mục muốn hiển thị — vị trí 1 là danh mục đứng đầu danh sách
       </p>
 
       {error && (
@@ -46,6 +52,7 @@ export function HomepageFeaturedCategories({ categories, selected }: Props) {
       <div className="divide-y divide-line border border-line bg-white">
         {categories.map((cat) => {
           const isChecked = checked.includes(cat.value);
+          const position = orderedChecked.indexOf(cat.value) + 1;
           return (
             <label
               key={cat.id}
@@ -62,7 +69,7 @@ export function HomepageFeaturedCategories({ categories, selected }: Props) {
               <span className="text-sm text-ink">{cat.label}</span>
               {isChecked && (
                 <span className="ml-auto text-xs text-muted">
-                  Vị trí {checked.indexOf(cat.value) + 1}
+                  Vị trí {position}
                 </span>
               )}
             </label>

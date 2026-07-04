@@ -56,6 +56,23 @@ export async function updateCategoryImage(id: string, imageUrl: string): Promise
   return { success: true };
 }
 
+export async function updateCategoryGender(
+  id: string,
+  gender: "nam" | "nu" | "unisex"
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("categories")
+    .update({ gender })
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/categories");
+  revalidatePath("/");
+  return { success: true };
+}
+
 export async function deleteCategory(id: string): Promise<ActionResult> {
   const supabase = await createClient();
   const { error } = await supabase.from("categories").delete().eq("id", id);
