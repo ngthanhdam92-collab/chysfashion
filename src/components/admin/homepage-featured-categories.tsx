@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { ChevronUp, ChevronDown } from "lucide-react";
 import { saveFeaturedCategories } from "@/lib/homepage-settings-actions";
 import type { Category } from "@/lib/categories";
 
@@ -22,25 +23,47 @@ export function HomepageFeaturedCategories({ categories, selected }: Props) {
     setSaved(false);
   }
 
-  // Positions follow the visual list order (top = 1), not the order they were ticked
-  const orderedChecked = categories
-    .filter((cat) => checked.includes(cat.value))
-    .map((cat) => cat.value);
+  function moveUp(value: string) {
+    setChecked((prev) => {
+      const idx = prev.indexOf(value);
+      if (idx <= 0) return prev;
+      const next = [...prev];
+      [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+      return next;
+    });
+    setSaved(false);
+  }
+
+  function moveDown(value: string) {
+    setChecked((prev) => {
+      const idx = prev.indexOf(value);
+      if (idx < 0 || idx >= prev.length - 1) return prev;
+      const next = [...prev];
+      [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+      return next;
+    });
+    setSaved(false);
+  }
 
   function handleSave() {
     setError(null);
     startTransition(async () => {
-      // Save in list order (top-to-bottom), not tick order
-      const res = await saveFeaturedCategories(orderedChecked);
+      const res = await saveFeaturedCategories(checked);
       if (res?.error) setError(res.error);
       else setSaved(true);
     });
   }
 
+  // Checked items first (in user-defined order), then unchecked
+  const checkedCats = checked
+    .map((v) => categories.find((c) => c.value === v))
+    .filter(Boolean) as Category[];
+  const uncheckedCats = categories.filter((c) => !checked.includes(c.value));
+
   return (
     <div>
       <p className="mb-3 text-xs text-muted">
-        Tick các danh mục muốn hiển thị — vị trí 1 là danh mục đứng đầu danh sách
+        Tick danh mục muốn hiển thị, dùng nút ↑↓ để sắp xếp thứ tự hiển thị trên trang chủ
       </p>
 
       {error && (
@@ -50,31 +73,60 @@ export function HomepageFeaturedCategories({ categories, selected }: Props) {
       )}
 
       <div className="divide-y divide-line border border-line bg-white">
-        {categories.map((cat) => {
-          const isChecked = checked.includes(cat.value);
-          const position = orderedChecked.indexOf(cat.value) + 1;
-          return (
-            <label
-              key={cat.id}
-              className={`flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors hover:bg-cream ${
-                isChecked ? "bg-gold/5" : ""
-              }`}
-            >
-              <input
-                type="checkbox"
-                checked={isChecked}
-                onChange={() => toggle(cat.value)}
-                className="h-4 w-4 accent-gold-dark"
-              />
-              <span className="text-sm text-ink">{cat.label}</span>
-              {isChecked && (
-                <span className="ml-auto text-xs text-muted">
-                  Vị trí {position}
-                </span>
-              )}
-            </label>
-          );
-        })}
+        {/* Checked items — user-controlled order */}
+        {checkedCats.map((cat, idx) => (
+          <div
+            key={cat.id}
+            className="flex items-center gap-3 bg-gold/5 px-4 py-3"
+          >
+            <input
+              type="checkbox"
+              checked
+              onChange={() => toggle(cat.value)}
+              className="h-4 w-4 accent-gold-dark"
+            />
+            <span className="text-sm text-ink">{cat.label}</span>
+            <span className="ml-auto text-xs font-medium text-gold-dark">
+              Vị trí {idx + 1}
+            </span>
+            <div className="flex flex-col">
+              <button
+                type="button"
+                onClick={() => moveUp(cat.value)}
+                disabled={idx === 0}
+                className="p-0.5 text-muted hover:text-ink disabled:opacity-20"
+                aria-label="Lên"
+              >
+                <ChevronUp size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={() => moveDown(cat.value)}
+                disabled={idx === checkedCats.length - 1}
+                className="p-0.5 text-muted hover:text-ink disabled:opacity-20"
+                aria-label="Xuống"
+              >
+                <ChevronDown size={14} />
+              </button>
+            </div>
+          </div>
+        ))}
+
+        {/* Unchecked items */}
+        {uncheckedCats.map((cat) => (
+          <label
+            key={cat.id}
+            className="flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors hover:bg-cream"
+          >
+            <input
+              type="checkbox"
+              checked={false}
+              onChange={() => toggle(cat.value)}
+              className="h-4 w-4 accent-gold-dark"
+            />
+            <span className="text-sm text-ink">{cat.label}</span>
+          </label>
+        ))}
       </div>
 
       <div className="mt-3 flex items-center gap-3">
