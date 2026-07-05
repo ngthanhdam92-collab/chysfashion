@@ -47,7 +47,9 @@ export interface CreateOrderInput {
   items: OrderItem[];
   subtotal: number;
   shipping: number;
+  discount: number;
   total: number;
+  promoCode?: string;
 }
 
 export async function createOrder(
@@ -66,7 +68,9 @@ export async function createOrder(
     items: input.items,
     subtotal: input.subtotal,
     shipping: input.shipping,
+    discount: input.discount,
     total: input.total,
+    promo_code: input.promoCode || null,
   });
 
   if (error) {

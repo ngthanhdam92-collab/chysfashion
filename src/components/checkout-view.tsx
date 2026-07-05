@@ -3,10 +3,12 @@
 import { FormEvent, useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { CircleCheck, Trash2 } from "lucide-react";
+import { CircleCheck, Trash2, Tag } from "lucide-react";
 import { useCart } from "@/context/cart-context";
 import { formatVnd } from "@/lib/utils";
 import { createOrder } from "@/lib/orders";
+import { validatePromoCode, type ValidateResult } from "@/lib/promotions-actions";
+import { getShippingRules, calcShippingFee, type ShippingRule } from "@/lib/shipping";
 import { CtaButton } from "./cta-button";
 import { ProductImagePlaceholder } from "./product-image-placeholder";
 
@@ -43,12 +45,26 @@ export function CheckoutView() {
   const [loadingDistricts, setLoadingDistricts] = useState(false);
   const [loadingWards, setLoadingWards]         = useState(false);
 
+  /* ── Promo code ── */
+  const [promoInput, setPromoInput]   = useState("");
+  const [promoApplied, setPromoApplied] = useState<(ValidateResult & { code: string }) | null>(null);
+  const [promoError, setPromoError]   = useState<string | null>(null);
+  const [promoLoading, setPromoLoading] = useState(false);
+
+  /* ── Shipping rules from DB ── */
+  const [shippingRules, setShippingRules] = useState<ShippingRule[]>([]);
+
   /* Load provinces once */
   useEffect(() => {
     fetch("https://provinces.open-api.vn/api/p/")
       .then((r) => r.json())
       .then(setProvinces)
       .catch(() => {});
+  }, []);
+
+  /* Load shipping rules once */
+  useEffect(() => {
+    getShippingRules().then(setShippingRules).catch(() => {});
   }, []);
 
   /* Load districts when province changes */
@@ -73,8 +89,33 @@ export function CheckoutView() {
       .finally(() => setLoadingWards(false));
   }, [district?.code]);
 
-  const shipping = subtotal >= 500000 || subtotal === 0 ? 0 : 30000;
-  const total    = subtotal + shipping;
+  /* ── Computed totals ── */
+  const discount = promoApplied ? promoApplied.discount : 0;
+  const discountedSubtotal = Math.max(0, subtotal - discount);
+  const baseFee = calcShippingFee(discountedSubtotal, shippingRules);
+  const shipping = (promoApplied?.freeShipping) ? 0 : baseFee;
+  const total = discountedSubtotal + shipping;
+
+  async function handleApplyPromo() {
+    if (!promoInput.trim()) return;
+    setPromoLoading(true);
+    setPromoError(null);
+    const productSlugs = lines.map((l) => l.slug);
+    const result = await validatePromoCode(promoInput.trim(), subtotal, productSlugs);
+    setPromoLoading(false);
+    if ("error" in result) {
+      setPromoError(result.error);
+      setPromoApplied(null);
+      return;
+    }
+    setPromoApplied({ ...result, code: promoInput.trim().toUpperCase() });
+  }
+
+  function removePromo() {
+    setPromoApplied(null);
+    setPromoInput("");
+    setPromoError(null);
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -101,7 +142,9 @@ export function CheckoutView() {
       })),
       subtotal,
       shipping,
+      discount,
       total,
+      promoCode: promoApplied?.code,
     });
 
     setSubmitting(false);
@@ -340,16 +383,63 @@ export function CheckoutView() {
           ))}
         </div>
 
+        {/* ── Promo code ── */}
+        <div className="border border-line bg-white p-4">
+          <p className="mb-2 text-xs font-medium uppercase tracking-label text-muted">Mã khuyến mại</p>
+          {promoApplied ? (
+            <div className="flex items-center justify-between rounded bg-green-50 border border-green-200 px-3 py-2">
+              <div className="flex items-center gap-2">
+                <Tag size={14} className="text-green-600" />
+                <span className="text-sm font-medium text-green-700">{promoApplied.code}</span>
+                <span className="text-sm text-green-600">— {promoApplied.label}</span>
+              </div>
+              <button type="button" onClick={removePromo}
+                className="text-muted hover:text-error text-xs">Xóa</button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <input
+                value={promoInput}
+                onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleApplyPromo())}
+                placeholder="Nhập mã giảm giá"
+                className="flex-1 border border-line bg-white px-3 py-2 text-sm focus:border-gold focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={handleApplyPromo}
+                disabled={promoLoading || !promoInput.trim()}
+                className="px-4 py-2 bg-ink text-paper text-sm hover:bg-ink/85 disabled:opacity-50"
+              >
+                {promoLoading ? "..." : "Áp dụng"}
+              </button>
+            </div>
+          )}
+          {promoError && (
+            <p className="mt-1.5 text-xs text-error">{promoError}</p>
+          )}
+        </div>
+
         {/* Totals */}
         <div className="border border-line bg-white p-4 space-y-2">
           <div className="flex justify-between text-sm text-muted">
             <span>Tạm tính</span>
             <span>{formatVnd(subtotal)}</span>
           </div>
+          {discount > 0 && (
+            <div className="flex justify-between text-sm text-green-600">
+              <span>Giảm giá ({promoApplied?.code})</span>
+              <span>-{formatVnd(discount)}</span>
+            </div>
+          )}
           <div className="flex justify-between text-sm text-muted">
             <span>Vận chuyển</span>
             <span className={shipping === 0 ? "text-success font-medium" : ""}>
-              {shipping === 0 ? "Miễn phí" : formatVnd(shipping)}
+              {shipping === 0
+                ? promoApplied?.freeShipping
+                  ? "Miễn phí (mã KM)"
+                  : "Miễn phí"
+                : formatVnd(shipping)}
             </span>
           </div>
           <div className="flex justify-between border-t border-line pt-3 text-base font-semibold text-ink">
