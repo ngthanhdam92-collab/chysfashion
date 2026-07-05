@@ -93,43 +93,70 @@ export default async function HomePage() {
         </div>
       )}
 
-      {/* ── 3. COLLECTION BANNERS ── */}
+      {/* ── 3. COLLECTION BANNERS + PRODUCTS ── */}
       {collectionBanners.length > 0 && (
         <div>
-          {collectionBanners.map((cat, i) => (
-            <Link
-              key={cat.id}
-              href={`/san-pham?category=${cat.value}`}
-              className="group relative flex min-h-[260px] items-end overflow-hidden sm:min-h-[320px]"
-            >
-              {/* Background: real image or gradient fallback */}
-              {cat.imageUrl ? (
-                <Image
-                  src={cat.imageUrl}
-                  alt={cat.label}
-                  fill
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
-                  sizes="100vw"
-                />
-              ) : (
-                <div className={`absolute inset-0 bg-gradient-to-r ${COLLECTION_GRADIENTS[i]}`} />
-              )}
-              {/* Dark gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+          {collectionBanners.map((cat, i) => {
+            const catProducts = products
+              .filter((p) => p.category === cat.value)
+              .slice(0, 4);
+            return (
+              <div key={cat.id}>
+                {/* Banner */}
+                <Link
+                  href={`/san-pham?category=${cat.value}`}
+                  className="group relative flex min-h-[260px] items-end overflow-hidden sm:min-h-[320px]"
+                >
+                  {cat.imageUrl ? (
+                    <Image
+                      src={cat.imageUrl}
+                      alt={cat.label}
+                      fill
+                      className="object-cover transition-transform duration-700 group-hover:scale-105"
+                      sizes="100vw"
+                    />
+                  ) : (
+                    <div className={`absolute inset-0 bg-gradient-to-r ${COLLECTION_GRADIENTS[i]}`} />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                  <div className="relative w-full px-6 pb-8 sm:px-12 sm:pb-12 lg:px-20">
+                    <h3 className="font-sans text-4xl font-black uppercase leading-none tracking-tight text-white sm:text-5xl lg:text-6xl">
+                      {cat.label}
+                    </h3>
+                    <div className="mt-5">
+                      <span className="inline-block rounded-full bg-white px-7 py-2.5 text-[13px] font-semibold uppercase tracking-wide text-ink transition-colors group-hover:bg-gold group-hover:text-white">
+                        MUA NGAY
+                      </span>
+                    </div>
+                  </div>
+                </Link>
 
-              {/* Text + button — bottom left */}
-              <div className="relative w-full px-6 pb-8 sm:px-12 sm:pb-12 lg:px-20">
-                <h3 className="font-sans text-4xl font-black uppercase leading-none tracking-tight text-white sm:text-5xl lg:text-6xl">
-                  {cat.label}
-                </h3>
-                <div className="mt-5">
-                  <span className="inline-block rounded-full bg-white px-7 py-2.5 text-[13px] font-semibold uppercase tracking-wide text-ink transition-colors group-hover:bg-gold group-hover:text-white">
-                    MUA NGAY
-                  </span>
-                </div>
+                {/* Products from this category */}
+                {catProducts.length > 0 && (
+                  <div className="bg-white">
+                    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+                      <div className="mb-6 flex items-center justify-between">
+                        <h3 className="text-base font-black uppercase tracking-widest text-ink sm:text-lg">
+                          Sản phẩm {cat.label}
+                        </h3>
+                        <Link
+                          href={`/san-pham?category=${cat.value}`}
+                          className="text-[11px] uppercase tracking-label text-muted underline hover:text-ink"
+                        >
+                          Xem thêm
+                        </Link>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                        {catProducts.map((product) => (
+                          <ProductCard key={product.id} product={product} />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            </Link>
-          ))}
+            );
+          })}
         </div>
       )}
 
