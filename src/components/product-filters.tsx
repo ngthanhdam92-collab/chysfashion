@@ -46,38 +46,53 @@ export function ProductFilters({ categories }: { categories: Category[] }) {
 
   return (
     <>
-      {/* ── MOBILE: compact horizontal chip rows ── */}
-      <div className="flex flex-col gap-3 lg:hidden">
+      {/* ── MOBILE: accordion sections ── */}
+      <div className="divide-y divide-line border border-line lg:hidden">
         {/* Gender */}
-        <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <span className="shrink-0 text-[10px] uppercase tracking-label text-muted">Giới tính:</span>
-          {GENDERS.map((opt) => (
-            <button key={opt.value} type="button" onClick={() => updateParam("gender", opt.value)} className={chip(gender === opt.value)}>
-              {opt.label}
-            </button>
-          ))}
-        </div>
+        <details>
+          <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3">
+            <span className="text-[11px] uppercase tracking-label text-ink">Giới tính</span>
+            {gender && <span className="text-xs text-gold-dark capitalize">{gender}</span>}
+          </summary>
+          <div className="flex flex-wrap gap-2 px-4 pb-4">
+            {GENDERS.map((opt) => (
+              <button key={opt.value} type="button" onClick={() => updateParam("gender", opt.value)} className={chip(gender === opt.value)}>
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </details>
 
         {/* Category */}
-        <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <span className="shrink-0 text-[10px] uppercase tracking-label text-muted">Danh mục:</span>
-          <button type="button" onClick={() => updateParam("category", "")} className={chip(category === "")}>Tất cả</button>
-          {categories.map((c) => (
-            <button key={c.value} type="button" onClick={() => updateParam("category", c.value)} className={chip(category === c.value)}>
-              {c.label}
-            </button>
-          ))}
-        </div>
+        <details>
+          <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3">
+            <span className="text-[11px] uppercase tracking-label text-ink">Danh mục</span>
+            {category && <span className="text-xs text-gold-dark">{categories.find(c => c.value === category)?.label}</span>}
+          </summary>
+          <div className="flex flex-wrap gap-2 px-4 pb-4">
+            <button type="button" onClick={() => updateParam("category", "")} className={chip(category === "")}>Tất cả</button>
+            {categories.map((c) => (
+              <button key={c.value} type="button" onClick={() => updateParam("category", c.value)} className={chip(category === c.value)}>
+                {c.label}
+              </button>
+            ))}
+          </div>
+        </details>
 
         {/* Quick filters */}
-        <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <span className="shrink-0 text-[10px] uppercase tracking-label text-muted">Bộ lọc:</span>
-          {QUICK_FILTERS.map((opt) => (
-            <button key={opt.value} type="button" onClick={() => updateParam("filter", opt.value)} className={chip(filter === opt.value)}>
-              {opt.label}
-            </button>
-          ))}
-        </div>
+        <details>
+          <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3">
+            <span className="text-[11px] uppercase tracking-label text-ink">Bộ lọc nhanh</span>
+            {filter && <span className="text-xs text-gold-dark">{QUICK_FILTERS.find(f => f.value === filter)?.label}</span>}
+          </summary>
+          <div className="flex flex-wrap gap-2 px-4 pb-4">
+            {QUICK_FILTERS.map((opt) => (
+              <button key={opt.value} type="button" onClick={() => updateParam("filter", opt.value)} className={chip(filter === opt.value)}>
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </details>
       </div>
 
       {/* ── DESKTOP: vertical sidebar ── */}
