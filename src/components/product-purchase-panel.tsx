@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Minus, Plus, Check, X, Ruler, Flame, AlertTriangle } from "lucide-react";
 import { Product } from "@/lib/types";
@@ -25,6 +25,23 @@ export function ProductPurchasePanel({ product, selectedColor, onColorChange, fl
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [showSizeGuide, setShowSizeGuide] = useState(false);
+  const [showSticky, setShowSticky] = useState(false);
+  const ctaRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ctaRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) {
+        // Show only when CTA has scrolled off the TOP (user scrolled past it)
+        setShowSticky(entry.boundingClientRect.top < 0);
+      } else {
+        setShowSticky(false);
+      }
+    }, { threshold: 0 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
 
   // Sync color when parent changes it
   const activeColor = selectedColor ?? color;
@@ -246,7 +263,7 @@ export function ProductPurchasePanel({ product, selectedColor, onColorChange, fl
           </div>
         </div>
       ) : (
-        <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+        <div ref={ctaRef} className="mt-9 flex flex-col gap-3 sm:flex-row">
           <button
             onClick={handleAddToCart}
             className="flex flex-1 items-center justify-center gap-2 border border-ink px-6 py-3.5 text-[12px] tracking-label uppercase text-ink transition-colors hover:bg-ink hover:text-paper"
@@ -264,6 +281,36 @@ export function ProductPurchasePanel({ product, selectedColor, onColorChange, fl
             className="flex-1 bg-ink px-6 py-3.5 text-[12px] tracking-label uppercase text-paper transition-colors hover:bg-ink/85"
           >
             Mua ngay
+          </button>
+        </div>
+      )}
+
+      {/* Sticky mobile bar — appears when CTA buttons scroll off screen */}
+      {showSticky && !outOfStock && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center gap-3 border-t border-line bg-paper/95 px-4 py-3 backdrop-blur lg:hidden"
+          style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+        >
+          <div className="min-w-0 flex-1">
+            {(size || activeColor) && (
+              <p className="truncate text-[11px] text-muted">
+                {[activeColor, size].filter(Boolean).join(" · ")}
+              </p>
+            )}
+            <p className={`text-base font-bold ${flashPrice !== null ? "text-red-600" : "text-ink"}`}>
+              {formatVnd(flashPrice ?? price)}
+            </p>
+          </div>
+          <button
+            onClick={handleBuyNow}
+            className="shrink-0 border border-ink px-4 py-2.5 text-[11px] tracking-label uppercase text-ink transition-colors hover:bg-ink hover:text-paper"
+          >
+            Mua ngay
+          </button>
+          <button
+            onClick={handleAddToCart}
+            className="shrink-0 bg-ink px-4 py-2.5 text-[11px] tracking-label uppercase text-paper transition-colors hover:bg-ink/85"
+          >
+            {added ? <Check size={14} /> : "Thêm vào giỏ"}
           </button>
         </div>
       )}
