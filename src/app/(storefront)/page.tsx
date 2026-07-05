@@ -216,7 +216,7 @@ export default async function HomePage() {
       {/* ── 6. CAM KẾT KHÁCH HÀNG ── */}
       <section className="bg-ink">
         <div className="mx-auto max-w-7xl px-4 py-16 text-center sm:px-6 lg:px-8">
-          <p className="text-[11px] tracking-label uppercase text-gold">
+          <p className="text-base tracking-label uppercase text-gold sm:text-lg">
             Cam kết của chúng tôi
           </p>
           <h2 className="mt-3 font-serif text-2xl text-paper sm:text-3xl lg:text-4xl">
