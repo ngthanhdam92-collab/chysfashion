@@ -90,7 +90,7 @@ export function HomepageCollectionBanners({ categories, selectedValues }: Props)
   return (
     <div className="space-y-5">
       <p className="text-xs text-muted">
-        Ảnh banner nên có tỷ lệ ngang (~16:5). Kích thước khuyến nghị: 1440×450px.
+        Dùng cùng kích thước với banner chính: tỉ lệ 8:3, kích thước 1440×540px.
       </p>
 
       {SLOTS.map((_, idx) => {
@@ -130,7 +130,7 @@ export function HomepageCollectionBanners({ categories, selectedValues }: Props)
               }}
               disabled={!catValue}
               className="group relative flex w-full items-end overflow-hidden bg-slate-100 disabled:cursor-not-allowed"
-              style={{ aspectRatio: "16/5" }}
+              style={{ aspectRatio: "8/3" }}
               title={catValue ? "Click để đổi ảnh banner" : "Chọn danh mục trước"}
             >
               {imgUrl && (

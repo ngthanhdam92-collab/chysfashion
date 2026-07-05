@@ -115,7 +115,7 @@ export default async function HomePage() {
                 {/* Banner */}
                 <Link
                   href={`/san-pham?category=${cat.value}`}
-                  className="group relative flex min-h-[260px] items-end overflow-hidden sm:min-h-[320px]"
+                  className="group relative flex aspect-[8/3] items-end overflow-hidden"
                 >
                   {(cat.bannerImageUrl ?? cat.imageUrl) ? (
                     <Image
