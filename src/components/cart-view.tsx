@@ -2,13 +2,22 @@
 
 import Link from "next/link";
 import { Minus, Plus, X } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useCart } from "@/context/cart-context";
 import { formatVnd } from "@/lib/utils";
+import { getShippingRules, calcShippingFee, type ShippingRule } from "@/lib/shipping";
 import { ProductImagePlaceholder } from "./product-image-placeholder";
 import { CtaButton } from "./cta-button";
 
 export function CartView() {
   const { lines, updateQuantity, removeLine, subtotal } = useCart();
+  const [shippingRules, setShippingRules] = useState<ShippingRule[]>([]);
+
+  useEffect(() => {
+    getShippingRules().then(setShippingRules);
+  }, []);
+
+  const shipping = calcShippingFee(subtotal, shippingRules);
 
   if (lines.length === 0) {
     return (
@@ -98,11 +107,13 @@ export function CartView() {
         </div>
         <div className="mt-2 flex justify-between text-sm text-muted">
           <span>Vận chuyển</span>
-          <span>{subtotal >= 500000 ? "Miễn phí" : formatVnd(30000)}</span>
+          <span className={shipping === 0 ? "font-medium text-green-600" : ""}>
+            {shipping === 0 ? "Miễn phí" : formatVnd(shipping)}
+          </span>
         </div>
         <div className="mt-4 flex justify-between border-t border-line pt-4 text-sm font-medium text-ink">
           <span>Tổng cộng</span>
-          <span>{formatVnd(subtotal >= 500000 ? subtotal : subtotal + 30000)}</span>
+          <span>{formatVnd(subtotal + shipping)}</span>
         </div>
         <Link
           href="/thanh-toan"
