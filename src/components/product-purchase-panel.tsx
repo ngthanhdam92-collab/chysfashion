@@ -189,19 +189,38 @@ export function ProductPurchasePanel({ product, selectedColor, onColorChange, fl
         </div>
 
         <div className="mt-3 flex flex-wrap gap-2">
-          {product.sizes.map((s) => (
-            <button
-              key={s}
-              onClick={() => setSize(s)}
-              className={`min-w-11 border px-3 py-2 text-sm transition-colors ${
-                size === s
-                  ? "border-ink bg-ink text-paper"
-                  : "border-line text-ink hover:border-ink"
-              }`}
-            >
-              {s}
-            </button>
-          ))}
+          {product.sizes.map((s) => {
+            const isSoldOut = hasVariants
+              ? (product.variants.find((v) => v.color === activeColor && v.size === s)?.stock ?? 1) === 0
+              : false;
+            const isSelected = size === s;
+            return (
+              <button
+                key={s}
+                onClick={() => { if (!isSoldOut) setSize(s); }}
+                disabled={isSoldOut}
+                title={isSoldOut ? "Hết hàng" : undefined}
+                className={`relative min-w-11 overflow-hidden border px-3 py-2 text-sm transition-colors ${
+                  isSoldOut
+                    ? "cursor-not-allowed border-line text-muted/50"
+                    : isSelected
+                      ? "border-ink bg-ink text-paper"
+                      : "border-line text-ink hover:border-ink"
+                }`}
+              >
+                {s}
+                {isSoldOut && (
+                  <svg
+                    className="pointer-events-none absolute inset-0 h-full w-full"
+                    aria-hidden="true"
+                    preserveAspectRatio="none"
+                  >
+                    <line x1="0" y1="100%" x2="100%" y2="0" stroke="#9a9691" strokeWidth="1.5" />
+                  </svg>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
