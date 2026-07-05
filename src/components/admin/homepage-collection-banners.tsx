@@ -1,27 +1,67 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useTransition } from "react";
 import Image from "next/image";
 import { Camera, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { updateCategoryBannerImage } from "@/lib/categories-actions";
+import { saveCollectionBanners } from "@/lib/homepage-settings-actions";
 import type { Category } from "@/lib/categories";
 
 interface Props {
-  banners: Category[]; // top 3 featured categories
+  categories: Category[];
+  selectedValues: string[]; // current 3 banner category values
 }
 
-export function HomepageCollectionBanners({ banners }: Props) {
-  const [images, setImages] = useState<Record<string, string>>(
-    Object.fromEntries(banners.map((b) => [b.id, b.bannerImageUrl ?? ""]))
-  );
-  const [uploading, setUploading] = useState<Record<string, boolean>>({});
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
+const SLOTS = [1, 2, 3];
 
-  async function handleUpload(cat: Category, file: File) {
-    setUploading((p) => ({ ...p, [cat.id]: true }));
-    setErrors((p) => ({ ...p, [cat.id]: "" }));
+export function HomepageCollectionBanners({ categories, selectedValues }: Props) {
+  // Slots: array of 3 category values (empty string = none selected)
+  const [slots, setSlots] = useState<string[]>([
+    selectedValues[0] ?? "",
+    selectedValues[1] ?? "",
+    selectedValues[2] ?? "",
+  ]);
+  const [uploading, setUploading] = useState<Record<number, boolean>>({});
+  const [uploadErrors, setUploadErrors] = useState<Record<number, string>>({});
+  // Local banner image overrides after upload
+  const [bannerImages, setBannerImages] = useState<Record<string, string>>(
+    Object.fromEntries(categories.map((c) => [c.value, c.bannerImageUrl ?? ""]))
+  );
+  const [isPending, startTransition] = useTransition();
+  const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const fileRefs = useRef<Record<number, HTMLInputElement | null>>({});
+
+  function getCat(value: string): Category | undefined {
+    return categories.find((c) => c.value === value);
+  }
+
+  function handleSlotChange(idx: number, value: string) {
+    setSlots((prev) => {
+      const next = [...prev];
+      next[idx] = value;
+      return next;
+    });
+    setSaved(false);
+  }
+
+  function handleSave() {
+    setSaveError(null);
+    startTransition(async () => {
+      const res = await saveCollectionBanners(slots.filter(Boolean));
+      if (res && "error" in res) setSaveError(res.error);
+      else setSaved(true);
+    });
+  }
+
+  async function handleUpload(slotIdx: number, file: File) {
+    const catValue = slots[slotIdx];
+    const cat = getCat(catValue);
+    if (!cat) return;
+
+    setUploading((p) => ({ ...p, [slotIdx]: true }));
+    setUploadErrors((p) => ({ ...p, [slotIdx]: "" }));
     try {
       const supabase = createClient();
       const ext = file.name.split(".").pop();
@@ -34,67 +74,84 @@ export function HomepageCollectionBanners({ banners }: Props) {
       const url = data.publicUrl;
       const result = await updateCategoryBannerImage(cat.id, url);
       if (result && "error" in result) throw new Error(result.error);
-      setImages((p) => ({ ...p, [cat.id]: url }));
+      setBannerImages((p) => ({ ...p, [catValue]: url }));
     } catch (err) {
-      setErrors((p) => ({
+      setUploadErrors((p) => ({
         ...p,
-        [cat.id]: err instanceof Error ? err.message : "Upload thất bại",
+        [slotIdx]: err instanceof Error ? err.message : "Upload thất bại",
       }));
     } finally {
-      setUploading((p) => ({ ...p, [cat.id]: false }));
-      const ref = fileRefs.current[cat.id];
+      setUploading((p) => ({ ...p, [slotIdx]: false }));
+      const ref = fileRefs.current[slotIdx];
       if (ref) ref.value = "";
     }
   }
 
-  if (banners.length === 0) {
-    return (
-      <p className="text-sm text-muted">
-        Chưa có danh mục nổi bật nào. Hãy thêm danh mục ở mục trên trước.
-      </p>
-    );
-  }
-
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <p className="text-xs text-muted">
-        Ảnh banner nên có tỷ lệ ngang (~16:5) để hiển thị đẹp nhất. Kích thước khuyến nghị: 1440×450px.
+        Ảnh banner nên có tỷ lệ ngang (~16:5). Kích thước khuyến nghị: 1440×450px.
       </p>
-      {banners.map((cat, idx) => {
-        const imgUrl = images[cat.id];
-        const isUploading = uploading[cat.id];
-        const err = errors[cat.id];
+
+      {SLOTS.map((_, idx) => {
+        const catValue = slots[idx];
+        const cat = getCat(catValue);
+        const imgUrl = catValue ? (bannerImages[catValue] || cat?.imageUrl || "") : "";
+        const isUploading = uploading[idx];
+        const err = uploadErrors[idx];
+
         return (
-          <div key={cat.id} className="border border-line bg-white">
-            {/* Banner preview */}
+          <div key={idx} className="border border-line bg-white">
+            {/* Category selector */}
+            <div className="flex items-center gap-3 border-b border-line px-4 py-3">
+              <span className="shrink-0 text-xs font-semibold uppercase tracking-wide text-muted">
+                Banner {idx + 1}
+              </span>
+              <select
+                value={catValue}
+                onChange={(e) => handleSlotChange(idx, e.target.value)}
+                className="flex-1 border border-line bg-white px-3 py-1.5 text-sm text-ink focus:border-gold focus:outline-none"
+              >
+                <option value="">— Chọn danh mục —</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Banner image preview */}
             <button
               type="button"
-              onClick={() => fileRefs.current[cat.id]?.click()}
-              className="group relative flex w-full items-end overflow-hidden bg-slate-100"
+              onClick={() => {
+                if (!catValue) return;
+                fileRefs.current[idx]?.click();
+              }}
+              disabled={!catValue}
+              className="group relative flex w-full items-end overflow-hidden bg-slate-100 disabled:cursor-not-allowed"
               style={{ aspectRatio: "16/5" }}
-              title="Click để đổi ảnh banner"
+              title={catValue ? "Click để đổi ảnh banner" : "Chọn danh mục trước"}
             >
-              {imgUrl ? (
+              {imgUrl && (
                 <Image
                   src={imgUrl}
-                  alt={cat.label}
+                  alt={cat?.label ?? ""}
                   fill
                   className="object-cover"
                   sizes="(min-width: 768px) 700px, 100vw"
                 />
-              ) : null}
-              {/* Overlay */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/30 opacity-0 transition-opacity group-hover:opacity-100">
-                <Camera size={22} className="text-white" />
-                <span className="text-xs font-medium text-white">
-                  {imgUrl ? "Đổi ảnh banner" : "Upload ảnh banner"}
-                </span>
-              </div>
-              {/* Position badge */}
-              <div className="absolute left-3 top-3 rounded bg-ink/70 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
-                Banner {idx + 1} — {cat.label}
-              </div>
-              {/* Loading spinner */}
+              )}
+              {/* Hover overlay */}
+              {catValue && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/30 opacity-0 transition-opacity group-hover:opacity-100">
+                  <Camera size={22} className="text-white" />
+                  <span className="text-xs font-medium text-white">
+                    {imgUrl ? "Đổi ảnh banner" : "Upload ảnh banner"}
+                  </span>
+                </div>
+              )}
+              {/* Loading */}
               {isUploading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                   <Loader2 size={28} className="animate-spin text-white" />
@@ -104,28 +161,41 @@ export function HomepageCollectionBanners({ banners }: Props) {
               {!imgUrl && !isUploading && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-slate-400">
                   <Camera size={28} />
-                  <span className="text-xs">Chưa có ảnh — Click để upload</span>
+                  <span className="text-xs">
+                    {catValue ? "Chưa có ảnh — Click để upload" : "Chọn danh mục để upload ảnh"}
+                  </span>
                 </div>
               )}
             </button>
 
-            {err && (
-              <p className="px-3 py-1.5 text-xs text-error">{err}</p>
-            )}
+            {err && <p className="px-3 py-1.5 text-xs text-error">{err}</p>}
 
             <input
-              ref={(el) => { fileRefs.current[cat.id] = el; }}
+              ref={(el) => { fileRefs.current[idx] = el; }}
               type="file"
               accept="image/*"
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0];
-                if (file) handleUpload(cat, file);
+                if (file) handleUpload(idx, file);
               }}
             />
           </div>
         );
       })}
+
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={isPending}
+          className="bg-ink px-5 py-2 text-[12px] uppercase tracking-label text-paper hover:bg-ink/85 disabled:opacity-50"
+        >
+          {isPending ? "Đang lưu…" : "Lưu banner"}
+        </button>
+        {saved && <span className="text-xs text-emerald-600">Đã lưu ✓</span>}
+        {saveError && <span className="text-xs text-error">{saveError}</span>}
+      </div>
 
       <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
         <strong>SQL cần chạy:</strong>

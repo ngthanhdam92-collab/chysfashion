@@ -24,3 +24,7 @@ export async function saveFeaturedCategories(values: string[]) {
 export async function saveNewCollectionCategory(value: string | null) {
   return upsert({ newCollectionCategory: value ?? "" });
 }
+
+export async function saveCollectionBanners(values: string[]) {
+  return upsert({ collectionBannerValues: values });
+}

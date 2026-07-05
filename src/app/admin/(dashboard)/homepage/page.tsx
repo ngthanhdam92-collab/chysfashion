@@ -17,11 +17,10 @@ export default async function HomepagePage() {
   const bestsellerCount = products.filter((p) => p.isBestSeller).length;
   const newCount = products.filter((p) => p.isNew).length;
 
-  // Top 3 featured categories = collection banners
-  const collectionBanners = settings.featuredCategoryValues
-    .slice(0, 3)
-    .map((v) => categories.find((c) => c.value === v))
-    .filter((c): c is NonNullable<typeof c> => c !== undefined);
+  // Fallback: if no banner values set yet, use top 3 featured
+  const bannerValues = settings.collectionBannerValues.length > 0
+    ? settings.collectionBannerValues
+    : settings.featuredCategoryValues.slice(0, 3);
 
   return (
     <div className="space-y-10">
@@ -57,7 +56,10 @@ export default async function HomepagePage() {
           </p>
         </div>
         <div className="mt-4">
-          <HomepageCollectionBanners banners={collectionBanners} />
+          <HomepageCollectionBanners
+            categories={categories}
+            selectedValues={bannerValues}
+          />
         </div>
       </section>
 

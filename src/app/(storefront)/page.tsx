@@ -38,7 +38,14 @@ export default async function HomePage() {
     .map((v) => allCategories.find((c) => c.value === v))
     .filter(Boolean) as typeof allCategories;
 
-  const collectionBanners = featuredCategories.slice(0, 3);
+  // Use independently configured banner slots, fall back to top 3 featured
+  const bannerValues = settings.collectionBannerValues.length > 0
+    ? settings.collectionBannerValues
+    : settings.featuredCategoryValues.slice(0, 3);
+
+  const collectionBanners = bannerValues
+    .map((v) => allCategories.find((c) => c.value === v))
+    .filter(Boolean) as typeof allCategories;
 
   const bestSellers = products.filter((p) => p.isBestSeller).slice(0, 6);
 
