@@ -36,7 +36,7 @@ export function ProductCard({ product }: { product: Product }) {
     e.stopPropagation();
     if (product.stock === 0) return;
     addItem(
-      { productId: product.id, slug: product.slug, name: product.name, price, color: selectedColor, size: selectedSize },
+      { productId: product.id, slug: product.slug, name: product.name, price, color: selectedColor, size: selectedSize, image: product.images[0] },
       1
     );
     setAdded(true);

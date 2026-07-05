@@ -52,6 +52,7 @@ export function ProductPurchasePanel({ product, selectedColor, onColorChange }: 
         price,
         color: activeColor,
         size,
+        image: product.colors.find((c) => c.name === activeColor)?.images?.[0] ?? product.images[0],
       },
       quantity
     );
