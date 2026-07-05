@@ -57,8 +57,8 @@ export default async function ProductListingPage({ searchParams }: Params) {
   } else if (gender === "nu") {
     breadcrumbItems.push({ label: "Nữ" });
   } else if (category) {
-    const cat = categories.find((c) => c.slug === category);
-    breadcrumbItems.push({ label: cat?.name ?? category });
+    const cat = categories.find((c) => c.value === category);
+    breadcrumbItems.push({ label: cat?.label ?? category });
   } else if (filter === "moi") {
     breadcrumbItems.push({ label: "Hàng mới" });
   } else if (filter === "sale") {
@@ -71,7 +71,7 @@ export default async function ProductListingPage({ searchParams }: Params) {
     ? `"${q.trim()}"`
     : gender === "nam" ? "Thời trang Nam"
     : gender === "nu" ? "Thời trang Nữ"
-    : category ? (categories.find((c) => c.slug === category)?.name ?? "Danh mục")
+    : category ? (categories.find((c) => c.value === category)?.label ?? "Danh mục")
     : filter === "moi" ? "Hàng mới về"
     : filter === "sale" ? "Khuyến mãi"
     : filter === "bestseller" ? "Bán chạy nhất"
