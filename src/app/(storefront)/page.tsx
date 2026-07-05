@@ -167,20 +167,7 @@ export default async function HomePage() {
         </div>
       )}
 
-      {/* ── 4. USP BAR ── */}
-      <section className="border-y border-line bg-surface">
-        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-6 px-4 py-10 sm:px-6 lg:grid-cols-4 lg:px-8">
-          {USPS.map(({ icon: Icon, title, desc }) => (
-            <div key={title} className="flex flex-col items-center gap-2 text-center">
-              <Icon size={24} strokeWidth={1.5} className="text-gold-dark" />
-              <p className="text-sm font-medium text-ink">{title}</p>
-              <p className="text-xs text-muted">{desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── 5. SẢN PHẨM BÁN CHẠY — 6 cột ── */}
+      {/* ── 4. SẢN PHẨM BÁN CHẠY — 6 cột ── */}
       {bestSellers.length > 0 && (
         <section className="bg-cream/50">
           <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
@@ -201,6 +188,19 @@ export default async function HomePage() {
           </div>
         </section>
       )}
+
+      {/* ── 5. USP BAR ── */}
+      <section className="border-y border-line bg-surface">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-6 px-4 py-10 sm:px-6 lg:grid-cols-4 lg:px-8">
+          {USPS.map(({ icon: Icon, title, desc }) => (
+            <div key={title} className="flex flex-col items-center gap-2 text-center">
+              <Icon size={24} strokeWidth={1.5} className="text-gold-dark" />
+              <p className="text-sm font-medium text-ink">{title}</p>
+              <p className="text-xs text-muted">{desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* ── 6. CAM KẾT KHÁCH HÀNG ── */}
       <section className="bg-ink">
