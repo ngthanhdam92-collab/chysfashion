@@ -2,19 +2,22 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Minus, Plus, Check, X, Ruler } from "lucide-react";
+import { Minus, Plus, Check, X, Ruler, Flame } from "lucide-react";
 import { Product } from "@/lib/types";
 import { formatVnd } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
 import { DEFAULT_SIZE_CHART, mergeWithDefault, recommendSize, SizeChartRow } from "@/lib/size-chart";
+import { CountdownTimer } from "./countdown-timer";
+import type { FlashSaleWithProducts } from "@/lib/flash-sales";
 
 interface Props {
   product: Product;
   selectedColor?: string;
   onColorChange?: (color: string) => void;
+  flashSale?: FlashSaleWithProducts;
 }
 
-export function ProductPurchasePanel({ product, selectedColor, onColorChange }: Props) {
+export function ProductPurchasePanel({ product, selectedColor, onColorChange, flashSale }: Props) {
   const router = useRouter();
   const { addItem } = useCart();
   const [color, setColor] = useState(selectedColor ?? product.colors[0]?.name ?? "");
@@ -35,6 +38,9 @@ export function ProductPurchasePanel({ product, selectedColor, onColorChange }: 
     selectedVariant && selectedVariant.price > 0 ? selectedVariant.price : product.price;
   const compareAtPrice =
     selectedVariant?.compareAtPrice ?? product.compareAtPrice;
+  const flashPrice = flashSale
+    ? Math.round(price * (1 - flashSale.discountPercent / 100))
+    : null;
   const availableStock = hasVariants ? selectedVariant?.stock ?? 0 : product.stock;
   const outOfStock = availableStock === 0;
 
@@ -75,19 +81,49 @@ export function ProductPurchasePanel({ product, selectedColor, onColorChange }: 
         <span className="text-sm text-muted">({product.reviewCount} đánh giá)</span>
       </div>
 
+      {/* Flash Sale badge + timer */}
+      {flashSale && flashPrice !== null && (
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded border border-red-200 bg-red-50 px-3 py-2.5">
+          <div className="flex items-center gap-2">
+            <Flame size={15} className="text-red-600" fill="#dc2626" />
+            <span className="text-[11px] font-black uppercase tracking-wider text-red-600">
+              Flash Sale -{flashSale.discountPercent}%
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-muted">Kết thúc sau</span>
+            <CountdownTimer endTime={flashSale.endTime} size="sm" />
+          </div>
+        </div>
+      )}
+
       {/* Price */}
       <div className="mt-4">
-        {compareAtPrice && compareAtPrice > price && (
-          <p className="text-sm text-muted line-through">{formatVnd(compareAtPrice)}</p>
+        {flashPrice !== null ? (
+          <>
+            <p className="text-sm text-muted line-through">{formatVnd(price)}</p>
+            <div className="flex items-baseline gap-2.5">
+              <span className="text-2xl font-bold text-red-600">{formatVnd(flashPrice)}</span>
+              <span className="rounded-full bg-red-600 px-2 py-0.5 text-[11px] font-semibold text-white">
+                -{flashSale!.discountPercent}%
+              </span>
+            </div>
+          </>
+        ) : (
+          <>
+            {compareAtPrice && compareAtPrice > price && (
+              <p className="text-sm text-muted line-through">{formatVnd(compareAtPrice)}</p>
+            )}
+            <div className="flex items-center gap-2.5">
+              <span className="text-2xl font-bold text-ink">{formatVnd(price)}</span>
+              {compareAtPrice && compareAtPrice > price && (
+                <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[11px] font-semibold text-white">
+                  -{Math.round((1 - price / compareAtPrice) * 100)}%
+                </span>
+              )}
+            </div>
+          </>
         )}
-        <div className="flex items-center gap-2.5">
-          <span className="text-2xl font-bold text-ink">{formatVnd(price)}</span>
-          {compareAtPrice && compareAtPrice > price && (
-            <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[11px] font-semibold text-white">
-              -{Math.round((1 - price / compareAtPrice) * 100)}%
-            </span>
-          )}
-        </div>
       </div>
 
       {product.colors.length > 0 && (

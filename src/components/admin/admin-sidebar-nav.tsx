@@ -15,6 +15,7 @@ import {
   CirclePlay,
   Ticket,
   Truck,
+  Flame,
 } from "lucide-react";
 
 const NAV_GROUPS = [
@@ -40,6 +41,7 @@ const NAV_GROUPS = [
       { href: "/admin/orders", label: "Đơn hàng", icon: Receipt },
       { href: "/admin/customers", label: "Khách hàng", icon: Users },
       { href: "/admin/promotions", label: "Khuyến mại", icon: Ticket },
+      { href: "/admin/flash-sales", label: "Flash Sale", icon: Flame },
       { href: "/admin/shipping", label: "Vận chuyển", icon: Truck },
     ],
   },

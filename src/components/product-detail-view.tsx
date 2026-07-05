@@ -8,8 +8,9 @@ import { Product } from "@/lib/types";
 import { formatVnd } from "@/lib/utils";
 import { ProductImagePlaceholder } from "@/components/product-image-placeholder";
 import { ProductPurchasePanel } from "@/components/product-purchase-panel";
+import type { FlashSaleWithProducts } from "@/lib/flash-sales";
 
-export function ProductDetailView({ product, suggestedProducts }: { product: Product; suggestedProducts?: Product[] }) {
+export function ProductDetailView({ product, suggestedProducts, flashSale }: { product: Product; suggestedProducts?: Product[]; flashSale?: FlashSaleWithProducts | null }) {
   const [selectedColor, setSelectedColor] = useState(
     product.colors[0]?.name ?? ""
   );
@@ -102,6 +103,7 @@ export function ProductDetailView({ product, suggestedProducts }: { product: Pro
           product={product}
           selectedColor={selectedColor}
           onColorChange={handleColorChange}
+          flashSale={flashSale ?? undefined}
         />
         {suggestedProducts && suggestedProducts.length > 0 && (
           <RelatedSuggestions products={suggestedProducts} />
