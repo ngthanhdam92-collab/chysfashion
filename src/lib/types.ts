@@ -64,7 +64,9 @@ export interface Order {
   items: OrderItem[];
   subtotal: number;
   shipping: number;
+  discount: number;
   total: number;
+  promoCode: string | null;
   status: OrderStatus;
   createdAt: string;
 }

@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { Order, OrderItem, OrderStatus } from "./types";
 import { createPublicClient } from "./supabase/public";
 import { createClient } from "./supabase/server";
@@ -15,7 +16,9 @@ interface OrderRow {
   items: OrderItem[];
   subtotal: number;
   shipping: number;
+  discount: number;
   total: number;
+  promo_code: string | null;
   status: OrderStatus;
   created_at: string;
 }
@@ -32,7 +35,9 @@ function mapRow(row: OrderRow): Order {
     items: row.items,
     subtotal: Number(row.subtotal),
     shipping: Number(row.shipping),
+    discount: Number(row.discount ?? 0),
     total: Number(row.total),
+    promoCode: row.promo_code ?? null,
     status: row.status,
     createdAt: row.created_at,
   };
@@ -107,8 +112,20 @@ export async function getOrderById(id: string): Promise<Order | undefined> {
 export async function updateOrderStatus(id: string, status: OrderStatus) {
   const supabase = await createClient();
   const { error } = await supabase.from("orders").update({ status }).eq("id", id);
-  if (error) {
-    return { error: error.message };
-  }
+  if (error) return { error: error.message };
+  return { success: true };
+}
+
+export async function updateOrderCustomerInfo(
+  id: string,
+  data: { phone: string; address: string }
+) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("orders")
+    .update({ phone: data.phone, address: data.address })
+    .eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath(`/admin/orders/${id}`);
   return { success: true };
 }
