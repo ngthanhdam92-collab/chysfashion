@@ -11,6 +11,7 @@ import { getCategories } from "@/lib/categories";
 import { getHomepageSettings } from "@/lib/homepage-settings";
 import { getActiveStories } from "@/lib/stories";
 import { CtaButton } from "@/components/cta-button";
+import { ProductSlider } from "@/components/product-slider";
 
 const USPS = [
   { icon: Truck, title: "Miễn phí vận chuyển", desc: "Cho đơn hàng từ 500.000đ" },
@@ -155,11 +156,7 @@ export default async function HomePage() {
                           Xem thêm
                         </Link>
                       </div>
-                      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                        {catProducts.map((product) => (
-                          <ProductCard key={product.id} product={product} />
-                        ))}
-                      </div>
+                      <ProductSlider products={catProducts} desktopCols={4} />
                     </div>
                   </div>
                 )}
@@ -182,11 +179,7 @@ export default async function HomePage() {
                 Xem thêm →
               </Link>
             </div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-6">
-              {bestSellers.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
+            <ProductSlider products={bestSellers} desktopCols={6} />
           </div>
         </section>
       )}
@@ -203,11 +196,7 @@ export default async function HomePage() {
               Xem thêm →
             </Link>
           </div>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-6">
-            {newArrivals.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          <ProductSlider products={newArrivals} desktopCols={6} />
         </section>
       )}
 

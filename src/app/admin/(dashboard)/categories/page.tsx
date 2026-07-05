@@ -9,11 +9,6 @@ export default async function AdminCategoriesPage() {
     <div>
       <h1 className="mb-6 font-serif text-2xl text-ink">Danh mục</h1>
 
-      <div className="mb-4 rounded border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
-        <strong>SQL cần chạy trong Supabase:</strong>
-        <code className="ml-2 font-mono">ALTER TABLE categories ADD COLUMN IF NOT EXISTS gender TEXT DEFAULT &apos;unisex&apos;;</code>
-      </div>
-
       <div className="mb-6 border border-line bg-surface p-5">
         <AddCategoryForm />
       </div>

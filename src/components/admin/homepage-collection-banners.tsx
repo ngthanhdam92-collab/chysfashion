@@ -197,12 +197,6 @@ export function HomepageCollectionBanners({ categories, selectedValues }: Props)
         {saveError && <span className="text-xs text-error">{saveError}</span>}
       </div>
 
-      <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-        <strong>SQL cần chạy:</strong>
-        <code className="ml-2 font-mono">
-          ALTER TABLE categories ADD COLUMN IF NOT EXISTS banner_image_url TEXT;
-        </code>
-      </div>
     </div>
   );
 }
