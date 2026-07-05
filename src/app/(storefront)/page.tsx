@@ -95,11 +95,6 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* ── 2. FLASH SALE ── */}
-      {activeFlashSale && (
-        <FlashSaleSection sale={activeFlashSale} products={products} />
-      )}
-
       {/* ── 3. STORY CIRCLES + NAM/NỮ TOGGLE + CATEGORY CARDS ── */}
       {allCategories.length > 0 && (
         <div className="mx-auto max-w-7xl">
