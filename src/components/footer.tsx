@@ -32,6 +32,7 @@ export function Footer() {
           <div>
             <h4 className="text-[11px] tracking-label uppercase text-paper">Hỗ trợ</h4>
             <ul className="mt-4 space-y-2.5">
+              <li><Link href="/tra-cuu-don-hang" className="text-sm text-stone hover:text-gold transition-colors">Tra cứu đơn hàng</Link></li>
               <li><Link href="/lien-he" className="text-sm text-stone hover:text-gold transition-colors">Liên hệ</Link></li>
               <li><Link href="/huong-dan-mua-hang" className="text-sm text-stone hover:text-gold transition-colors">Hướng dẫn mua hàng</Link></li>
               <li><Link href="/huong-dan-chon-size" className="text-sm text-stone hover:text-gold transition-colors">Hướng dẫn chọn size</Link></li>
