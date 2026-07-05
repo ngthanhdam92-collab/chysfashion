@@ -3,6 +3,7 @@ import { ChevronDown } from "lucide-react";
 import { getProductBySlug, getRelatedProducts } from "@/lib/products";
 import { getActiveFlashSale } from "@/lib/flash-sales";
 import { ProductDetailView } from "@/components/product-detail-view";
+import { RecentlyViewedSection } from "@/components/recently-viewed-section";
 
 interface Params {
   params: Promise<{ slug: string }>;
@@ -78,6 +79,17 @@ export default async function ProductDetailPage({ params }: Params) {
         </div>
       </div>
 
+      <RecentlyViewedSection
+        current={{
+          id: product.id,
+          slug: product.slug,
+          name: product.name,
+          price: product.price,
+          compareAtPrice: product.compareAtPrice,
+          image: product.images[0] ?? null,
+          categoryLabel: product.categoryLabel,
+        }}
+      />
     </div>
   );
 }
