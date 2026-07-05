@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Menu, X, Search, ShoppingBag, User, ChevronDown } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Search, ShoppingBag, User, ChevronDown } from "lucide-react";
 import { useCart } from "@/context/cart-context";
-import { NavLink } from "@/lib/nav-links";
+import type { NavLink } from "@/lib/nav-links";
 import type { AnnouncementBar } from "@/lib/homepage-settings";
 
 interface HeaderProps {
@@ -13,11 +14,20 @@ interface HeaderProps {
 }
 
 export function Header({ navLinks, announcement }: HeaderProps) {
-  const [menuOpen, setMenuOpen] = useState(false);
   const { totalCount } = useCart();
+  const router = useRouter();
+  const [searchTerm, setSearchTerm] = useState("");
+
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      router.push(`/san-pham?q=${encodeURIComponent(searchTerm.trim())}`);
+    }
+  }
 
   return (
     <header className="sticky top-0 z-50 bg-paper/95 backdrop-blur">
+      {/* Announcement bar */}
       {announcement.enabled && (
         <div
           className={`py-2 text-center ${
@@ -32,25 +42,17 @@ export function Header({ navLinks, announcement }: HeaderProps) {
           {announcement.text}
         </div>
       )}
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <button
-          className="p-2 lg:hidden"
-          aria-label={menuOpen ? "Đóng menu" : "Mở menu"}
-          onClick={() => setMenuOpen((v) => !v)}
-        >
-          {menuOpen ? <X size={22} /> : <Menu size={22} />}
-        </button>
 
-        <Link href="/" className="flex flex-col items-center leading-none">
-          <span className="font-serif text-2xl tracking-[0.12em] text-ink">
-            CHYS
-          </span>
-          <span className="text-[9px] tracking-[0.32em] uppercase text-muted">
-            Fashion
-          </span>
+      {/* Main header row */}
+      <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
+        {/* Logo — always left */}
+        <Link href="/" className="mr-2 flex shrink-0 flex-col items-center leading-none">
+          <span className="font-serif text-xl tracking-[0.12em] text-ink sm:text-2xl">CHYS</span>
+          <span className="text-[8px] tracking-[0.32em] uppercase text-muted">Fashion</span>
         </Link>
 
-        <nav className="hidden items-center gap-8 lg:flex">
+        {/* Desktop nav links */}
+        <nav className="hidden items-center gap-6 lg:flex">
           {navLinks.map((link) =>
             link.children.length > 0 ? (
               <div key={link.id} className="group relative py-2">
@@ -85,19 +87,25 @@ export function Header({ navLinks, announcement }: HeaderProps) {
           )}
         </nav>
 
-        <div className="flex items-center gap-1">
-          <button
-            className="hidden p-2 sm:inline-flex"
-            aria-label="Tìm kiếm"
-            type="button"
-          >
-            <Search size={19} />
-          </button>
-          <button
-            className="hidden p-2 sm:inline-flex"
-            aria-label="Tài khoản"
-            type="button"
-          >
+        {/* Search bar */}
+        <form onSubmit={handleSearch} className="flex flex-1 items-center">
+          <div className="flex w-full items-center border border-line bg-white px-3 py-1.5 focus-within:border-gold">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Tìm kiếm sản phẩm..."
+              className="flex-1 bg-transparent text-sm text-ink placeholder:text-muted focus:outline-none"
+            />
+            <button type="submit" aria-label="Tìm kiếm">
+              <Search size={16} className="text-muted hover:text-ink" />
+            </button>
+          </div>
+        </form>
+
+        {/* Action icons */}
+        <div className="flex shrink-0 items-center">
+          <button className="hidden p-2 sm:inline-flex" aria-label="Tài khoản" type="button">
             <User size={19} />
           </button>
           <Link href="/gio-hang" className="relative p-2" aria-label="Giỏ hàng">
@@ -111,44 +119,18 @@ export function Header({ navLinks, announcement }: HeaderProps) {
         </div>
       </div>
 
-      {menuOpen && (
-        <nav className="flex flex-col border-t border-line bg-paper px-4 py-4 lg:hidden">
-          {navLinks.map((link) =>
-            link.children.length > 0 ? (
-              <details key={link.id} className="group border-b border-line py-1">
-                <summary className="flex cursor-pointer list-none items-center justify-between py-2 text-sm tracking-label uppercase text-ink">
-                  {link.label}
-                  <ChevronDown
-                    size={15}
-                    className="transition-transform group-open:rotate-180"
-                  />
-                </summary>
-                <div className="flex flex-col pb-2 pl-3">
-                  {link.children.map((child) => (
-                    <Link
-                      key={child.id}
-                      href={child.href}
-                      onClick={() => setMenuOpen(false)}
-                      className="py-2 text-sm text-muted hover:text-ink"
-                    >
-                      {child.label}
-                    </Link>
-                  ))}
-                </div>
-              </details>
-            ) : (
-              <Link
-                key={link.id}
-                href={link.href}
-                onClick={() => setMenuOpen(false)}
-                className="border-b border-line py-3 text-sm tracking-label uppercase text-ink"
-              >
-                {link.label}
-              </Link>
-            )
-          )}
-        </nav>
-      )}
+      {/* Mobile nav strip — horizontal scroll thay cho hamburger menu */}
+      <div className="flex overflow-x-auto border-t border-line [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:hidden">
+        {navLinks.map((link) => (
+          <Link
+            key={link.id}
+            href={link.href}
+            className="shrink-0 whitespace-nowrap px-4 py-2 text-[11px] tracking-label uppercase text-ink hover:text-gold-dark"
+          >
+            {link.label}
+          </Link>
+        ))}
+      </div>
     </header>
   );
 }
