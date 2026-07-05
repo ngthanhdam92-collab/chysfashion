@@ -38,3 +38,7 @@ export async function saveNewCollectionSettings(
 export async function saveCollectionBanners(values: string[]) {
   return upsert({ collectionBannerValues: values });
 }
+
+export async function saveAnnouncementBar(bar: import("./homepage-settings").AnnouncementBar) {
+  return upsert({ announcementBar: bar });
+}

@@ -5,16 +5,33 @@ import { useState } from "react";
 import { Menu, X, Search, ShoppingBag, User, ChevronDown } from "lucide-react";
 import { useCart } from "@/context/cart-context";
 import { NavLink } from "@/lib/nav-links";
+import type { AnnouncementBar } from "@/lib/homepage-settings";
 
-export function Header({ navLinks }: { navLinks: NavLink[] }) {
+interface HeaderProps {
+  navLinks: NavLink[];
+  announcement: AnnouncementBar;
+}
+
+export function Header({ navLinks, announcement }: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { totalCount } = useCart();
 
   return (
     <header className="sticky top-0 z-50 bg-paper/95 backdrop-blur">
-      <div className="bg-ink py-2 text-center text-[11px] tracking-label uppercase text-paper">
-        Miễn phí vận chuyển cho đơn hàng từ 500.000đ
-      </div>
+      {announcement.enabled && (
+        <div
+          className={`py-2 text-center ${
+            announcement.fontStyle === "serif"
+              ? "font-serif text-sm"
+              : announcement.fontStyle === "uppercase"
+              ? "text-[11px] tracking-widest uppercase"
+              : "text-sm"
+          }`}
+          style={{ backgroundColor: announcement.bgColor, color: announcement.textColor }}
+        >
+          {announcement.text}
+        </div>
+      )}
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <button
           className="p-2 lg:hidden"

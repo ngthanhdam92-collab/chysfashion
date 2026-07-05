@@ -6,6 +6,7 @@ import { getHomepageSettings } from "@/lib/homepage-settings";
 import { HomepageFeaturedCategories } from "@/components/admin/homepage-featured-categories";
 import { HomepageCollectionBanners } from "@/components/admin/homepage-collection-banners";
 import { HomepageNewCollection } from "@/components/admin/homepage-new-collection";
+import { HomepageAnnouncementBar } from "@/components/admin/homepage-announcement-bar";
 
 export default async function HomepagePage() {
   const [categories, products, settings] = await Promise.all([
@@ -30,6 +31,19 @@ export default async function HomepagePage() {
           Cấu hình nội dung hiển thị trên trang chủ của cửa hàng
         </p>
       </div>
+
+      {/* ── THANH THÔNG BÁO ── */}
+      <section>
+        <div className="border-b border-line pb-3">
+          <h2 className="font-semibold text-ink">Thanh thông báo</h2>
+          <p className="mt-0.5 text-xs text-muted">
+            Dải thông báo hiển thị trên cùng của trang — chỉnh nội dung, màu sắc và phông chữ
+          </p>
+        </div>
+        <div className="mt-4">
+          <HomepageAnnouncementBar current={settings.announcementBar} />
+        </div>
+      </section>
 
       {/* ── DANH MỤC NỔI BẬT ── */}
       <section>
