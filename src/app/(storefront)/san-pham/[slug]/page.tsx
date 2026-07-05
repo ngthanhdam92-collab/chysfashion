@@ -4,6 +4,7 @@ import { getProductBySlug, getRelatedProducts } from "@/lib/products";
 import { getActiveFlashSale } from "@/lib/flash-sales";
 import { ProductDetailView } from "@/components/product-detail-view";
 import { RecentlyViewedSection } from "@/components/recently-viewed-section";
+import { Breadcrumb } from "@/components/breadcrumb";
 
 interface Params {
   params: Promise<{ slug: string }>;
@@ -30,6 +31,13 @@ export default async function ProductDetailPage({ params }: Params) {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <Breadcrumb
+        items={[
+          { label: "Sản phẩm", href: "/san-pham" },
+          { label: product.categoryLabel, href: `/san-pham?category=${product.category}` },
+          { label: product.name },
+        ]}
+      />
       <ProductDetailView product={product} suggestedProducts={related} flashSale={flashSaleForProduct} />
 
       <div className="mt-10 lg:grid lg:grid-cols-2 lg:gap-16">

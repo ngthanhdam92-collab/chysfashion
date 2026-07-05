@@ -5,6 +5,7 @@ import { ProductCard } from "@/components/product-card";
 import { getAllProducts } from "@/lib/products";
 import { getCategories } from "@/lib/categories";
 import { Product } from "@/lib/types";
+import { Breadcrumb, type BreadcrumbItem } from "@/components/breadcrumb";
 
 export const metadata = {
   title: "Sản phẩm — CHYS Fashion",
@@ -47,14 +48,44 @@ export default async function ProductListingPage({ searchParams }: Params) {
   if (sort === "gia-tang") items = [...items].sort((a, b) => a.price - b.price);
   if (sort === "gia-giam") items = [...items].sort((a, b) => b.price - a.price);
 
+  // Build breadcrumb
+  const breadcrumbItems: BreadcrumbItem[] = [{ label: "Sản phẩm", href: "/san-pham" }];
+  if (q?.trim()) {
+    breadcrumbItems.push({ label: `Tìm kiếm: "${q.trim()}"` });
+  } else if (gender === "nam") {
+    breadcrumbItems.push({ label: "Nam" });
+  } else if (gender === "nu") {
+    breadcrumbItems.push({ label: "Nữ" });
+  } else if (category) {
+    const cat = categories.find((c) => c.slug === category);
+    breadcrumbItems.push({ label: cat?.name ?? category });
+  } else if (filter === "moi") {
+    breadcrumbItems.push({ label: "Hàng mới" });
+  } else if (filter === "sale") {
+    breadcrumbItems.push({ label: "Khuyến mãi" });
+  } else if (filter === "bestseller") {
+    breadcrumbItems.push({ label: "Bán chạy" });
+  }
+
+  const pageTitle = q?.trim()
+    ? `"${q.trim()}"`
+    : gender === "nam" ? "Thời trang Nam"
+    : gender === "nu" ? "Thời trang Nữ"
+    : category ? (categories.find((c) => c.slug === category)?.name ?? "Danh mục")
+    : filter === "moi" ? "Hàng mới về"
+    : filter === "sale" ? "Khuyến mãi"
+    : filter === "bestseller" ? "Bán chạy nhất"
+    : "Tất cả sản phẩm";
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <Breadcrumb items={breadcrumbItems} />
       <div className="mb-10">
         <p className="text-[12px] tracking-label uppercase text-gold-dark">
           {q?.trim() ? "Tìm kiếm" : "Cửa hàng"}
         </p>
         <h1 className="mt-2 font-serif text-3xl text-ink sm:text-4xl">
-          {q?.trim() ? `"${q.trim()}"` : "Tất cả sản phẩm"}
+          {pageTitle}
         </h1>
       </div>
 
