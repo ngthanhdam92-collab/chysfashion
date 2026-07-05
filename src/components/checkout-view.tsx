@@ -160,12 +160,23 @@ export function CheckoutView() {
         <CircleCheck size={48} className="text-success" strokeWidth={1.5} />
         <h2 className="mt-5 font-serif text-2xl text-ink">Đặt hàng thành công!</h2>
         <p className="mt-2 max-w-md text-sm text-muted">
-          Cảm ơn bạn đã mua sắm tại CHYS Fashion. Mã đơn hàng:{" "}
-          <span className="font-medium text-ink">{orderCode}</span>.
-          Chúng tôi sẽ liên hệ xác nhận qua số điện thoại bạn đã cung cấp.
+          Cảm ơn bạn đã mua sắm tại CHYS Fashion. Chúng tôi sẽ liên hệ xác nhận qua số điện thoại bạn đã cung cấp.
         </p>
-        <div className="mt-8">
-          <CtaButton href="/san-pham" variant="primary">Tiếp tục mua sắm</CtaButton>
+
+        {/* Order code box */}
+        <div className="mt-6 rounded border border-line bg-surface px-8 py-4">
+          <p className="text-xs text-muted">Mã đơn hàng của bạn</p>
+          <p className="mt-1 font-mono text-2xl font-semibold tracking-widest text-ink">{orderCode}</p>
+          <p className="mt-1 text-xs text-muted">Lưu mã này để tra cứu trạng thái đơn hàng</p>
+        </div>
+
+        <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row">
+          <CtaButton href={`/tra-cuu-don-hang?code=${orderCode}`} variant="primary">
+            Theo dõi đơn hàng
+          </CtaButton>
+          <CtaButton href="/san-pham" variant="outline">
+            Tiếp tục mua sắm
+          </CtaButton>
         </div>
       </div>
     );
