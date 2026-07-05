@@ -107,9 +107,9 @@ export default async function HomePage() {
                   href={`/san-pham?category=${cat.value}`}
                   className="group relative flex min-h-[260px] items-end overflow-hidden sm:min-h-[320px]"
                 >
-                  {cat.imageUrl ? (
+                  {(cat.bannerImageUrl ?? cat.imageUrl) ? (
                     <Image
-                      src={cat.imageUrl}
+                      src={(cat.bannerImageUrl ?? cat.imageUrl)!}
                       alt={cat.label}
                       fill
                       className="object-cover transition-transform duration-700 group-hover:scale-105"

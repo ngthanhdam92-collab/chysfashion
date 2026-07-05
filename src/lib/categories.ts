@@ -5,6 +5,7 @@ export interface Category {
   value: string;
   label: string;
   imageUrl: string | null;
+  bannerImageUrl: string | null;
   gender: "nam" | "nu" | "unisex";
 }
 
@@ -25,6 +26,7 @@ export async function getCategories(): Promise<Category[]> {
     value: r.value,
     label: r.label,
     imageUrl: r.image_url ?? null,
+    bannerImageUrl: r.banner_image_url ?? null,
     gender: (r.gender as "nam" | "nu" | "unisex") ?? "unisex",
   }));
 }

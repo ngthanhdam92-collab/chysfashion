@@ -4,6 +4,7 @@ import { getCategories } from "@/lib/categories";
 import { getAllProducts } from "@/lib/products";
 import { getHomepageSettings } from "@/lib/homepage-settings";
 import { HomepageFeaturedCategories } from "@/components/admin/homepage-featured-categories";
+import { HomepageCollectionBanners } from "@/components/admin/homepage-collection-banners";
 import { HomepageNewCollection } from "@/components/admin/homepage-new-collection";
 
 export default async function HomepagePage() {
@@ -15,6 +16,12 @@ export default async function HomepagePage() {
 
   const bestsellerCount = products.filter((p) => p.isBestSeller).length;
   const newCount = products.filter((p) => p.isNew).length;
+
+  // Top 3 featured categories = collection banners
+  const collectionBanners = settings.featuredCategoryValues
+    .slice(0, 3)
+    .map((v) => categories.find((c) => c.value === v))
+    .filter((c): c is NonNullable<typeof c> => c !== undefined);
 
   return (
     <div className="space-y-10">
@@ -30,7 +37,7 @@ export default async function HomepagePage() {
         <div className="border-b border-line pb-3">
           <h2 className="font-semibold text-ink">Danh mục nổi bật</h2>
           <p className="mt-0.5 text-xs text-muted">
-            Chọn các danh mục hiển thị trên trang chủ
+            Chọn các danh mục hiển thị trên trang chủ — 3 danh mục đầu sẽ làm banner bộ sưu tập
           </p>
         </div>
         <div className="mt-4">
@@ -38,6 +45,19 @@ export default async function HomepagePage() {
             categories={categories}
             selected={settings.featuredCategoryValues}
           />
+        </div>
+      </section>
+
+      {/* ── BANNER BỘ SƯU TẬP ── */}
+      <section>
+        <div className="border-b border-line pb-3">
+          <h2 className="font-semibold text-ink">Banner bộ sưu tập</h2>
+          <p className="mt-0.5 text-xs text-muted">
+            Ảnh banner hiển thị trên trang chủ cho 3 danh mục đầu tiên — click để upload ảnh mới
+          </p>
+        </div>
+        <div className="mt-4">
+          <HomepageCollectionBanners banners={collectionBanners} />
         </div>
       </section>
 
