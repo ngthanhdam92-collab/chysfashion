@@ -130,7 +130,7 @@ export function Header({ navLinks, announcement }: HeaderProps) {
             </nav>
 
             {/* Desktop search bar */}
-            <form onSubmit={handleSearch} className="hidden flex-1 items-center lg:flex">
+            <form onSubmit={handleSearch} className="ml-auto hidden w-52 shrink-0 items-center lg:flex">
               <div className="flex w-full items-center border border-line bg-white px-3 py-1.5 focus-within:border-gold">
                 <input
                   type="text"
