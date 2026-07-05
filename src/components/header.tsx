@@ -52,14 +52,11 @@ export function Header({ navLinks, announcement }: HeaderProps) {
       )}
 
       {/* Main header row */}
-      <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-14 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
 
-        {/* Mobile: search overlay row */}
+        {/* ── MOBILE: search overlay ── */}
         {searchOpen && (
-          <form
-            onSubmit={handleSearch}
-            className="flex flex-1 items-center gap-2 lg:hidden"
-          >
+          <form onSubmit={handleSearch} className="flex flex-1 items-center gap-2 lg:hidden">
             <div className="flex flex-1 items-center border border-line bg-white px-3 py-1.5 focus-within:border-gold">
               <input
                 ref={inputRef}
@@ -84,71 +81,70 @@ export function Header({ navLinks, announcement }: HeaderProps) {
           </form>
         )}
 
-        {/* Normal header content (hidden on mobile when search is open) */}
+        {/* ── LEFT: Logo ── */}
         {!searchOpen && (
-          <>
-            {/* Logo — always left */}
-            <Link href="/" className="mr-2 flex shrink-0 flex-col items-center leading-none">
+          <div className="flex items-center lg:flex-1">
+            <Link href="/" className="flex shrink-0 flex-col items-center leading-none">
               <span className="font-serif text-xl tracking-[0.12em] text-ink sm:text-2xl">CHYS</span>
               <span className="text-[8px] tracking-[0.32em] uppercase text-muted">Fashion</span>
             </Link>
-
-            {/* Desktop nav links */}
-            <nav className="hidden items-center gap-6 lg:flex">
-              {navLinks.map((link) =>
-                link.children.length > 0 ? (
-                  <div key={link.id} className="group relative py-2">
-                    <Link
-                      href={link.href}
-                      className="flex items-center gap-1 text-[13px] tracking-label uppercase text-ink transition-colors hover:text-gold-dark"
-                    >
-                      {link.label}
-                      <ChevronDown size={13} />
-                    </Link>
-                    <div className="invisible absolute left-1/2 top-full w-52 -translate-x-1/2 border border-line bg-surface opacity-0 shadow-lg transition-all duration-150 group-hover:visible group-hover:opacity-100">
-                      {link.children.map((child) => (
-                        <Link
-                          key={child.id}
-                          href={child.href}
-                          className="block px-4 py-2.5 text-sm text-ink hover:bg-cream hover:text-gold-dark"
-                        >
-                          {child.label}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <Link
-                    key={link.id}
-                    href={link.href}
-                    className="text-[13px] tracking-label uppercase text-ink transition-colors hover:text-gold-dark"
-                  >
-                    {link.label}
-                  </Link>
-                )
-              )}
-            </nav>
-
-            {/* Desktop search bar */}
-            <form onSubmit={handleSearch} className="ml-auto hidden w-52 shrink-0 items-center lg:flex">
-              <div className="flex w-full items-center border border-line bg-white px-3 py-1.5 focus-within:border-gold">
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Tìm kiếm sản phẩm..."
-                  className="flex-1 bg-transparent text-sm text-ink placeholder:text-muted focus:outline-none"
-                />
-                <button type="submit" aria-label="Tìm kiếm">
-                  <Search size={16} className="text-muted hover:text-ink" />
-                </button>
-              </div>
-            </form>
-          </>
+          </div>
         )}
 
-        {/* Action icons — always visible on right */}
-        <div className="ml-auto flex shrink-0 items-center lg:ml-0">
+        {/* ── CENTER: Desktop nav ── */}
+        <nav className="hidden flex-1 items-center justify-center gap-6 lg:flex">
+          {navLinks.map((link) =>
+            link.children.length > 0 ? (
+              <div key={link.id} className="group relative py-2">
+                <Link
+                  href={link.href}
+                  className="flex items-center gap-1 whitespace-nowrap text-[13.5px] font-semibold tracking-label uppercase text-ink transition-colors hover:text-gold-dark"
+                >
+                  {link.label}
+                  <ChevronDown size={13} />
+                </Link>
+                <div className="invisible absolute left-1/2 top-full w-52 -translate-x-1/2 border border-line bg-surface opacity-0 shadow-lg transition-all duration-150 group-hover:visible group-hover:opacity-100">
+                  {link.children.map((child) => (
+                    <Link
+                      key={child.id}
+                      href={child.href}
+                      className="block px-4 py-2.5 text-sm text-ink hover:bg-cream hover:text-gold-dark"
+                    >
+                      {child.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <Link
+                key={link.id}
+                href={link.href}
+                className="whitespace-nowrap text-[13.5px] font-semibold tracking-label uppercase text-ink transition-colors hover:text-gold-dark"
+              >
+                {link.label}
+              </Link>
+            )
+          )}
+        </nav>
+
+        {/* ── RIGHT: Search + icons ── */}
+        <div className="ml-auto flex items-center gap-1 lg:flex-1 lg:justify-end">
+          {/* Desktop search bar */}
+          <form onSubmit={handleSearch} className="hidden w-48 items-center lg:flex">
+            <div className="flex w-full items-center border border-line bg-white px-3 py-1.5 focus-within:border-gold">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Tìm kiếm..."
+                className="flex-1 min-w-0 bg-transparent text-sm text-ink placeholder:text-muted focus:outline-none"
+              />
+              <button type="submit" aria-label="Tìm kiếm">
+                <Search size={16} className="text-muted hover:text-ink" />
+              </button>
+            </div>
+          </form>
+
           {/* Mobile search icon */}
           {!searchOpen && (
             <button
@@ -160,9 +156,13 @@ export function Header({ navLinks, announcement }: HeaderProps) {
               <Search size={19} />
             </button>
           )}
+
+          {/* Account */}
           <button className="hidden p-2 lg:inline-flex" aria-label="Tài khoản" type="button">
             <User size={19} />
           </button>
+
+          {/* Cart */}
           <Link href="/gio-hang" className="relative p-2" aria-label="Giỏ hàng">
             <ShoppingBag size={19} />
             {totalCount > 0 && (
@@ -172,6 +172,7 @@ export function Header({ navLinks, announcement }: HeaderProps) {
             )}
           </Link>
         </div>
+
       </div>
     </header>
   );
