@@ -50,7 +50,7 @@ export function HomepageCollectionBanners({ categories, selectedValues }: Props)
     setSaveError(null);
     startTransition(async () => {
       const res = await saveCollectionBanners(slots.filter(Boolean));
-      if (res && "error" in res) setSaveError(res.error);
+      if (res && "error" in res) setSaveError(res.error ?? "Lỗi không xác định");
       else setSaved(true);
     });
   }
