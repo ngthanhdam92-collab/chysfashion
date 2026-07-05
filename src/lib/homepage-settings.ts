@@ -2,14 +2,16 @@ import { createPublicClient } from "./supabase/public";
 
 export interface HomepageSettings {
   featuredCategoryValues: string[];
-  collectionBannerValues: string[]; // up to 3 category values for banners
+  collectionBannerValues: string[];
   newCollectionCategory: string | null;
+  newCollectionDisplayName: string | null;
 }
 
 const DEFAULT: HomepageSettings = {
   featuredCategoryValues: [],
   collectionBannerValues: [],
   newCollectionCategory: null,
+  newCollectionDisplayName: null,
 };
 
 function parse(raw: unknown): HomepageSettings {
@@ -25,6 +27,10 @@ function parse(raw: unknown): HomepageSettings {
     newCollectionCategory:
       typeof d.newCollectionCategory === "string" && d.newCollectionCategory
         ? d.newCollectionCategory
+        : null,
+    newCollectionDisplayName:
+      typeof d.newCollectionDisplayName === "string" && d.newCollectionDisplayName
+        ? d.newCollectionDisplayName
         : null,
   };
 }

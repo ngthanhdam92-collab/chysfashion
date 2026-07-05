@@ -54,9 +54,11 @@ export default async function HomePage() {
     ? products.filter((p) => p.category === newCollectionCat).slice(0, 6)
     : products.filter((p) => p.isNew).slice(0, 6);
 
-  const newCollectionLabel = newCollectionCat
-    ? allCategories.find((c) => c.value === newCollectionCat)?.label ?? "Bộ sưu tập mới"
-    : "Bộ sưu tập mới";
+  const newCollectionLabel =
+    settings.newCollectionDisplayName ||
+    (newCollectionCat
+      ? allCategories.find((c) => c.value === newCollectionCat)?.label ?? "Bộ sưu tập mới"
+      : "Bộ sưu tập mới");
 
   return (
     <div>
@@ -189,7 +191,27 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* ── 5. USP BAR ── */}
+      {/* ── 5. BỘ SƯU TẬP MỚI — 6 cột ── */}
+      {newArrivals.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+          <div className="mb-8 flex items-end justify-between">
+            <h2 className="font-serif text-2xl text-ink sm:text-3xl">{newCollectionLabel}</h2>
+            <Link
+              href={newCollectionCat ? `/san-pham?category=${newCollectionCat}` : "/san-pham"}
+              className="text-[11px] tracking-label uppercase text-ink hover:text-gold-dark"
+            >
+              Xem thêm →
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-6">
+            {newArrivals.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── 6. USP BAR ── */}
       <section className="border-y border-line bg-surface">
         <div className="mx-auto grid max-w-7xl grid-cols-2 gap-6 px-4 py-10 sm:px-6 lg:grid-cols-4 lg:px-8">
           {USPS.map(({ icon: Icon, title, desc }) => (
@@ -232,25 +254,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── 7. BỘ SƯU TẬP MỚI — 6 cột ── */}
-      {newArrivals.length > 0 && (
-        <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-          <div className="mb-8 flex items-end justify-between">
-            <h2 className="font-serif text-2xl text-ink sm:text-3xl">{newCollectionLabel}</h2>
-            <Link
-              href={newCollectionCat ? `/san-pham?category=${newCollectionCat}` : "/san-pham"}
-              className="text-[11px] tracking-label uppercase text-ink hover:text-gold-dark"
-            >
-              Xem thêm →
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-6">
-            {newArrivals.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </section>
-      )}
     </div>
   );
 }

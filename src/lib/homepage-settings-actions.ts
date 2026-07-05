@@ -25,6 +25,16 @@ export async function saveNewCollectionCategory(value: string | null) {
   return upsert({ newCollectionCategory: value ?? "" });
 }
 
+export async function saveNewCollectionSettings(
+  category: string | null,
+  displayName: string | null
+) {
+  return upsert({
+    newCollectionCategory: category ?? "",
+    newCollectionDisplayName: displayName ?? "",
+  });
+}
+
 export async function saveCollectionBanners(values: string[]) {
   return upsert({ collectionBannerValues: values });
 }

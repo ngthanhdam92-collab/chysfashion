@@ -103,6 +103,7 @@ export default async function HomepagePage() {
           <HomepageNewCollection
             categories={categories}
             current={settings.newCollectionCategory}
+            currentDisplayName={settings.newCollectionDisplayName}
           />
         </div>
       </section>
