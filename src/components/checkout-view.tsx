@@ -31,6 +31,7 @@ export function CheckoutView() {
   /* ── Form fields ── */
   const [fullName, setFullName] = useState("");
   const [phone, setPhone]       = useState("");
+  const [phoneError, setPhoneError] = useState<string | null>(null);
   const [email, setEmail]       = useState("");
   const [street, setStreet]     = useState("");
   const [note, setNote]         = useState("");
@@ -96,6 +97,13 @@ export function CheckoutView() {
   const shipping = (promoApplied?.freeShipping) ? 0 : baseFee;
   const total = discountedSubtotal + shipping;
 
+  function validatePhone(p: string): string | null {
+    if (!p) return "Vui lòng nhập số điện thoại.";
+    if (!/^0[35789]\d{8}$/.test(p))
+      return "Số điện thoại không hợp lệ. Vui lòng nhập đúng định dạng Việt Nam (VD: 0912345678).";
+    return null;
+  }
+
   async function handleApplyPromo() {
     if (!promoInput.trim()) return;
     setPromoLoading(true);
@@ -119,6 +127,8 @@ export function CheckoutView() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    const pErr = validatePhone(phone);
+    if (pErr) { setPhoneError(pErr); return; }
     if (!province || !district || !ward) { setError("Vui lòng chọn đầy đủ tỉnh/quận/phường."); return; }
     setSubmitting(true);
     setError(null);
@@ -218,11 +228,21 @@ export function CheckoutView() {
             <input
               required
               type="tel"
+              inputMode="numeric"
+              maxLength={10}
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="Nhập số điện thoại"
-              className={INPUT_CLS}
+              onChange={(e) => {
+                const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+                setPhone(digits);
+                if (phoneError) setPhoneError(validatePhone(digits));
+              }}
+              onBlur={() => setPhoneError(validatePhone(phone))}
+              placeholder="VD: 0912345678"
+              className={`${INPUT_CLS} ${phoneError ? "border-error" : ""}`}
             />
+            {phoneError && (
+              <p className="mt-1 text-xs text-error">{phoneError}</p>
+            )}
           </div>
         </div>
 
