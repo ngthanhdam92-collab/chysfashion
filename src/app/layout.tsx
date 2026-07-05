@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Be_Vietnam_Pro } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -29,6 +30,9 @@ export default function RootLayout({
       lang="vi"
       className={`${playfair.variable} ${beVietnamPro.variable} h-full antialiased`}
     >
+      <head>
+        <Script src="/polyfills.js" strategy="beforeInteractive" />
+      </head>
       <body className="min-h-full flex flex-col font-sans">{children}</body>
     </html>
   );
