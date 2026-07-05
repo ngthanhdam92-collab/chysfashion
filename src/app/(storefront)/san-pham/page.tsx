@@ -16,14 +16,24 @@ interface Params {
     category?: string;
     filter?: string;
     sort?: string;
+    q?: string;
   }>;
 }
 
 export default async function ProductListingPage({ searchParams }: Params) {
-  const { gender, category, filter, sort } = await searchParams;
+  const { gender, category, filter, sort, q } = await searchParams;
   let items: Product[] = await getAllProducts();
   const categories = await getCategories();
 
+  if (q?.trim()) {
+    const keyword = q.trim().toLowerCase();
+    items = items.filter(
+      (p) =>
+        p.name.toLowerCase().includes(keyword) ||
+        p.categoryLabel.toLowerCase().includes(keyword) ||
+        p.description.toLowerCase().includes(keyword)
+    );
+  }
   if (gender === "nam" || gender === "nu") {
     items = items.filter((p) => p.gender === gender || p.gender === "unisex");
   }
@@ -41,10 +51,10 @@ export default async function ProductListingPage({ searchParams }: Params) {
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
       <div className="mb-10">
         <p className="text-[12px] tracking-label uppercase text-gold-dark">
-          Cửa hàng
+          {q?.trim() ? "Tìm kiếm" : "Cửa hàng"}
         </p>
         <h1 className="mt-2 font-serif text-3xl text-ink sm:text-4xl">
-          Tất cả sản phẩm
+          {q?.trim() ? `"${q.trim()}"` : "Tất cả sản phẩm"}
         </h1>
       </div>
 
