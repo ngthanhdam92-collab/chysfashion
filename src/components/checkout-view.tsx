@@ -1,9 +1,9 @@
 "use client";
 
-import { FormEvent, useState, useEffect } from "react";
+import { FormEvent, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { CircleCheck, Trash2, Tag } from "lucide-react";
+import { CircleCheck, Trash2, Tag, RotateCcw } from "lucide-react";
 import { useCart } from "@/context/cart-context";
 import { formatVnd } from "@/lib/utils";
 import { createOrder } from "@/lib/orders";
@@ -17,6 +17,12 @@ interface Province { code: number; name: string; }
 interface District { code: number; name: string; }
 interface Ward    { code: number; name: string; }
 
+const CUSTOMER_KEY = "chys-customer";
+interface SavedCustomer {
+  fullName: string; phone: string; email: string; street: string;
+  provinceCode: number; districtCode: number; wardCode: number;
+}
+
 const SELECT_CLS =
   "mt-1 w-full border border-line bg-white px-3 py-2.5 text-sm text-ink focus:border-gold focus:outline-none disabled:bg-surface disabled:text-muted";
 const INPUT_CLS =
@@ -27,6 +33,11 @@ export function CheckoutView() {
   const [orderCode, setOrderCode] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  /* ── Saved customer ── */
+  const [savedCustomer, setSavedCustomer] = useState<SavedCustomer | null>(null);
+  const pendingDistrictCode = useRef<number | null>(null);
+  const pendingWardCode     = useRef<number | null>(null);
 
   /* ── Form fields ── */
   const [fullName, setFullName] = useState("");
@@ -67,6 +78,44 @@ export function CheckoutView() {
   useEffect(() => {
     getShippingRules().then(setShippingRules).catch(() => {});
   }, []);
+
+  /* Load saved customer info from localStorage */
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(CUSTOMER_KEY);
+      if (!raw) return;
+      const data: SavedCustomer = JSON.parse(raw);
+      setFullName(data.fullName ?? "");
+      setPhone(data.phone ?? "");
+      setEmail(data.email ?? "");
+      setStreet(data.street ?? "");
+      pendingDistrictCode.current = data.districtCode ?? null;
+      pendingWardCode.current     = data.wardCode ?? null;
+      setSavedCustomer(data);
+    } catch {}
+  }, []);
+
+  /* After provinces load, restore saved province */
+  useEffect(() => {
+    if (!savedCustomer || provinces.length === 0) return;
+    const p = provinces.find((x) => x.code === savedCustomer.provinceCode);
+    if (p) setProvince(p);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [provinces]);
+
+  /* After districts load, restore saved district */
+  useEffect(() => {
+    if (pendingDistrictCode.current === null || districts.length === 0) return;
+    const d = districts.find((x) => x.code === pendingDistrictCode.current);
+    if (d) { setDistrict(d); pendingDistrictCode.current = null; }
+  }, [districts]);
+
+  /* After wards load, restore saved ward */
+  useEffect(() => {
+    if (pendingWardCode.current === null || wards.length === 0) return;
+    const w = wards.find((x) => x.code === pendingWardCode.current);
+    if (w) { setWard(w); pendingWardCode.current = null; }
+  }, [wards]);
 
   /* Load districts when province changes */
   useEffect(() => {
@@ -159,6 +208,17 @@ export function CheckoutView() {
 
     setSubmitting(false);
     if ("error" in result) { setError(result.error); return; }
+
+    // Save customer info for next visit
+    try {
+      localStorage.setItem(CUSTOMER_KEY, JSON.stringify({
+        fullName, phone, email, street,
+        provinceCode: province!.code,
+        districtCode: district!.code,
+        wardCode: ward!.code,
+      } satisfies SavedCustomer));
+    } catch {}
+
     setOrderCode(result.orderCode);
     clearCart();
   }
@@ -210,6 +270,27 @@ export function CheckoutView() {
       {/* ── LEFT: Shipping form ── */}
       <div className="space-y-5">
         <h2 className="font-serif text-xl text-ink">Thông tin vận chuyển</h2>
+
+        {savedCustomer && (
+          <div className="flex items-center justify-between rounded border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-700">
+            <span className="flex items-center gap-1.5">
+              <RotateCcw size={13} />
+              Đã điền thông tin từ lần mua trước
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                localStorage.removeItem(CUSTOMER_KEY);
+                setSavedCustomer(null);
+                setFullName(""); setPhone(""); setEmail(""); setStreet("");
+                setProvince(null); setDistrict(null); setWard(null);
+              }}
+              className="ml-3 underline hover:no-underline"
+            >
+              Xóa
+            </button>
+          </div>
+        )}
 
         {/* Name + Phone */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
