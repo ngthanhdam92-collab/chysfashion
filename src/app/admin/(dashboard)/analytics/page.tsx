@@ -4,20 +4,39 @@ import { getTrafficData } from "@/lib/analytics";
 import { formatVnd } from "@/lib/utils";
 import { Order, OrderItem } from "@/lib/types";
 import Link from "next/link";
-import { TrendingUp, TrendingDown, AlertCircle, Globe, MousePointerClick, ShoppingCart, Package, CreditCard } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertCircle, Globe, ShoppingCart, Package, CreditCard } from "lucide-react";
+import { AnalyticsPeriodPicker } from "@/components/admin/analytics-period-picker";
 
-type Period = "7d" | "30d" | "all";
+type Period = "yesterday" | "7d" | "custom";
 type View   = "revenue" | "traffic";
 
-const PERIOD_LABELS: Record<Period, string> = {
-  "7d":  "7 ngày qua",
-  "30d": "30 ngày qua",
-  "all": "Tất cả",
-};
+function periodRange(period: Period, fromParam?: string, toParam?: string): { from: Date; to: Date } {
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-function periodCutoff(period: Period): Date {
-  if (period === "all") return new Date(0);
-  return new Date(Date.now() - (period === "7d" ? 7 : 30) * 86400000);
+  if (period === "yesterday") {
+    const yStart = new Date(todayStart.getTime() - 86400000);
+    return { from: yStart, to: todayStart };
+  }
+  if (period === "custom" && fromParam && toParam) {
+    const from = new Date(fromParam);
+    const to   = new Date(toParam);
+    to.setHours(23, 59, 59, 999);
+    if (!isNaN(from.getTime()) && !isNaN(to.getTime())) return { from, to };
+  }
+  // default: 7d
+  return { from: new Date(now.getTime() - 7 * 86400000), to: now };
+}
+
+function periodLabel(period: Period, from?: string, to?: string): string {
+  if (period === "yesterday") return "Hôm qua";
+  if (period === "custom" && from && to) return `${formatDate(from)} – ${formatDate(to)}`;
+  return "7 ngày qua";
+}
+
+function formatDate(iso: string): string {
+  const [, m, d] = iso.split("-");
+  return `${d}/${m}`;
 }
 
 function dayKey(date: Date): string {
@@ -32,23 +51,26 @@ function formatDayLabel(key: string): string {
 export default async function AnalyticsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ period?: string; view?: string }>;
+  searchParams: Promise<{ period?: string; view?: string; from?: string; to?: string }>;
 }) {
-  const { period: rawPeriod = "30d", view: rawView = "revenue" } = await searchParams;
-  const period = (["7d", "30d", "all"].includes(rawPeriod) ? rawPeriod : "30d") as Period;
-  const view   = (["revenue", "traffic"].includes(rawView)  ? rawView  : "revenue") as View;
+  const { period: rawPeriod = "7d", view: rawView = "revenue", from: fromParam, to: toParam } = await searchParams;
+  const period = (["yesterday", "7d", "custom"].includes(rawPeriod) ? rawPeriod : "7d") as Period;
+  const view   = (["revenue", "traffic"].includes(rawView) ? rawView : "revenue") as View;
 
-  const cutoff = periodCutoff(period);
+  const range = periodRange(period, fromParam, toParam);
 
-  // ── Tabs ───────────────────────────────────────────────────────────────────
-  function tabHref(v: View) { return `/admin/analytics?view=${v}&period=${period}`; }
-  function periodHref(p: Period) { return `/admin/analytics?view=${view}&period=${p}`; }
+  // ── Tab helpers ────────────────────────────────────────────────────────────
+  function tabHref(v: View) {
+    const p = new URLSearchParams({ view: v, period });
+    if (period === "custom" && fromParam && toParam) { p.set("from", fromParam); p.set("to", toParam); }
+    return `/admin/analytics?${p.toString()}`;
+  }
 
-  // ── Load data based on view ────────────────────────────────────────────────
+  // ── Load data ──────────────────────────────────────────────────────────────
   const [allOrders, products, traffic] = await Promise.all([
     getAllOrders(),
     getAllProducts(),
-    view === "traffic" ? getTrafficData(cutoff) : Promise.resolve(null),
+    view === "traffic" ? getTrafficData(range) : Promise.resolve(null),
   ]);
 
   // ── Revenue / profit data ──────────────────────────────────────────────────
@@ -68,9 +90,10 @@ export default async function AnalyticsPage({
     if (!p.costPrice && !p.variants.some((v) => v.costPrice)) missingCostCount++;
   }
 
-  const activeOrders = allOrders.filter(
-    (o) => o.status !== "da_huy" && new Date(o.createdAt) >= cutoff
-  );
+  const activeOrders = allOrders.filter((o) => {
+    const d = new Date(o.createdAt);
+    return o.status !== "da_huy" && d >= range.from && d <= range.to;
+  });
 
   function itemCost(item: OrderItem): number {
     const key = `${item.color}__${item.size}`;
@@ -111,21 +134,19 @@ export default async function AnalyticsPage({
   }
   const topProducts = Object.entries(productRevMap).sort((a, b) => b[1].revenue - a[1].revenue).slice(0, 8);
 
-  const chartDays = period === "7d" ? 7 : 30;
+  const chartDays = Math.min(62, Math.max(1, Math.ceil((range.to.getTime() - range.from.getTime()) / 86400000) + 1));
   const dailyRevData: { key: string; productRev: number; shipping: number; profit: number }[] = [];
-  for (let i = chartDays - 1; i >= 0; i--) {
-    const d = new Date(Date.now() - i * 86400000);
+  for (let i = 0; i < chartDays; i++) {
+    const d = new Date(range.from.getTime() + i * 86400000);
     dailyRevData.push({ key: dayKey(d), productRev: 0, shipping: 0, profit: 0 });
   }
-  if (period !== "all") {
-    for (const order of activeOrders) {
-      const k = dayKey(new Date(order.createdAt));
-      const entry = dailyRevData.find((d) => d.key === k);
-      if (entry) {
-        entry.productRev += orderProductRevenue(order);
-        entry.shipping   += order.shipping ?? 0;
-        entry.profit     += orderProfit(order);
-      }
+  for (const order of activeOrders) {
+    const k = dayKey(new Date(order.createdAt));
+    const entry = dailyRevData.find((d) => d.key === k);
+    if (entry) {
+      entry.productRev += orderProductRevenue(order);
+      entry.shipping   += order.shipping ?? 0;
+      entry.profit     += orderProfit(order);
     }
   }
   const maxRevBar = Math.max(...dailyRevData.map((d) => d.productRev + d.shipping), 1);
@@ -148,17 +169,16 @@ export default async function AnalyticsPage({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-serif text-2xl text-ink">Phân tích</h1>
-          <p className="mt-0.5 text-sm text-muted">Doanh thu, lợi nhuận và lượng truy cập cửa hàng.</p>
+          <p className="mt-0.5 text-sm text-muted">
+            {periodLabel(period, fromParam, toParam)} — Doanh thu, lợi nhuận và lượng truy cập.
+          </p>
         </div>
-        {/* Period filter */}
-        <div className="flex gap-1 border border-line">
-          {(["7d", "30d", "all"] as Period[]).map((p) => (
-            <Link key={p} href={periodHref(p)}
-              className={`px-4 py-2 text-xs tracking-wide transition-colors ${period === p ? "bg-ink text-paper" : "text-muted hover:text-ink"}`}>
-              {PERIOD_LABELS[p]}
-            </Link>
-          ))}
-        </div>
+        <AnalyticsPeriodPicker
+          currentPeriod={period}
+          currentFrom={fromParam}
+          currentTo={toParam}
+          view={view}
+        />
       </div>
 
       {/* View tabs */}
@@ -221,7 +241,7 @@ export default async function AnalyticsPage({
           </div>
 
           {/* Revenue chart */}
-          {period !== "all" && (
+          {chartDays <= 62 && (
             <div className="mt-8">
               <h2 className="font-serif text-lg text-ink">Biểu đồ doanh thu theo ngày</h2>
               <div className="mt-3 border border-line bg-surface p-5">

@@ -41,13 +41,14 @@ function utmSourceLabel(src: string): string {
   return map[src.toLowerCase()] ?? src;
 }
 
-export async function getTrafficData(cutoff: Date): Promise<TrafficData> {
+export async function getTrafficData(range: { from: Date; to: Date }): Promise<TrafficData> {
   try {
     const supabase = await createClient();
     const { data: events, error } = await supabase
       .from("analytics_events")
       .select("event_type, session_id, page_path, referrer, utm_source, utm_medium, utm_campaign, created_at")
-      .gte("created_at", cutoff.toISOString())
+      .gte("created_at", range.from.toISOString())
+      .lte("created_at", range.to.toISOString())
       .order("created_at", { ascending: true })
       .limit(20000);
 
