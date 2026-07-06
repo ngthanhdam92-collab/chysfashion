@@ -293,30 +293,32 @@ export default async function AnalyticsPage({
                 {topProducts.length === 0 ? (
                   <p className="px-4 py-8 text-center text-sm text-muted">Chưa có dữ liệu</p>
                 ) : (
-                  <div className="overflow-x-auto"><table className="w-full min-w-[440px] text-sm">
-                    <thead>
-                      <tr className="border-b border-line text-left text-[11px] uppercase tracking-label text-muted">
-                        <th className="px-4 py-3">Sản phẩm</th>
-                        <th className="px-4 py-3 text-right">SL</th>
-                        <th className="px-4 py-3 text-right">Doanh thu SP</th>
-                        <th className="px-4 py-3 text-right">Lợi nhuận</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {topProducts.map(([pid, data]) => (
-                        <tr key={pid} className="border-b border-line last:border-0">
-                          <td className="px-4 py-3 text-ink max-w-[160px] truncate">{productNameMap[pid] ?? pid}</td>
-                          <td className="px-4 py-3 text-right text-muted">{data.qty}</td>
-                          <td className="px-4 py-3 text-right font-medium text-ink">{formatVnd(data.revenue)}</td>
-                          <td className="px-4 py-3 text-right">
-                            {data.profit > 0
-                              ? <span className="font-medium text-emerald-600">{formatVnd(data.profit)}</span>
-                              : <span className="text-muted">—</span>}
-                          </td>
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[440px] text-sm">
+                      <thead>
+                        <tr className="border-b border-line text-left text-[11px] uppercase tracking-label text-muted">
+                          <th className="px-4 py-3">Sản phẩm</th>
+                          <th className="px-4 py-3 text-right">SL</th>
+                          <th className="px-4 py-3 text-right">Doanh thu SP</th>
+                          <th className="px-4 py-3 text-right">Lợi nhuận</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table></div>
+                      </thead>
+                      <tbody>
+                        {topProducts.map(([pid, data]) => (
+                          <tr key={pid} className="border-b border-line last:border-0">
+                            <td className="px-4 py-3 text-ink max-w-[160px] truncate">{productNameMap[pid] ?? pid}</td>
+                            <td className="px-4 py-3 text-right text-muted">{data.qty}</td>
+                            <td className="px-4 py-3 text-right font-medium text-ink">{formatVnd(data.revenue)}</td>
+                            <td className="px-4 py-3 text-right">
+                              {data.profit > 0
+                                ? <span className="font-medium text-emerald-600">{formatVnd(data.profit)}</span>
+                                : <span className="text-muted">—</span>}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </div>
             </div>
@@ -330,38 +332,40 @@ export default async function AnalyticsPage({
                 {recentOrders.length === 0 ? (
                   <p className="px-4 py-8 text-center text-sm text-muted">Chưa có đơn hàng</p>
                 ) : (
-                  <div className="overflow-x-auto"><table className="w-full min-w-[380px] text-sm">
-                    <thead>
-                      <tr className="border-b border-line text-left text-[11px] uppercase tracking-label text-muted">
-                        <th className="px-4 py-3">Mã đơn</th>
-                        <th className="px-4 py-3 text-right">DT sản phẩm</th>
-                        <th className="px-4 py-3 text-right">Ship</th>
-                        <th className="px-4 py-3 text-right">Lợi nhuận</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {recentOrders.map((order) => {
-                        const pRev   = orderProductRevenue(order);
-                        const profit = orderProfit(order);
-                        const hasCost = orderHasCost(order);
-                        return (
-                          <tr key={order.id} className="border-b border-line last:border-0">
-                            <td className="px-4 py-3">
-                              <Link href={`/admin/orders/${order.id}`} className="font-medium text-ink hover:text-gold-dark">{order.orderCode}</Link>
-                              <p className="text-[11px] text-muted">{order.fullName}</p>
-                            </td>
-                            <td className="px-4 py-3 text-right text-ink">{formatVnd(pRev)}</td>
-                            <td className="px-4 py-3 text-right text-muted">{formatVnd(order.shipping ?? 0)}</td>
-                            <td className="px-4 py-3 text-right">
-                              {hasCost
-                                ? <span className={`font-medium ${profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>{formatVnd(profit)}</span>
-                                : <span className="text-[11px] text-muted">Chưa có GV</span>}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table></div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[380px] text-sm">
+                      <thead>
+                        <tr className="border-b border-line text-left text-[11px] uppercase tracking-label text-muted">
+                          <th className="px-4 py-3">Mã đơn</th>
+                          <th className="px-4 py-3 text-right">DT sản phẩm</th>
+                          <th className="px-4 py-3 text-right">Ship</th>
+                          <th className="px-4 py-3 text-right">Lợi nhuận</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {recentOrders.map((order) => {
+                          const pRev   = orderProductRevenue(order);
+                          const profit = orderProfit(order);
+                          const hasCost = orderHasCost(order);
+                          return (
+                            <tr key={order.id} className="border-b border-line last:border-0">
+                              <td className="px-4 py-3">
+                                <Link href={`/admin/orders/${order.id}`} className="font-medium text-ink hover:text-gold-dark">{order.orderCode}</Link>
+                                <p className="text-[11px] text-muted">{order.fullName}</p>
+                              </td>
+                              <td className="px-4 py-3 text-right text-ink">{formatVnd(pRev)}</td>
+                              <td className="px-4 py-3 text-right text-muted">{formatVnd(order.shipping ?? 0)}</td>
+                              <td className="px-4 py-3 text-right">
+                                {hasCost
+                                  ? <span className={`font-medium ${profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>{formatVnd(profit)}</span>
+                                  : <span className="text-[11px] text-muted">Chưa có GV</span>}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </div>
             </div>
@@ -500,28 +504,30 @@ export default async function AnalyticsPage({
                     <p className="mt-2 text-xs text-muted">Thêm <code className="rounded bg-line px-1 py-0.5">?utm_source=zalo&utm_campaign=ten-chien-dich</code> vào link quảng cáo</p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto"><table className="w-full min-w-[320px] text-sm">
-                    <thead>
-                      <tr className="border-b border-line text-left text-[11px] uppercase tracking-label text-muted">
-                        <th className="px-4 py-3">Chiến dịch</th>
-                        <th className="px-4 py-3">Kênh</th>
-                        <th className="px-4 py-3 text-right">Phiên</th>
-                        <th className="px-4 py-3 text-right">%</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {traffic.campaignBreakdown.map((c) => (
-                        <tr key={c.campaign} className="border-b border-line last:border-0">
-                          <td className="px-4 py-3 font-medium text-ink max-w-[140px] truncate">{c.campaign}</td>
-                          <td className="px-4 py-3">
-                            <span className="rounded-full bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700">{c.source}</span>
-                          </td>
-                          <td className="px-4 py-3 text-right font-medium text-ink">{c.sessions}</td>
-                          <td className="px-4 py-3 text-right text-xs text-muted">{c.pct}%</td>
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[320px] text-sm">
+                      <thead>
+                        <tr className="border-b border-line text-left text-[11px] uppercase tracking-label text-muted">
+                          <th className="px-4 py-3">Chiến dịch</th>
+                          <th className="px-4 py-3">Kênh</th>
+                          <th className="px-4 py-3 text-right">Phiên</th>
+                          <th className="px-4 py-3 text-right">%</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table></div>
+                      </thead>
+                      <tbody>
+                        {traffic.campaignBreakdown.map((c) => (
+                          <tr key={c.campaign} className="border-b border-line last:border-0">
+                            <td className="px-4 py-3 font-medium text-ink max-w-[140px] truncate">{c.campaign}</td>
+                            <td className="px-4 py-3">
+                              <span className="rounded-full bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700">{c.source}</span>
+                            </td>
+                            <td className="px-4 py-3 text-right font-medium text-ink">{c.sessions}</td>
+                            <td className="px-4 py-3 text-right text-xs text-muted">{c.pct}%</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </div>
             </div>
@@ -533,22 +539,24 @@ export default async function AnalyticsPage({
                 {traffic.topPages.length === 0 ? (
                   <p className="px-4 py-8 text-center text-sm text-muted">Chưa có dữ liệu</p>
                 ) : (
-                  <div className="overflow-x-auto"><table className="w-full min-w-[260px] text-sm">
-                    <thead>
-                      <tr className="border-b border-line text-left text-[11px] uppercase tracking-label text-muted">
-                        <th className="px-4 py-3">Trang</th>
-                        <th className="px-4 py-3 text-right">Lượt xem</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {traffic.topPages.map((page) => (
-                        <tr key={page.path} className="border-b border-line last:border-0">
-                          <td className="px-4 py-3 font-mono text-xs text-muted max-w-[200px] truncate">{page.path}</td>
-                          <td className="px-4 py-3 text-right font-medium text-ink">{page.views.toLocaleString("vi-VN")}</td>
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[260px] text-sm">
+                      <thead>
+                        <tr className="border-b border-line text-left text-[11px] uppercase tracking-label text-muted">
+                          <th className="px-4 py-3">Trang</th>
+                          <th className="px-4 py-3 text-right">Lượt xem</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table></div>
+                      </thead>
+                      <tbody>
+                        {traffic.topPages.map((page) => (
+                          <tr key={page.path} className="border-b border-line last:border-0">
+                            <td className="px-4 py-3 font-mono text-xs text-muted max-w-[200px] truncate">{page.path}</td>
+                            <td className="px-4 py-3 text-right font-medium text-ink">{page.views.toLocaleString("vi-VN")}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </div>
             </div>
