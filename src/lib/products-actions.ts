@@ -214,15 +214,4 @@ export async function updateProductFlag(
   return { success: true };
 }
 
-export async function bulkSetCostPrice(costPrice: number) {
-  const supabase = await createClient();
-  const { error, count } = await supabase
-    .from("products")
-    .update({ cost_price: costPrice })
-    .neq("id", "00000000-0000-0000-0000-000000000000");
-  if (error) return { error: error.message };
-  revalidatePath("/admin/analytics");
-  revalidatePath("/admin/products");
-  return { success: true };
-}
 
