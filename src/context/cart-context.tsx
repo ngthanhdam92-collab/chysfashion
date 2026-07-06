@@ -9,6 +9,7 @@ import {
   ReactNode,
 } from "react";
 import { CartLine } from "@/lib/types";
+import { trackEvent } from "@/lib/analytics-client";
 
 const STORAGE_KEY = "chys-cart";
 
@@ -56,6 +57,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [lines, hydrated]);
 
   const addItem: CartContextValue["addItem"] = (line, quantity = 1) => {
+    trackEvent("add_to_cart", { product_id: line.productId });
     setLines((prev) => {
       const key = lineKey(line.slug, line.color, line.size);
       const existing = prev.find(
