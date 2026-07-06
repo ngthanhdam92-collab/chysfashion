@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { useCart } from "@/context/cart-context";
 import { formatVnd } from "@/lib/utils";
 import { getShippingRules, calcShippingFee, type ShippingRule } from "@/lib/shipping";
+import Image from "next/image";
 import { ProductImagePlaceholder } from "./product-image-placeholder";
 import { CtaButton } from "./cta-button";
 
@@ -42,7 +43,19 @@ export function CartView() {
               className="flex gap-4 py-5"
             >
               <Link href={`/san-pham/${line.slug}`} className="w-24 shrink-0">
-                <ProductImagePlaceholder seed={line.productId} />
+                {line.image ? (
+                  <div className="relative aspect-[3/4] w-full overflow-hidden bg-cream">
+                    <Image
+                      src={line.image}
+                      alt={line.name}
+                      fill
+                      className="object-cover"
+                      sizes="96px"
+                    />
+                  </div>
+                ) : (
+                  <ProductImagePlaceholder seed={line.productId} />
+                )}
               </Link>
               <div className="flex flex-1 flex-col justify-between">
                 <div className="flex justify-between gap-3">
