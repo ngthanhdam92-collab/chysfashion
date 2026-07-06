@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { PullToRefresh } from "./pull-to-refresh";
 
 interface Props {
   sidebar: React.ReactNode;
@@ -51,6 +52,7 @@ export function AdminShell({ sidebar, header, children }: Props) {
 
       {/* Main */}
       <div className="flex min-w-0 flex-1 flex-col overflow-x-hidden bg-cream/40">
+        <PullToRefresh />
         {/* Top bar */}
         <div className="flex h-14 items-center gap-3 border-b border-line bg-surface px-4 lg:h-16 lg:px-10">
           <button
