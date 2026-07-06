@@ -42,6 +42,8 @@ function buildProductPayload(formData: FormData, slug: string) {
   const fallbackCompareAtPriceRaw = formData.get("compareAtPrice");
   const fallbackCompareAtPrice = fallbackCompareAtPriceRaw ? Number(fallbackCompareAtPriceRaw) : null;
   const fallbackStock = Math.max(0, Number(formData.get("stock") || 0));
+  const fallbackCostPriceRaw = formData.get("costPrice");
+  const fallbackCostPrice = fallbackCostPriceRaw ? Math.max(0, Number(fallbackCostPriceRaw)) : null;
 
   // Phân loại hàng — each variant can carry its own price, compareAtPrice, stock, sku
   let variants: { color: string; size: string; price: number; compareAtPrice?: number; stock: number; sku: string }[] = [];
@@ -55,6 +57,7 @@ function buildProductPayload(formData: FormData, slug: string) {
           size: v.size,
           price: Math.max(0, Number(v.price) || 0),
           ...(v.compareAtPrice ? { compareAtPrice: Math.max(0, Number(v.compareAtPrice) || 0) } : {}),
+          ...(v.costPrice ? { costPrice: Math.max(0, Number(v.costPrice) || 0) } : {}),
           stock: Math.max(0, Math.floor(Number(v.stock) || 0)),
           sku: String(v.sku || ""),
         }));
@@ -113,6 +116,7 @@ function buildProductPayload(formData: FormData, slug: string) {
     video_url: videoUrl,
     related_product_ids: relatedProductIds,
     size_chart_id: sizeChartId,
+    cost_price: fallbackCostPrice,
   };
 }
 

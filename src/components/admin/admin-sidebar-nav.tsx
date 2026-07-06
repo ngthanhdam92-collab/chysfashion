@@ -16,6 +16,7 @@ import {
   Ticket,
   Truck,
   Flame,
+  BarChart3,
 } from "lucide-react";
 
 const NAV_GROUPS = [
@@ -39,6 +40,7 @@ const NAV_GROUPS = [
     label: "Kinh doanh",
     items: [
       { href: "/admin/orders", label: "Đơn hàng", icon: Receipt },
+      { href: "/admin/analytics", label: "Lợi nhuận", icon: BarChart3 },
       { href: "/admin/customers", label: "Khách hàng", icon: Users },
       { href: "/admin/promotions", label: "Khuyến mại", icon: Ticket },
       { href: "/admin/flash-sales", label: "Flash Sale", icon: Flame },

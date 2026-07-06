@@ -32,6 +32,7 @@ interface VariantValue {
   compareAtPrice: string;
   stock: string;
   sku: string;
+  costPrice: string;
 }
 
 function variantKey(col: string, row: string) {
@@ -105,6 +106,7 @@ export function ProductForm({ product, categories, allProducts = [], sizeCharts 
         compareAtPrice: v.compareAtPrice ? String(v.compareAtPrice) : "",
         stock: String(v.stock ?? 0),
         sku: v.sku ?? "",
+        costPrice: v.costPrice ? String(v.costPrice) : "",
       };
     }
     return initial;
@@ -114,6 +116,7 @@ export function ProductForm({ product, categories, allProducts = [], sizeCharts 
   const [bulkCompareAtPrice, setBulkCompareAtPrice] = useState("");
   const [bulkStock, setBulkStock] = useState("");
   const [bulkSku, setBulkSku] = useState("");
+  const [bulkCostPrice, setBulkCostPrice] = useState("");
 
   // ===== Gợi ý xem thêm =====
   const [relatedIds, setRelatedIds] = useState<string[]>(product?.relatedProductIds ?? []);
@@ -130,7 +133,7 @@ export function ProductForm({ product, categories, allProducts = [], sizeCharts 
       : [];
 
   function getVariant(color: string, size: string): VariantValue {
-    return variantData[variantKey(color, size)] ?? { price: "", compareAtPrice: "", stock: "0", sku: "" };
+    return variantData[variantKey(color, size)] ?? { price: "", compareAtPrice: "", stock: "0", sku: "", costPrice: "" };
   }
 
   function setVariantField(color: string, size: string, field: keyof VariantValue, value: string) {
@@ -146,12 +149,13 @@ export function ProductForm({ product, categories, allProducts = [], sizeCharts 
       const next = { ...data };
       for (const combo of variantCombos) {
         const key = variantKey(combo.color, combo.size);
-        const current = next[key] ?? { price: "", compareAtPrice: "", stock: "0", sku: "" };
+        const current = next[key] ?? { price: "", compareAtPrice: "", stock: "0", sku: "", costPrice: "" };
         next[key] = {
           price: bulkPrice !== "" ? bulkPrice : current.price,
           compareAtPrice: bulkCompareAtPrice !== "" ? bulkCompareAtPrice : current.compareAtPrice,
           stock: bulkStock !== "" ? bulkStock : current.stock,
           sku: bulkSku !== "" ? bulkSku : current.sku,
+          costPrice: bulkCostPrice !== "" ? bulkCostPrice : current.costPrice,
         };
       }
       return next;
@@ -162,11 +166,13 @@ export function ProductForm({ product, categories, allProducts = [], sizeCharts 
     variantCombos.map((combo) => {
       const v = getVariant(combo.color, combo.size);
       const cap = Number(v.compareAtPrice) || 0;
+      const cp = Number(v.costPrice) || 0;
       return {
         color: combo.color,
         size: combo.size,
         price: Number(v.price) || 0,
         ...(cap > 0 ? { compareAtPrice: cap } : {}),
+        ...(cp > 0 ? { costPrice: cp } : {}),
         stock: Math.max(0, Math.floor(Number(v.stock) || 0)),
         sku: v.sku,
       };
@@ -656,6 +662,15 @@ export function ProductForm({ product, categories, allProducts = [], sizeCharts 
                   />
                 </div>
                 <div className="flex-1 min-w-[90px]">
+                  <label className="text-xs text-muted">Giá vốn (đ)</label>
+                  <input
+                    type="number" min={0} value={bulkCostPrice}
+                    onChange={(e) => setBulkCostPrice(e.target.value)}
+                    placeholder="Giá vốn"
+                    className="mt-1 w-full border border-line bg-white px-2 py-1.5 text-sm focus:border-gold focus:outline-none"
+                  />
+                </div>
+                <div className="flex-1 min-w-[90px]">
                   <label className="text-xs text-muted">SKU phân loại</label>
                   <input
                     value={bulkSku} onChange={(e) => setBulkSku(e.target.value)}
@@ -683,6 +698,7 @@ export function ProductForm({ product, categories, allProducts = [], sizeCharts 
                       )}
                       <th className="px-3 py-2.5">Giá bán (đ) *</th>
                       <th className="px-3 py-2.5">Giá gốc (đ)</th>
+                      <th className="px-3 py-2.5">Giá vốn (đ)</th>
                       <th className="px-3 py-2.5">Kho hàng *</th>
                       <th className="px-3 py-2.5">SKU phân loại</th>
                     </tr>
@@ -710,6 +726,14 @@ export function ProductForm({ product, categories, allProducts = [], sizeCharts 
                             <input
                               type="number" min={0} value={v.compareAtPrice}
                               onChange={(e) => setVariantField(combo.color, combo.size, "compareAtPrice", e.target.value)}
+                              placeholder="—"
+                              className="w-28 border border-line bg-white px-2 py-1.5 text-sm focus:border-gold focus:outline-none"
+                            />
+                          </td>
+                          <td className="px-3 py-2">
+                            <input
+                              type="number" min={0} value={v.costPrice}
+                              onChange={(e) => setVariantField(combo.color, combo.size, "costPrice", e.target.value)}
                               placeholder="—"
                               className="w-28 border border-line bg-white px-2 py-1.5 text-sm focus:border-gold focus:outline-none"
                             />
@@ -785,7 +809,7 @@ export function ProductForm({ product, categories, allProducts = [], sizeCharts 
 
           {/* Fallback price/stock khi không có phân loại */}
           {variantCombos.length === 0 && (
-            <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-4">
               <div>
                 <label className="text-xs text-muted" htmlFor="price">Giá bán (đ) *</label>
                 <input
@@ -799,6 +823,14 @@ export function ProductForm({ product, categories, allProducts = [], sizeCharts 
                 <input
                   id="compareAtPrice" name="compareAtPrice" type="number" min={0}
                   defaultValue={product?.compareAtPrice}
+                  className="mt-1 w-full border border-line bg-white px-3 py-2.5 text-sm focus:border-gold focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted" htmlFor="costPrice">Giá vốn (đ) — để tính lợi nhuận</label>
+                <input
+                  id="costPrice" name="costPrice" type="number" min={0}
+                  defaultValue={product?.costPrice}
                   className="mt-1 w-full border border-line bg-white px-3 py-2.5 text-sm focus:border-gold focus:outline-none"
                 />
               </div>

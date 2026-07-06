@@ -13,6 +13,7 @@ export interface ProductVariant {
   compareAtPrice?: number;
   stock: number;
   sku: string;
+  costPrice?: number;
 }
 
 export interface Product {
@@ -39,6 +40,7 @@ export interface Product {
   relatedProductIds: string[];
   sizeChartId: string | null;
   sizeChart: Record<string, Partial<SizeChartRow>>;
+  costPrice?: number;
 }
 
 export interface OrderItem {

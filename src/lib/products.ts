@@ -25,6 +25,7 @@ interface ProductRow {
   video_url: string | null;
   related_product_ids: string[] | null;
   size_chart_id: string | null;
+  cost_price: number | null;
 }
 
 function mapRow(
@@ -55,6 +56,7 @@ function mapRow(
     relatedProductIds: row.related_product_ids ?? [],
     sizeChartId: row.size_chart_id ?? null,
     sizeChart: (sizeChartData ?? {}) as Record<string, Partial<SizeChartRow>>,
+    costPrice: row.cost_price ? Number(row.cost_price) : undefined,
   };
 }
 
