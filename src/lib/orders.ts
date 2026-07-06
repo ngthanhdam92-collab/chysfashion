@@ -186,8 +186,13 @@ export async function updateOrderFull(
 
 export async function deleteOrder(id: string) {
   const supabase = await createClient();
-  const { error } = await supabase.from("orders").delete().eq("id", id);
+  const { error, count } = await supabase
+    .from("orders")
+    .delete({ count: "exact" })
+    .eq("id", id);
   if (error) return { error: error.message };
+  if (count === 0) return { error: "Không thể xóa đơn — bảng orders chưa có RLS DELETE policy. Xem hướng dẫn bên dưới." };
   revalidatePath("/admin/orders");
+  revalidatePath("/admin");
   return { success: true };
 }
