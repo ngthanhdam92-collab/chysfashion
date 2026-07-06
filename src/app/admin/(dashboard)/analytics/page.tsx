@@ -3,7 +3,7 @@ import { getAllProducts } from "@/lib/products";
 import { formatVnd } from "@/lib/utils";
 import { Order, OrderItem } from "@/lib/types";
 import Link from "next/link";
-import { TrendingUp, TrendingDown, Package, ShoppingBag, BarChart3, AlertCircle } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
 
 type Period = "7d" | "30d" | "all";
 
@@ -15,8 +15,7 @@ const PERIOD_LABELS: Record<Period, string> = {
 
 function periodCutoff(period: Period): Date {
   if (period === "all") return new Date(0);
-  const days = period === "7d" ? 7 : 30;
-  return new Date(Date.now() - days * 86400000);
+  return new Date(Date.now() - (period === "7d" ? 7 : 30) * 86400000);
 }
 
 function dayKey(date: Date): string {
@@ -38,11 +37,11 @@ export default async function AnalyticsPage({
 
   const [allOrders, products] = await Promise.all([getAllOrders(), getAllProducts()]);
 
-  // Build cost price lookup: productId → { "color__size": costPrice }
+  // Cost price lookup: productId → { "color__size": costPrice }
   const variantCostMap: Record<string, Record<string, number>> = {};
   const productCostMap: Record<string, number> = {};
-  let missingCostCount = 0;
   const productNameMap: Record<string, string> = {};
+  let missingCostCount = 0;
 
   for (const p of products) {
     productNameMap[p.id] = p.name;
@@ -60,15 +59,21 @@ export default async function AnalyticsPage({
     (o) => o.status !== "da_huy" && new Date(o.createdAt) >= cutoff
   );
 
-  // Profit per order item
+  // ── Helpers ────────────────────────────────────────────────────────────────
   function itemCost(item: OrderItem): number {
     const key = `${item.color}__${item.size}`;
     return (variantCostMap[item.productId]?.[key] ?? productCostMap[item.productId] ?? 0) * item.quantity;
   }
 
+  // Product revenue per order = subtotal - discount (excludes shipping)
+  function orderProductRevenue(order: Order): number {
+    return order.subtotal - (order.discount ?? 0);
+  }
+
+  // Profit = product revenue - COGS (shipping is pass-through, not counted)
   function orderProfit(order: Order): number {
     const cogs = order.items.reduce((s, i) => s + itemCost(i), 0);
-    return order.total - cogs;
+    return orderProductRevenue(order) - cogs;
   }
 
   function orderHasCost(order: Order): boolean {
@@ -77,64 +82,64 @@ export default async function AnalyticsPage({
     );
   }
 
-  const totalRevenue = activeOrders.reduce((s, o) => s + o.total, 0);
-  const totalCOGS = activeOrders.reduce((s, o) => s + o.items.reduce((si, i) => si + itemCost(i), 0), 0);
-  const totalProfit = totalRevenue - totalCOGS;
-  const margin = totalRevenue > 0 ? Math.round((totalProfit / totalRevenue) * 100) : 0;
+  // ── Aggregates ─────────────────────────────────────────────────────────────
+  const productRevenue = activeOrders.reduce((s, o) => s + orderProductRevenue(o), 0);
+  const totalShipping  = activeOrders.reduce((s, o) => s + (o.shipping ?? 0), 0);
+  const totalDiscount  = activeOrders.reduce((s, o) => s + (o.discount ?? 0), 0);
+  const totalReceived  = activeOrders.reduce((s, o) => s + o.total, 0); // = productRevenue + shipping
+  const totalCOGS      = activeOrders.reduce((s, o) => s + o.items.reduce((si, i) => si + itemCost(i), 0), 0);
+  const totalProfit    = productRevenue - totalCOGS;
+  const margin         = productRevenue > 0 ? Math.round((totalProfit / productRevenue) * 100) : 0;
   const costDataAvailable = totalCOGS > 0;
-  const avgOrderValue = activeOrders.length > 0 ? Math.round(totalRevenue / activeOrders.length) : 0;
+  const avgOrderValue  = activeOrders.length > 0 ? Math.round(productRevenue / activeOrders.length) : 0;
 
-  // Product revenue map for top products
+  // ── Top products ───────────────────────────────────────────────────────────
   const productRevMap: Record<string, { revenue: number; profit: number; qty: number }> = {};
   for (const order of activeOrders) {
     for (const item of order.items) {
-      if (!productRevMap[item.productId]) {
+      if (!productRevMap[item.productId])
         productRevMap[item.productId] = { revenue: 0, profit: 0, qty: 0 };
-      }
-      const lineRevenue = item.price * item.quantity;
+      const lineRev = item.price * item.quantity;
       const lineCost = itemCost(item);
-      productRevMap[item.productId].revenue += lineRevenue;
-      productRevMap[item.productId].profit += lineRevenue - lineCost;
-      productRevMap[item.productId].qty += item.quantity;
+      productRevMap[item.productId].revenue += lineRev;
+      productRevMap[item.productId].profit  += lineRev - lineCost;
+      productRevMap[item.productId].qty     += item.quantity;
     }
   }
   const topProducts = Object.entries(productRevMap)
     .sort((a, b) => b[1].revenue - a[1].revenue)
     .slice(0, 8);
 
-  // Daily chart data (last N days)
-  const chartDays = period === "7d" ? 7 : period === "30d" ? 30 : Math.min(30, activeOrders.length > 0 ? 30 : 0);
-  const dailyData: { key: string; revenue: number; profit: number }[] = [];
-
-  if (chartDays > 0) {
-    for (let i = chartDays - 1; i >= 0; i--) {
-      const d = new Date(Date.now() - i * 86400000);
-      dailyData.push({ key: dayKey(d), revenue: 0, profit: 0 });
-    }
+  // ── Daily chart ────────────────────────────────────────────────────────────
+  const chartDays = period === "7d" ? 7 : 30;
+  const dailyData: { key: string; productRev: number; shipping: number; profit: number }[] = [];
+  for (let i = chartDays - 1; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 86400000);
+    dailyData.push({ key: dayKey(d), productRev: 0, shipping: 0, profit: 0 });
+  }
+  if (period !== "all") {
     for (const order of activeOrders) {
       const k = dayKey(new Date(order.createdAt));
       const entry = dailyData.find((d) => d.key === k);
       if (entry) {
-        entry.revenue += order.total;
-        entry.profit += orderProfit(order);
+        entry.productRev += orderProductRevenue(order);
+        entry.shipping   += order.shipping ?? 0;
+        entry.profit     += orderProfit(order);
       }
     }
   }
+  const maxBar = Math.max(...dailyData.map((d) => d.productRev + d.shipping), 1);
 
-  const maxRevenue = Math.max(...dailyData.map((d) => d.revenue), 1);
-
-  // Recent orders with profit
   const recentOrders = activeOrders.slice(0, 10);
 
   return (
     <div>
+      {/* ── Header ── */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-serif text-2xl text-ink">Phân tích lợi nhuận</h1>
-          <p className="mt-0.5 text-sm text-muted">Doanh thu và lợi nhuận ước tính theo giá vốn đã nhập.</p>
+          <p className="mt-0.5 text-sm text-muted">Doanh thu sản phẩm, phí vận chuyển và lợi nhuận ước tính.</p>
         </div>
-
-        {/* Period filter */}
         <div className="flex gap-1 border border-line">
           {(["7d", "30d", "all"] as Period[]).map((p) => (
             <Link
@@ -150,84 +155,109 @@ export default async function AnalyticsPage({
         </div>
       </div>
 
-      {/* Missing cost price warning */}
       {missingCostCount > 0 && (
         <div className="mt-4 flex items-start gap-2.5 rounded border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           <AlertCircle size={16} className="mt-0.5 shrink-0" />
           <p>
-            <span className="font-semibold">{missingCostCount} sản phẩm</span> chưa nhập giá vốn — lợi nhuận của các sản phẩm này sẽ không chính xác.{" "}
-            <Link href="/admin/products" className="underline hover:no-underline">
-              Cập nhật giá vốn
-            </Link>
+            <span className="font-semibold">{missingCostCount} sản phẩm</span> chưa nhập giá vốn —
+            lợi nhuận sẽ không chính xác.{" "}
+            <Link href="/admin/products" className="underline hover:no-underline">Cập nhật giá vốn</Link>
           </p>
         </div>
       )}
 
-      {/* Stat cards */}
-      <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard
-          label="Doanh thu"
-          value={formatVnd(totalRevenue)}
-          sub={`${activeOrders.length} đơn hàng`}
-          color="blue"
-        />
-        <StatCard
-          label="Lợi nhuận ước tính"
-          value={costDataAvailable ? formatVnd(totalProfit) : "Chưa có dữ liệu"}
-          sub={costDataAvailable ? `Biên ${margin}%` : "Nhập giá vốn để xem"}
-          color={totalProfit >= 0 ? "green" : "red"}
-          icon={totalProfit >= 0 ? TrendingUp : TrendingDown}
-        />
-        <StatCard
-          label="Giá trị đơn TB"
-          value={activeOrders.length > 0 ? formatVnd(avgOrderValue) : "—"}
-          sub="Trung bình / đơn"
-          color="purple"
-        />
-        <StatCard
-          label="Tổng giá vốn"
-          value={costDataAvailable ? formatVnd(totalCOGS) : "—"}
-          sub="COGS ước tính"
-          color="amber"
-        />
+      {/* ── Revenue breakdown ── */}
+      <div className="mt-6">
+        <p className="text-[11px] font-semibold uppercase tracking-label text-muted">Doanh thu</p>
+        <div className="mt-2 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <StatCard label="Doanh thu sản phẩm" value={formatVnd(productRevenue)}
+            sub={`${activeOrders.length} đơn · giá bán – giảm giá`} color="blue" />
+          <StatCard label="Phí vận chuyển thu" value={formatVnd(totalShipping)}
+            sub="Khách trả ship" color="purple" />
+          <StatCard label="Giảm giá / voucher" value={formatVnd(totalDiscount)}
+            sub="Đã khấu trừ" color="amber" />
+          <StatCard label="Tổng tiền thu về" value={formatVnd(totalReceived)}
+            sub="SP + ship – giảm giá" color="slate" />
+        </div>
       </div>
 
-      {/* Chart */}
-      {dailyData.length > 0 && (
+      {/* ── Profit breakdown ── */}
+      <div className="mt-5">
+        <p className="text-[11px] font-semibold uppercase tracking-label text-muted">Lợi nhuận (tính trên doanh thu sản phẩm)</p>
+        <div className="mt-2 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <StatCard label="Lợi nhuận gộp" value={costDataAvailable ? formatVnd(totalProfit) : "Chưa có dữ liệu"}
+            sub={costDataAvailable ? `Biên ${margin}%` : "Nhập giá vốn để xem"}
+            color={totalProfit >= 0 ? "green" : "red"}
+            icon={costDataAvailable ? (totalProfit >= 0 ? TrendingUp : TrendingDown) : undefined} />
+          <StatCard label="Giá vốn (COGS)" value={costDataAvailable ? formatVnd(totalCOGS) : "—"}
+            sub="Tổng chi phí hàng bán" color="amber" />
+          <StatCard label="Giá trị đơn TB" value={activeOrders.length > 0 ? formatVnd(avgOrderValue) : "—"}
+            sub="Doanh thu SP / đơn" color="blue" />
+          <div className="border border-line bg-surface p-5">
+            <p className="text-[11px] uppercase tracking-label text-muted">Biên lợi nhuận</p>
+            <p className={`mt-1.5 text-2xl font-bold ${costDataAvailable ? (margin >= 0 ? "text-emerald-600" : "text-red-600") : "text-muted"}`}>
+              {costDataAvailable ? `${margin}%` : "—"}
+            </p>
+            {costDataAvailable && (
+              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-line">
+                <div
+                  className={`h-full rounded-full ${margin >= 0 ? "bg-emerald-500" : "bg-red-500"}`}
+                  style={{ width: `${Math.min(100, Math.max(0, margin))}%` }}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Chart ── */}
+      {period !== "all" && dailyData.length > 0 && (
         <div className="mt-8">
-          <h2 className="font-serif text-lg text-ink">Doanh thu theo ngày</h2>
+          <h2 className="font-serif text-lg text-ink">Biểu đồ theo ngày</h2>
           <div className="mt-3 border border-line bg-surface p-5">
-            <div className="flex items-end gap-1" style={{ height: 160 }}>
+            <div className="flex items-end gap-0.5" style={{ height: 160 }}>
               {dailyData.map((day) => {
-                const revH = Math.round((day.revenue / maxRevenue) * 140);
+                const revH  = Math.round((day.productRev / maxBar) * 140);
+                const shipH = Math.round((day.shipping / maxBar) * 140);
                 const profH = costDataAvailable
-                  ? Math.max(0, Math.round((day.profit / maxRevenue) * 140))
+                  ? Math.max(0, Math.round((day.profit / maxBar) * 140))
                   : 0;
+                const total = day.productRev + day.shipping;
                 return (
-                  <div key={day.key} className="group relative flex flex-1 flex-col items-center justify-end gap-0.5" style={{ height: 160 }}>
+                  <div key={day.key} className="group relative flex flex-1 flex-col items-center justify-end" style={{ height: 160 }}>
                     {/* Tooltip */}
-                    <div className="absolute bottom-full mb-2 hidden min-w-[110px] rounded bg-ink px-2 py-1.5 text-[11px] text-paper shadow group-hover:block z-10 left-1/2 -translate-x-1/2">
-                      <p className="font-medium">{formatDayLabel(day.key)}</p>
-                      <p>DT: {formatVnd(day.revenue)}</p>
-                      {costDataAvailable && <p>LN: {formatVnd(day.profit)}</p>}
+                    {total > 0 && (
+                      <div className="pointer-events-none absolute bottom-full mb-2 hidden min-w-[130px] rounded bg-ink px-2.5 py-2 text-[11px] text-paper shadow group-hover:block z-10 left-1/2 -translate-x-1/2">
+                        <p className="font-semibold">{formatDayLabel(day.key)}</p>
+                        <p className="mt-0.5 text-blue-300">SP: {formatVnd(day.productRev)}</p>
+                        <p className="text-purple-300">Ship: {formatVnd(day.shipping)}</p>
+                        {costDataAvailable && <p className="text-emerald-300">LN: {formatVnd(day.profit)}</p>}
+                      </div>
+                    )}
+                    <div className="flex w-full flex-col justify-end gap-0" style={{ height: 140 }}>
+                      {/* Profit overlay (green, on top of product bar) */}
+                      {costDataAvailable && profH > 0 && (
+                        <div className="w-full bg-emerald-400 opacity-70" style={{ height: profH }} />
+                      )}
+                      {/* Product revenue (blue) */}
+                      {revH > 0 && (
+                        <div className="w-full bg-blue-400" style={{ height: Math.max(0, revH - profH) }} />
+                      )}
+                      {/* Shipping (purple, bottom) */}
+                      {shipH > 0 && (
+                        <div className="w-full bg-purple-300" style={{ height: shipH }} />
+                      )}
+                      {total === 0 && <div className="w-full bg-line" style={{ height: 2 }} />}
                     </div>
-                    {/* Profit bar */}
-                    {costDataAvailable && profH > 0 && (
-                      <div className="w-full rounded-t-sm bg-emerald-400" style={{ height: profH }} />
-                    )}
-                    {/* Revenue bar behind/below */}
-                    {revH > profH && (
-                      <div className="w-full rounded-t-sm bg-blue-400" style={{ height: revH - profH }} />
-                    )}
-                    {revH === 0 && <div className="w-full bg-line" style={{ height: 2 }} />}
-                    <span className="mt-1 rotate-0 text-[9px] text-muted">{formatDayLabel(day.key)}</span>
+                    <span className="mt-1 text-[9px] text-muted">{formatDayLabel(day.key)}</span>
                   </div>
                 );
               })}
             </div>
-            <div className="mt-3 flex items-center gap-4 text-xs text-muted">
-              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-blue-400" />Doanh thu</span>
-              {costDataAvailable && <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-emerald-400" />Lợi nhuận</span>}
+            <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-muted">
+              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-blue-400"/>Doanh thu SP</span>
+              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-purple-300"/>Phí vận chuyển</span>
+              {costDataAvailable && <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-emerald-400 opacity-70"/>Lợi nhuận</span>}
             </div>
           </div>
         </div>
@@ -246,24 +276,20 @@ export default async function AnalyticsPage({
                   <tr className="border-b border-line text-left text-[11px] uppercase tracking-label text-muted">
                     <th className="px-4 py-3">Sản phẩm</th>
                     <th className="px-4 py-3 text-right">SL</th>
-                    <th className="px-4 py-3 text-right">Doanh thu</th>
+                    <th className="px-4 py-3 text-right">Doanh thu SP</th>
                     <th className="px-4 py-3 text-right">Lợi nhuận</th>
                   </tr>
                 </thead>
                 <tbody>
                   {topProducts.map(([pid, data]) => (
                     <tr key={pid} className="border-b border-line last:border-0">
-                      <td className="px-4 py-3">
-                        <p className="line-clamp-1 text-ink">{productNameMap[pid] ?? pid}</p>
-                      </td>
+                      <td className="px-4 py-3 text-ink line-clamp-1 max-w-[180px]">{productNameMap[pid] ?? pid}</td>
                       <td className="px-4 py-3 text-right text-muted">{data.qty}</td>
                       <td className="px-4 py-3 text-right font-medium text-ink">{formatVnd(data.revenue)}</td>
                       <td className="px-4 py-3 text-right">
-                        {data.profit > 0 ? (
-                          <span className="font-medium text-emerald-600">{formatVnd(data.profit)}</span>
-                        ) : (
-                          <span className="text-muted">—</span>
-                        )}
+                        {data.profit > 0
+                          ? <span className="font-medium text-emerald-600">{formatVnd(data.profit)}</span>
+                          : <span className="text-muted">—</span>}
                       </td>
                     </tr>
                   ))}
@@ -287,12 +313,14 @@ export default async function AnalyticsPage({
                 <thead>
                   <tr className="border-b border-line text-left text-[11px] uppercase tracking-label text-muted">
                     <th className="px-4 py-3">Mã đơn</th>
-                    <th className="px-4 py-3 text-right">Doanh thu</th>
+                    <th className="px-4 py-3 text-right">DT sản phẩm</th>
+                    <th className="px-4 py-3 text-right">Ship</th>
                     <th className="px-4 py-3 text-right">Lợi nhuận</th>
                   </tr>
                 </thead>
                 <tbody>
                   {recentOrders.map((order) => {
+                    const pRev   = orderProductRevenue(order);
                     const profit = orderProfit(order);
                     const hasCost = orderHasCost(order);
                     return (
@@ -303,15 +331,12 @@ export default async function AnalyticsPage({
                           </Link>
                           <p className="text-[11px] text-muted">{order.fullName}</p>
                         </td>
-                        <td className="px-4 py-3 text-right text-ink">{formatVnd(order.total)}</td>
+                        <td className="px-4 py-3 text-right text-ink">{formatVnd(pRev)}</td>
+                        <td className="px-4 py-3 text-right text-muted">{formatVnd(order.shipping ?? 0)}</td>
                         <td className="px-4 py-3 text-right">
-                          {hasCost ? (
-                            <span className={`font-medium ${profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-                              {formatVnd(profit)}
-                            </span>
-                          ) : (
-                            <span className="text-[11px] text-muted">Chưa có GV</span>
-                          )}
+                          {hasCost
+                            ? <span className={`font-medium ${profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>{formatVnd(profit)}</span>
+                            : <span className="text-[11px] text-muted">Chưa có GV</span>}
                         </td>
                       </tr>
                     );
@@ -328,24 +353,21 @@ export default async function AnalyticsPage({
 
 // ── Stat card ───────────────────────────────────────────────────────────────
 function StatCard({
-  label,
-  value,
-  sub,
-  color,
-  icon: Icon,
+  label, value, sub, color, icon: Icon,
 }: {
   label: string;
   value: string;
   sub?: string;
-  color: "blue" | "green" | "red" | "purple" | "amber";
+  color: "blue" | "green" | "red" | "purple" | "amber" | "slate";
   icon?: React.ElementType;
 }) {
-  const colorMap = {
+  const iconMap: Record<string, string> = {
     blue:   "bg-blue-50 text-blue-600",
     green:  "bg-emerald-50 text-emerald-600",
     red:    "bg-red-50 text-red-600",
     purple: "bg-purple-50 text-purple-600",
     amber:  "bg-amber-50 text-amber-600",
+    slate:  "bg-slate-50 text-slate-600",
   };
   return (
     <div className="border border-line bg-surface p-5">
@@ -354,7 +376,7 @@ function StatCard({
       {sub && (
         <div className="mt-1.5 flex items-center gap-1.5">
           {Icon && (
-            <span className={`inline-flex items-center rounded-full p-0.5 ${colorMap[color]}`}>
+            <span className={`inline-flex items-center rounded-full p-0.5 ${iconMap[color]}`}>
               <Icon size={11} />
             </span>
           )}
