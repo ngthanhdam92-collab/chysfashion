@@ -199,16 +199,16 @@ export default async function AnalyticsPage({
       ════════════════════════════════════════════════════════════════════════ */}
       {view === "revenue" && (
         <div className="mt-6">
-          {missingCostCount > 0 && (
-            <div className="mb-5 flex flex-wrap items-center gap-3 rounded border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              <AlertCircle size={16} className="shrink-0" />
-              <p className="flex-1">
-                <span className="font-semibold">{missingCostCount} sản phẩm</span> chưa nhập giá vốn.{" "}
-                <Link href="/admin/products" className="underline hover:no-underline">Nhập thủ công</Link>
-              </p>
-              <BulkCostPriceButton amount={50000} />
-            </div>
-          )}
+          <div className="mb-5 flex flex-wrap items-center gap-3 rounded border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <AlertCircle size={16} className="shrink-0" />
+            <p className="flex-1">
+              {missingCostCount > 0
+                ? <><span className="font-semibold">{missingCostCount} sản phẩm</span> chưa nhập giá vốn. <Link href="/admin/products" className="underline hover:no-underline">Nhập thủ công</Link></>
+                : <span>Đặt giá vốn nhanh cho tất cả sản phẩm (dùng để test)</span>
+              }
+            </p>
+            <BulkCostPriceButton amount={50000} />
+          </div>
 
           {/* Revenue breakdown */}
           <p className="text-[11px] font-semibold uppercase tracking-label text-muted">Doanh thu</p>
