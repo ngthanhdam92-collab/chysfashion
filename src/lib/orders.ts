@@ -142,3 +142,52 @@ export async function updateOrderCustomerInfo(
   revalidatePath(`/admin/orders/${id}`);
   return { success: true };
 }
+
+export async function updateOrderFull(
+  id: string,
+  data: {
+    fullName: string;
+    phone: string;
+    address: string;
+    city: string;
+    note: string;
+    shipping: number;
+    discount: number;
+  }
+) {
+  const supabase = await createClient();
+  // Re-fetch subtotal to recompute total correctly
+  const { data: row } = await supabase
+    .from("orders")
+    .select("subtotal")
+    .eq("id", id)
+    .maybeSingle();
+  const subtotal = Number((row as { subtotal: number } | null)?.subtotal ?? 0);
+  const total = Math.max(0, subtotal - data.discount + data.shipping);
+
+  const { error } = await supabase
+    .from("orders")
+    .update({
+      full_name: data.fullName,
+      phone: data.phone,
+      address: data.address,
+      city: data.city,
+      note: data.note || null,
+      shipping: data.shipping,
+      discount: data.discount,
+      total,
+    })
+    .eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath(`/admin/orders/${id}`);
+  revalidatePath("/admin/orders");
+  return { success: true };
+}
+
+export async function deleteOrder(id: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("orders").delete().eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/orders");
+  return { success: true };
+}

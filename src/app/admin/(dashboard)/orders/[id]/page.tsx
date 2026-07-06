@@ -5,6 +5,7 @@ import { getOrderById } from "@/lib/orders";
 import { formatVnd } from "@/lib/utils";
 import { OrderStatusSelect } from "@/components/admin/order-status-select";
 import { OrderCustomerEdit } from "@/components/admin/order-customer-edit";
+import { OrderDeleteButton } from "@/components/admin/order-delete-button";
 
 interface Params {
   params: Promise<{ id: string }>;
@@ -17,11 +18,14 @@ export default async function AdminOrderDetailPage({ params }: Params) {
 
   return (
     <div>
-      <Link href="/admin/orders" className="flex items-center gap-1.5 text-sm text-muted hover:text-ink">
-        <ArrowLeft size={15} /> Quay lại danh sách đơn
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link href="/admin/orders" className="flex items-center gap-1.5 text-sm text-muted hover:text-ink">
+          <ArrowLeft size={15} /> Quay lại danh sách đơn
+        </Link>
+        <OrderDeleteButton orderId={order.id} orderCode={order.orderCode} />
+      </div>
 
-      <div className="mt-4 flex items-center justify-between">
+      <div className="mt-4 flex flex-wrap items-center gap-3 justify-between">
         <h1 className="font-serif text-2xl text-ink">Đơn hàng {order.orderCode}</h1>
         <OrderStatusSelect id={order.id} status={order.status} />
       </div>
@@ -76,27 +80,21 @@ export default async function AdminOrderDetailPage({ params }: Params) {
           </div>
         </div>
 
-        {/* ── Customer info ── */}
+        {/* ── Customer info (editable) ── */}
         <div className="border border-line bg-surface p-6">
           <h2 className="text-[12px] tracking-label uppercase text-ink">Thông tin khách hàng</h2>
           <dl className="mt-4 space-y-3 text-sm">
-            <div>
-              <dt className="text-xs text-muted">Họ tên</dt>
-              <dd className="text-ink">{order.fullName}</dd>
-            </div>
-
             <OrderCustomerEdit
               orderId={order.id}
+              initialFullName={order.fullName}
               initialPhone={order.phone}
-              initialAddress={`${order.address}, ${order.city}`}
+              initialAddress={order.address}
+              initialCity={order.city}
+              initialNote={order.note ?? ""}
+              initialShipping={order.shipping}
+              initialDiscount={order.discount}
+              subtotal={order.subtotal}
             />
-
-            {order.note && (
-              <div>
-                <dt className="text-xs text-muted">Ghi chú</dt>
-                <dd className="text-ink">{order.note}</dd>
-              </div>
-            )}
             <div>
               <dt className="text-xs text-muted">Ngày đặt</dt>
               <dd className="text-ink">
