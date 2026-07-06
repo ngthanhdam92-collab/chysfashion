@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { Search, AlertTriangle } from "lucide-react";
 import { Order, OrderStatus } from "@/lib/types";
 import { formatVnd } from "@/lib/utils";
 import { AvatarInitials } from "./avatar-initials";
@@ -20,6 +20,21 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
       count: orders.filter((o) => o.status === opt.value).length,
     })),
   ];
+
+  // Detect suspected duplicates: same phone, placed within 10 minutes of each other
+  const duplicateIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (let i = 0; i < orders.length; i++) {
+      for (let j = i + 1; j < orders.length; j++) {
+        const a = orders[i];
+        const b = orders[j];
+        if (a.phone !== b.phone) continue;
+        const diff = Math.abs(new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        if (diff <= 10 * 60 * 1000) { ids.add(a.id); ids.add(b.id); }
+      }
+    }
+    return ids;
+  }, [orders]);
 
   const filtered = useMemo(() => {
     let rows = tab === "all" ? orders : orders.filter((o) => o.status === tab);
@@ -86,6 +101,15 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
                   >
                     {o.orderCode}
                   </Link>
+                  {duplicateIds.has(o.id) && (
+                    <span
+                      title="Có thể là đơn trùng lặp — cùng SĐT, đặt trong vòng 10 phút"
+                      className="ml-2 inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700"
+                    >
+                      <AlertTriangle size={10} />
+                      Trùng?
+                    </span>
+                  )}
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2.5">

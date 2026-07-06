@@ -33,6 +33,7 @@ export function CheckoutView() {
   const [orderCode, setOrderCode] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const submittingRef = useRef(false); // synchronous guard against double-submit
 
   /* ── Saved customer ── */
   const [savedCustomer, setSavedCustomer] = useState<SavedCustomer | null>(null);
@@ -176,9 +177,11 @@ export function CheckoutView() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    if (submittingRef.current) return; // block concurrent submits
     const pErr = validatePhone(phone);
     if (pErr) { setPhoneError(pErr); return; }
     if (!province || !district || !ward) { setError("Vui lòng chọn đầy đủ tỉnh/quận/phường."); return; }
+    submittingRef.current = true;
     setSubmitting(true);
     setError(null);
 
@@ -206,6 +209,7 @@ export function CheckoutView() {
       promoCode: promoApplied?.code,
     });
 
+    submittingRef.current = false;
     setSubmitting(false);
     if ("error" in result) { setError(result.error); return; }
 
