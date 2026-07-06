@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 import { ShoppingBag, X } from "lucide-react";
 import Link from "next/link";
 
@@ -19,6 +20,7 @@ function formatVnd(n: number) {
 export function OrderNotifier() {
   const [toasts, setToasts] = useState<OrderToast[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const supabase = createClient();
@@ -44,6 +46,9 @@ export function OrderNotifier() {
           };
 
           setToasts((prev) => [...prev, toast]);
+
+          // Refresh server component data so dashboard/orders list updates automatically
+          router.refresh();
 
           // Play a simple beep via AudioContext
           try {
