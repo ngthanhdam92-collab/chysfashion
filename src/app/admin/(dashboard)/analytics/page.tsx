@@ -6,6 +6,7 @@ import { Order, OrderItem } from "@/lib/types";
 import Link from "next/link";
 import { TrendingUp, TrendingDown, AlertCircle, Globe, ShoppingCart, Package, CreditCard } from "lucide-react";
 import { AnalyticsPeriodPicker } from "@/components/admin/analytics-period-picker";
+import { BulkCostPriceButton } from "@/components/admin/bulk-cost-price-button";
 
 type Period = "yesterday" | "7d" | "custom";
 type View   = "revenue" | "traffic";
@@ -199,12 +200,13 @@ export default async function AnalyticsPage({
       {view === "revenue" && (
         <div className="mt-6">
           {missingCostCount > 0 && (
-            <div className="mb-5 flex items-start gap-2.5 rounded border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              <AlertCircle size={16} className="mt-0.5 shrink-0" />
-              <p>
+            <div className="mb-5 flex flex-wrap items-center gap-3 rounded border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              <AlertCircle size={16} className="shrink-0" />
+              <p className="flex-1">
                 <span className="font-semibold">{missingCostCount} sản phẩm</span> chưa nhập giá vốn.{" "}
-                <Link href="/admin/products" className="underline hover:no-underline">Cập nhật giá vốn</Link>
+                <Link href="/admin/products" className="underline hover:no-underline">Nhập thủ công</Link>
               </p>
+              <BulkCostPriceButton amount={50000} />
             </div>
           )}
 
