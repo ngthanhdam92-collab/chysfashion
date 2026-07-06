@@ -1,0 +1,19 @@
+{
+  "name": "CHYS Admin",
+  "short_name": "CHYS",
+  "description": "Quản lý cửa hàng CHYS Fashion",
+  "start_url": "/admin",
+  "scope": "/admin",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1a1814",
+  "theme_color": "#1a1814",
+  "icons": [
+    {
+      "src": "/admin-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

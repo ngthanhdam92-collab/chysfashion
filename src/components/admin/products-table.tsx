@@ -17,7 +17,7 @@ export function ProductsTable({ products }: Props) {
 
   return (
     <>
-      <div className="border border-line bg-surface">
+      <div className="overflow-x-auto border border-line bg-surface">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-line text-left text-xs uppercase tracking-label text-muted">

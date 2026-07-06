@@ -18,6 +18,12 @@ export const metadata: Metadata = {
   title: "CHYS Fashion — Thời trang cao cấp",
   description:
     "CHYS Fashion — thương hiệu thời trang cao cấp với thiết kế tối giản, tinh tế, chất liệu cao cấp dành cho phái mạnh và phái đẹp.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "CHYS Admin",
+  },
 };
 
 export default function RootLayout({
@@ -32,6 +38,8 @@ export default function RootLayout({
     >
       <head>
         <Script src="/polyfills.js" strategy="beforeInteractive" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <link rel="apple-touch-icon" href="/admin-icon.svg" />
       </head>
       <body className="min-h-full flex flex-col font-sans">{children}</body>
     </html>
