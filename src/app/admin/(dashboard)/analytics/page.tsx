@@ -359,9 +359,8 @@ export default async function AnalyticsPage({
 
           {/* Traffic stats */}
           <p className="text-[11px] font-semibold uppercase tracking-label text-muted">Lượng truy cập</p>
-          <div className="mt-2 grid grid-cols-2 gap-3 lg:grid-cols-5">
+          <div className="mt-2 grid grid-cols-2 gap-3 lg:grid-cols-4">
             <StatCard label="Lượt xem trang" value={traffic.totalPageViews.toLocaleString("vi-VN")} sub="Page views" color="blue" icon={Globe} />
-            <StatCard label="Phiên truy cập" value={traffic.uniqueSessions.toLocaleString("vi-VN")} sub="Unique sessions" color="purple" icon={MousePointerClick} />
             <StatCard label="Xem sản phẩm" value={traffic.productViewSessions.toLocaleString("vi-VN")} sub="Phiên vào trang SP" color="amber" icon={Package} />
             <StatCard label="Thêm vào giỏ" value={traffic.cartSessions.toLocaleString("vi-VN")} sub="Phiên bấm add to cart" color="green" icon={ShoppingCart} />
             <StatCard label="Đến thanh toán" value={traffic.checkoutSessions.toLocaleString("vi-VN")} sub="Phiên vào /thanh-toan" color="slate" icon={CreditCard} />
