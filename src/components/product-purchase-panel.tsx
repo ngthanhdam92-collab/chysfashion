@@ -14,10 +14,11 @@ interface Props {
   product: Product;
   selectedColor?: string;
   onColorChange?: (color: string) => void;
+  activeColorImage?: string;
   flashSale?: FlashSaleWithProducts;
 }
 
-export function ProductPurchasePanel({ product, selectedColor, onColorChange, flashSale }: Props) {
+export function ProductPurchasePanel({ product, selectedColor, onColorChange, activeColorImage, flashSale }: Props) {
   const router = useRouter();
   const { addItem } = useCart();
   const [color, setColor] = useState(selectedColor ?? product.colors[0]?.name ?? "");
@@ -77,7 +78,7 @@ export function ProductPurchasePanel({ product, selectedColor, onColorChange, fl
         price,
         color: activeColor,
         size,
-        image: product.colors.find((c) => c.name === activeColor)?.images?.[0] ?? product.images[0],
+        image: activeColorImage ?? product.colors.find((c) => c.name === activeColor)?.images?.[0] ?? product.images[0],
       },
       quantity
     );

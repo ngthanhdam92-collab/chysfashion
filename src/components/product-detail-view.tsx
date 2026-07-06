@@ -103,6 +103,7 @@ export function ProductDetailView({ product, suggestedProducts, flashSale }: { p
           product={product}
           selectedColor={selectedColor}
           onColorChange={handleColorChange}
+          activeColorImage={colorOverrideSrc ?? undefined}
           flashSale={flashSale ?? undefined}
         />
         {suggestedProducts && suggestedProducts.length > 0 && (
