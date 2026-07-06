@@ -4,7 +4,7 @@ import { getTrafficData } from "@/lib/analytics";
 import { formatVnd } from "@/lib/utils";
 import { Order, OrderItem } from "@/lib/types";
 import Link from "next/link";
-import { TrendingUp, TrendingDown, AlertCircle, Globe, MousePointerClick, ShoppingCart, Package } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertCircle, Globe, MousePointerClick, ShoppingCart, Package, CreditCard } from "lucide-react";
 
 type Period = "7d" | "30d" | "all";
 type View   = "revenue" | "traffic";
@@ -359,11 +359,12 @@ export default async function AnalyticsPage({
 
           {/* Traffic stats */}
           <p className="text-[11px] font-semibold uppercase tracking-label text-muted">Lượng truy cập</p>
-          <div className="mt-2 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="mt-2 grid grid-cols-2 gap-3 lg:grid-cols-5">
             <StatCard label="Lượt xem trang" value={traffic.totalPageViews.toLocaleString("vi-VN")} sub="Page views" color="blue" icon={Globe} />
             <StatCard label="Phiên truy cập" value={traffic.uniqueSessions.toLocaleString("vi-VN")} sub="Unique sessions" color="purple" icon={MousePointerClick} />
             <StatCard label="Xem sản phẩm" value={traffic.productViewSessions.toLocaleString("vi-VN")} sub="Phiên vào trang SP" color="amber" icon={Package} />
             <StatCard label="Thêm vào giỏ" value={traffic.cartSessions.toLocaleString("vi-VN")} sub="Phiên bấm add to cart" color="green" icon={ShoppingCart} />
+            <StatCard label="Đến thanh toán" value={traffic.checkoutSessions.toLocaleString("vi-VN")} sub="Phiên vào /thanh-toan" color="slate" icon={CreditCard} />
           </div>
 
           {/* Conversion funnel */}
@@ -377,6 +378,7 @@ export default async function AnalyticsPage({
                   { label: "Phiên truy cập", value: traffic.uniqueSessions, pct: 100, color: "bg-blue-500" },
                   { label: "Xem sản phẩm", value: traffic.productViewSessions, pct: traffic.uniqueSessions > 0 ? Math.round((traffic.productViewSessions / traffic.uniqueSessions) * 100) : 0, color: "bg-indigo-500" },
                   { label: "Thêm vào giỏ", value: traffic.cartSessions, pct: traffic.uniqueSessions > 0 ? Math.round((traffic.cartSessions / traffic.uniqueSessions) * 100) : 0, color: "bg-amber-500" },
+                  { label: "Đến trang thanh toán", value: traffic.checkoutSessions, pct: traffic.uniqueSessions > 0 ? Math.round((traffic.checkoutSessions / traffic.uniqueSessions) * 100) : 0, color: "bg-orange-500" },
                   { label: "Đặt hàng thành công", value: activeOrders.length, pct: traffic.uniqueSessions > 0 ? Math.round((activeOrders.length / traffic.uniqueSessions) * 100) : 0, color: "bg-emerald-500" },
                 ].map((step) => (
                   <div key={step.label} className="flex items-center gap-3">

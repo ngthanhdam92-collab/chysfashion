@@ -5,6 +5,7 @@ export interface TrafficData {
   uniqueSessions: number;
   productViewSessions: number;
   cartSessions: number;
+  checkoutSessions: number;
   topPages: { path: string; views: number }[];
   sourceBreakdown: { source: string; sessions: number; pct: number }[];
   campaignBreakdown: { campaign: string; source: string; sessions: number; pct: number }[];
@@ -67,6 +68,13 @@ export async function getTrafficData(cutoff: Date): Promise<TrafficData> {
     );
 
     const cartSessions = new Set(cartEvents.map((e) => e.session_id));
+
+    // Checkout page sessions
+    const checkoutSessions = new Set(
+      pageViews
+        .filter((e) => e.page_path === "/thanh-toan")
+        .map((e) => e.session_id)
+    );
 
     // Top pages
     const pageCounts: Record<string, number> = {};
@@ -148,6 +156,7 @@ export async function getTrafficData(cutoff: Date): Promise<TrafficData> {
       uniqueSessions: allSessions.size,
       productViewSessions: productSessions.size,
       cartSessions: cartSessions.size,
+      checkoutSessions: checkoutSessions.size,
       topPages,
       sourceBreakdown,
       campaignBreakdown,
@@ -164,6 +173,7 @@ function empty(): TrafficData {
     uniqueSessions: 0,
     productViewSessions: 0,
     cartSessions: 0,
+    checkoutSessions: 0,
     topPages: [],
     sourceBreakdown: [],
     campaignBreakdown: [],
