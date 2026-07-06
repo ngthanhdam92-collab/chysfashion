@@ -50,10 +50,9 @@ export function AdminShell({ sidebar, header, children }: Props) {
       )}
 
       {/* Main */}
-      <div className="flex min-w-0 flex-1 flex-col bg-cream/40">
+      <div className="flex min-w-0 flex-1 flex-col overflow-x-hidden bg-cream/40">
         {/* Top bar */}
         <div className="flex h-14 items-center gap-3 border-b border-line bg-surface px-4 lg:h-16 lg:px-10">
-          {/* Hamburger — mobile only */}
           <button
             onClick={() => setOpen(true)}
             className="shrink-0 rounded p-1.5 text-muted hover:text-ink lg:hidden"
@@ -61,12 +60,10 @@ export function AdminShell({ sidebar, header, children }: Props) {
           >
             <Menu size={22} />
           </button>
-          {/* Logo — mobile only, center */}
           <span className="font-serif text-lg tracking-[0.1em] text-ink lg:hidden">CHYS</span>
-          {/* Header content (date + avatar) */}
           <div className="ml-auto flex items-center gap-3">{header}</div>
         </div>
-        <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+        <div className="w-full overflow-x-hidden px-4 py-5 sm:px-6 lg:mx-auto lg:max-w-6xl lg:px-10 lg:py-8">
           {children}
         </div>
       </div>

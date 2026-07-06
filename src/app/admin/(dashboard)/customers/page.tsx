@@ -36,8 +36,8 @@ export default async function AdminCustomersPage() {
         Danh sách được tổng hợp từ thông tin trong các đơn hàng (chưa có hệ thống tài khoản khách).
       </p>
 
-      <div className="border border-line bg-surface">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto border border-line bg-surface">
+        <table className="w-full min-w-[560px] text-sm">
           <thead>
             <tr className="border-b border-line text-left text-xs uppercase tracking-label text-muted">
               <th className="px-4 py-3">Họ tên</th>

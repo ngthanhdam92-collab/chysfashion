@@ -166,11 +166,11 @@ export default async function AnalyticsPage({
   // ── Shared header ──────────────────────────────────────────────────────────
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
         <div>
           <h1 className="font-serif text-2xl text-ink">Phân tích</h1>
           <p className="mt-0.5 text-sm text-muted">
-            {periodLabel(period, fromParam, toParam)} — Doanh thu, lợi nhuận và lượng truy cập.
+            {periodLabel(period, fromParam, toParam)}
           </p>
         </div>
         <AnalyticsPeriodPicker
@@ -182,10 +182,10 @@ export default async function AnalyticsPage({
       </div>
 
       {/* View tabs */}
-      <div className="mt-5 flex gap-0 border-b border-line">
+      <div className="mt-4 flex gap-0 overflow-x-auto border-b border-line">
         {([["revenue", "Doanh thu & Lợi nhuận"], ["traffic", "Truy cập & Chuyển đổi"]] as [View, string][]).map(([v, label]) => (
           <Link key={v} href={tabHref(v)}
-            className={`border-b-2 px-5 py-2.5 text-sm font-medium transition-colors ${
+            className={`shrink-0 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
               view === v ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink"
             }`}>
             {label}
@@ -289,7 +289,7 @@ export default async function AnalyticsPage({
                 {topProducts.length === 0 ? (
                   <p className="px-4 py-8 text-center text-sm text-muted">Chưa có dữ liệu</p>
                 ) : (
-                  <table className="w-full text-sm">
+                  <div className="overflow-x-auto"><table className="w-full min-w-[440px] text-sm">
                     <thead>
                       <tr className="border-b border-line text-left text-[11px] uppercase tracking-label text-muted">
                         <th className="px-4 py-3">Sản phẩm</th>
@@ -312,7 +312,7 @@ export default async function AnalyticsPage({
                         </tr>
                       ))}
                     </tbody>
-                  </table>
+                  </table></div>
                 )}
               </div>
             </div>
@@ -326,7 +326,7 @@ export default async function AnalyticsPage({
                 {recentOrders.length === 0 ? (
                   <p className="px-4 py-8 text-center text-sm text-muted">Chưa có đơn hàng</p>
                 ) : (
-                  <table className="w-full text-sm">
+                  <div className="overflow-x-auto"><table className="w-full min-w-[380px] text-sm">
                     <thead>
                       <tr className="border-b border-line text-left text-[11px] uppercase tracking-label text-muted">
                         <th className="px-4 py-3">Mã đơn</th>
@@ -357,7 +357,7 @@ export default async function AnalyticsPage({
                         );
                       })}
                     </tbody>
-                  </table>
+                  </table></div>
                 )}
               </div>
             </div>
@@ -397,21 +397,21 @@ export default async function AnalyticsPage({
                   { label: "Phiên truy cập", value: traffic.uniqueSessions, pct: 100, color: "bg-blue-500" },
                   { label: "Xem sản phẩm", value: traffic.productViewSessions, pct: traffic.uniqueSessions > 0 ? Math.round((traffic.productViewSessions / traffic.uniqueSessions) * 100) : 0, color: "bg-indigo-500" },
                   { label: "Thêm vào giỏ", value: traffic.cartSessions, pct: traffic.uniqueSessions > 0 ? Math.round((traffic.cartSessions / traffic.uniqueSessions) * 100) : 0, color: "bg-amber-500" },
-                  { label: "Đến trang thanh toán", value: traffic.checkoutSessions, pct: traffic.uniqueSessions > 0 ? Math.round((traffic.checkoutSessions / traffic.uniqueSessions) * 100) : 0, color: "bg-orange-500" },
-                  { label: "Đặt hàng thành công", value: activeOrders.length, pct: traffic.uniqueSessions > 0 ? Math.round((activeOrders.length / traffic.uniqueSessions) * 100) : 0, color: "bg-emerald-500" },
+                  { label: "Đến trang TT", value: traffic.checkoutSessions, pct: traffic.uniqueSessions > 0 ? Math.round((traffic.checkoutSessions / traffic.uniqueSessions) * 100) : 0, color: "bg-orange-500" },
+                  { label: "Đặt hàng", value: activeOrders.length, pct: traffic.uniqueSessions > 0 ? Math.round((activeOrders.length / traffic.uniqueSessions) * 100) : 0, color: "bg-emerald-500" },
                 ].map((step) => (
-                  <div key={step.label} className="flex items-center gap-3">
-                    <span className="w-40 shrink-0 text-sm text-ink">{step.label}</span>
+                  <div key={step.label} className="flex items-center gap-2">
+                    <span className="w-28 shrink-0 text-xs text-ink sm:w-36 sm:text-sm">{step.label}</span>
                     <div className="flex-1">
-                      <div className="h-7 overflow-hidden rounded-sm bg-line">
+                      <div className="h-6 overflow-hidden rounded-sm bg-line sm:h-7">
                         <div className={`h-full ${step.color} flex items-center px-2 text-[11px] font-medium text-white`}
                           style={{ width: `${Math.max(step.pct, step.value > 0 ? 4 : 0)}%` }}>
-                          {step.pct > 8 ? `${step.pct}%` : ""}
+                          {step.pct > 10 ? `${step.pct}%` : ""}
                         </div>
                       </div>
                     </div>
-                    <span className="w-16 shrink-0 text-right text-sm font-medium text-ink">{step.value.toLocaleString("vi-VN")}</span>
-                    <span className="w-10 shrink-0 text-right text-xs text-muted">{step.pct}%</span>
+                    <span className="w-12 shrink-0 text-right text-xs font-medium text-ink sm:w-16 sm:text-sm">{step.value.toLocaleString("vi-VN")}</span>
+                    <span className="hidden w-10 shrink-0 text-right text-xs text-muted sm:block">{step.pct}%</span>
                   </div>
                 ))}
               </div>
@@ -496,7 +496,7 @@ export default async function AnalyticsPage({
                     <p className="mt-2 text-xs text-muted">Thêm <code className="rounded bg-line px-1 py-0.5">?utm_source=zalo&utm_campaign=ten-chien-dich</code> vào link quảng cáo</p>
                   </div>
                 ) : (
-                  <table className="w-full text-sm">
+                  <div className="overflow-x-auto"><table className="w-full min-w-[320px] text-sm">
                     <thead>
                       <tr className="border-b border-line text-left text-[11px] uppercase tracking-label text-muted">
                         <th className="px-4 py-3">Chiến dịch</th>
@@ -517,7 +517,7 @@ export default async function AnalyticsPage({
                         </tr>
                       ))}
                     </tbody>
-                  </table>
+                  </table></div>
                 )}
               </div>
             </div>
@@ -529,7 +529,7 @@ export default async function AnalyticsPage({
                 {traffic.topPages.length === 0 ? (
                   <p className="px-4 py-8 text-center text-sm text-muted">Chưa có dữ liệu</p>
                 ) : (
-                  <table className="w-full text-sm">
+                  <div className="overflow-x-auto"><table className="w-full min-w-[260px] text-sm">
                     <thead>
                       <tr className="border-b border-line text-left text-[11px] uppercase tracking-label text-muted">
                         <th className="px-4 py-3">Trang</th>
@@ -539,12 +539,12 @@ export default async function AnalyticsPage({
                     <tbody>
                       {traffic.topPages.map((page) => (
                         <tr key={page.path} className="border-b border-line last:border-0">
-                          <td className="px-4 py-3 font-mono text-xs text-muted max-w-[240px] truncate">{page.path}</td>
+                          <td className="px-4 py-3 font-mono text-xs text-muted max-w-[200px] truncate">{page.path}</td>
                           <td className="px-4 py-3 text-right font-medium text-ink">{page.views.toLocaleString("vi-VN")}</td>
                         </tr>
                       ))}
                     </tbody>
-                  </table>
+                  </table></div>
                 )}
               </div>
             </div>
