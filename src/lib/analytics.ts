@@ -7,6 +7,7 @@ export interface TrafficData {
   cartSessions: number;
   topPages: { path: string; views: number }[];
   sourceBreakdown: { source: string; sessions: number; pct: number }[];
+  campaignBreakdown: { campaign: string; source: string; sessions: number; pct: number }[];
   dailyStats: { date: string; sessions: number; pageViews: number }[];
 }
 
@@ -14,14 +15,29 @@ function parseSource(referrer: string): string {
   if (!referrer) return "Trực tiếp";
   try {
     const host = new URL(referrer).hostname.replace(/^www\./, "");
-    const SEARCH  = ["google.com", "google.com.vn", "bing.com", "yahoo.com", "coccoc.com", "duckduckgo.com"];
-    const SOCIAL  = ["facebook.com", "m.facebook.com", "l.facebook.com", "instagram.com", "tiktok.com", "zalo.me", "youtube.com"];
-    if (SEARCH.includes(host))  return "Tìm kiếm tự nhiên";
-    if (SOCIAL.includes(host))  return "Mạng xã hội";
+    const SEARCH = ["google.com", "google.com.vn", "bing.com", "yahoo.com", "coccoc.com", "duckduckgo.com"];
+    const SOCIAL = ["facebook.com", "m.facebook.com", "l.facebook.com", "instagram.com", "tiktok.com", "zalo.me", "youtube.com"];
+    if (SEARCH.includes(host)) return "Tìm kiếm tự nhiên";
+    if (SOCIAL.includes(host)) return "Mạng xã hội";
     return "Trang khác";
   } catch {
     return "Trực tiếp";
   }
+}
+
+function utmSourceLabel(src: string): string {
+  const map: Record<string, string> = {
+    facebook:  "Facebook",
+    fb:        "Facebook",
+    zalo:      "Zalo",
+    tiktok:    "TikTok",
+    instagram: "Instagram",
+    google:    "Google Ads",
+    youtube:   "YouTube",
+    email:     "Email",
+    sms:       "SMS",
+  };
+  return map[src.toLowerCase()] ?? src;
 }
 
 export async function getTrafficData(cutoff: Date): Promise<TrafficData> {
@@ -29,20 +45,18 @@ export async function getTrafficData(cutoff: Date): Promise<TrafficData> {
     const supabase = await createClient();
     const { data: events, error } = await supabase
       .from("analytics_events")
-      .select("event_type, session_id, page_path, referrer, created_at")
+      .select("event_type, session_id, page_path, referrer, utm_source, utm_medium, utm_campaign, created_at")
       .gte("created_at", cutoff.toISOString())
       .order("created_at", { ascending: true })
       .limit(20000);
 
     if (error || !events || events.length === 0) return empty();
 
-    const pageViews = events.filter((e) => e.event_type === "page_view");
+    const pageViews  = events.filter((e) => e.event_type === "page_view");
     const cartEvents = events.filter((e) => e.event_type === "add_to_cart");
 
-    // Unique sessions across all events
     const allSessions = new Set(events.map((e) => e.session_id));
 
-    // Product page sessions
     const productSessions = new Set(
       pageViews
         .filter((e) => {
@@ -52,7 +66,6 @@ export async function getTrafficData(cutoff: Date): Promise<TrafficData> {
         .map((e) => e.session_id)
     );
 
-    // Add-to-cart sessions
     const cartSessions = new Set(cartEvents.map((e) => e.session_id));
 
     // Top pages
@@ -65,16 +78,24 @@ export async function getTrafficData(cutoff: Date): Promise<TrafficData> {
       .slice(0, 10)
       .map(([path, views]) => ({ path, views }));
 
-    // Traffic sources — use the first page_view referrer per session
-    const sessionEntry: Record<string, string> = {};
-    for (const e of pageViews) {
-      if (!(e.session_id in sessionEntry)) {
-        sessionEntry[e.session_id] = e.referrer ?? "";
+    // Source breakdown — prefer utm_source, fall back to referrer parsing
+    // One entry per session (use first event of session)
+    const sessionSource: Record<string, string> = {};
+    for (const e of events) {
+      if (e.session_id in sessionSource) continue;
+      if (e.utm_source) {
+        sessionSource[e.session_id] = utmSourceLabel(e.utm_source);
+      } else if (e.event_type === "page_view") {
+        sessionSource[e.session_id] = parseSource(e.referrer ?? "");
       }
     }
+    // Fill sessions not yet assigned (e.g. first event was add_to_cart without utm)
+    for (const sid of allSessions) {
+      if (!(sid in sessionSource)) sessionSource[sid] = "Trực tiếp";
+    }
+
     const sourceCounts: Record<string, number> = {};
-    for (const ref of Object.values(sessionEntry)) {
-      const src = parseSource(ref);
+    for (const src of Object.values(sessionSource)) {
       sourceCounts[src] = (sourceCounts[src] ?? 0) + 1;
     }
     const totalSrc = Object.values(sourceCounts).reduce((s, n) => s + n, 0) || 1;
@@ -84,6 +105,25 @@ export async function getTrafficData(cutoff: Date): Promise<TrafficData> {
         source,
         sessions,
         pct: Math.round((sessions / totalSrc) * 100),
+      }));
+
+    // Campaign breakdown (utm_campaign)
+    const campaignMap: Record<string, { source: string; sessions: Set<string> }> = {};
+    for (const e of events) {
+      if (!e.utm_campaign || !e.utm_source) continue;
+      const key = e.utm_campaign;
+      if (!campaignMap[key]) campaignMap[key] = { source: utmSourceLabel(e.utm_source), sessions: new Set() };
+      campaignMap[key].sessions.add(e.session_id);
+    }
+    const totalCamp = allSessions.size || 1;
+    const campaignBreakdown = Object.entries(campaignMap)
+      .sort((a, b) => b[1].sessions.size - a[1].sessions.size)
+      .slice(0, 10)
+      .map(([campaign, { source, sessions }]) => ({
+        campaign,
+        source,
+        sessions: sessions.size,
+        pct: Math.round((sessions.size / totalCamp) * 100),
       }));
 
     // Daily stats
@@ -110,6 +150,7 @@ export async function getTrafficData(cutoff: Date): Promise<TrafficData> {
       cartSessions: cartSessions.size,
       topPages,
       sourceBreakdown,
+      campaignBreakdown,
       dailyStats,
     };
   } catch {
@@ -125,6 +166,7 @@ function empty(): TrafficData {
     cartSessions: 0,
     topPages: [],
     sourceBreakdown: [],
+    campaignBreakdown: [],
     dailyStats: [],
   };
 }

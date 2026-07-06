@@ -436,11 +436,12 @@ export default async function AnalyticsPage({
             </div>
           )}
 
-          {/* Sources + Top pages */}
+          {/* Sources + Campaigns + Top pages */}
           <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
             {/* Traffic sources */}
             <div>
               <h2 className="font-serif text-lg text-ink">Nguồn truy cập</h2>
+              <p className="mt-0.5 text-xs text-muted">Phát hiện tự động qua UTM hoặc referrer</p>
               <div className="mt-3 border border-line bg-surface">
                 {traffic.sourceBreakdown.length === 0 ? (
                   <p className="px-4 py-8 text-center text-sm text-muted">Chưa có dữ liệu</p>
@@ -459,6 +460,43 @@ export default async function AnalyticsPage({
                       </div>
                     ))}
                   </div>
+                )}
+              </div>
+            </div>
+
+            {/* UTM Campaigns */}
+            <div>
+              <h2 className="font-serif text-lg text-ink">Chiến dịch quảng cáo (UTM)</h2>
+              <p className="mt-0.5 text-xs text-muted">Chỉ hiển thị khi link có tham số utm_campaign</p>
+              <div className="mt-3 border border-line bg-surface">
+                {traffic.campaignBreakdown.length === 0 ? (
+                  <div className="px-4 py-8 text-center">
+                    <p className="text-sm text-muted">Chưa có dữ liệu chiến dịch</p>
+                    <p className="mt-2 text-xs text-muted">Thêm <code className="rounded bg-line px-1 py-0.5">?utm_source=zalo&utm_campaign=ten-chien-dich</code> vào link quảng cáo</p>
+                  </div>
+                ) : (
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-line text-left text-[11px] uppercase tracking-label text-muted">
+                        <th className="px-4 py-3">Chiến dịch</th>
+                        <th className="px-4 py-3">Kênh</th>
+                        <th className="px-4 py-3 text-right">Phiên</th>
+                        <th className="px-4 py-3 text-right">%</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {traffic.campaignBreakdown.map((c) => (
+                        <tr key={c.campaign} className="border-b border-line last:border-0">
+                          <td className="px-4 py-3 font-medium text-ink max-w-[140px] truncate">{c.campaign}</td>
+                          <td className="px-4 py-3">
+                            <span className="rounded-full bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700">{c.source}</span>
+                          </td>
+                          <td className="px-4 py-3 text-right font-medium text-ink">{c.sessions}</td>
+                          <td className="px-4 py-3 text-right text-xs text-muted">{c.pct}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 )}
               </div>
             </div>
