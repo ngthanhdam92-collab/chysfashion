@@ -4,6 +4,7 @@ import { signOut } from "@/lib/supabase/actions";
 import { AdminSidebarNav } from "@/components/admin/admin-sidebar-nav";
 import { AvatarInitials } from "@/components/admin/avatar-initials";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { OrderNotifier } from "@/components/admin/order-notifier";
 
 export default async function DashboardLayout({
   children,
@@ -60,8 +61,11 @@ export default async function DashboardLayout({
   );
 
   return (
-    <AdminShell sidebar={sidebarContent} header={headerContent}>
-      {children}
-    </AdminShell>
+    <>
+      <AdminShell sidebar={sidebarContent} header={headerContent}>
+        {children}
+      </AdminShell>
+      <OrderNotifier />
+    </>
   );
 }
