@@ -39,7 +39,6 @@ export default function RootLayout({
       <head>
         <Script src="/polyfills.js" strategy="beforeInteractive" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <link rel="apple-touch-icon" href="/admin-icon.svg" />
       </head>
       <body className="min-h-full flex flex-col font-sans">{children}</body>
     </html>
