@@ -7,13 +7,16 @@ import Link from "next/link";
 import { TrendingUp, TrendingDown, AlertCircle, Globe, ShoppingCart, Package, CreditCard } from "lucide-react";
 import { AnalyticsPeriodPicker } from "@/components/admin/analytics-period-picker";
 
-type Period = "yesterday" | "7d" | "custom";
+type Period = "today" | "yesterday" | "7d" | "custom";
 type View   = "revenue" | "traffic";
 
 function periodRange(period: Period, fromParam?: string, toParam?: string): { from: Date; to: Date } {
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
+  if (period === "today") {
+    return { from: todayStart, to: now };
+  }
   if (period === "yesterday") {
     const yStart = new Date(todayStart.getTime() - 86400000);
     return { from: yStart, to: todayStart };
@@ -29,6 +32,7 @@ function periodRange(period: Period, fromParam?: string, toParam?: string): { fr
 }
 
 function periodLabel(period: Period, from?: string, to?: string): string {
+  if (period === "today")     return "Hôm nay";
   if (period === "yesterday") return "Hôm qua";
   if (period === "custom" && from && to) return `${formatDate(from)} – ${formatDate(to)}`;
   return "7 ngày qua";
@@ -54,7 +58,7 @@ export default async function AnalyticsPage({
   searchParams: Promise<{ period?: string; view?: string; from?: string; to?: string }>;
 }) {
   const { period: rawPeriod = "7d", view: rawView = "revenue", from: fromParam, to: toParam } = await searchParams;
-  const period = (["yesterday", "7d", "custom"].includes(rawPeriod) ? rawPeriod : "7d") as Period;
+  const period = (["today", "yesterday", "7d", "custom"].includes(rawPeriod) ? rawPeriod : "7d") as Period;
   const view   = (["revenue", "traffic"].includes(rawView) ? rawView : "revenue") as View;
 
   const range = periodRange(period, fromParam, toParam);

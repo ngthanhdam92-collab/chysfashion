@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-type Period = "yesterday" | "7d" | "custom";
+type Period = "today" | "yesterday" | "7d" | "custom";
 
 interface Props {
   currentPeriod: Period;
@@ -29,27 +29,35 @@ export function AnalyticsPeriodPicker({ currentPeriod, currentFrom, currentTo, v
 
   const today = new Date().toISOString().slice(0, 10);
 
+  const btns: { value: Period; label: string }[] = [
+    { value: "today",     label: "Hôm nay" },
+    { value: "yesterday", label: "Hôm qua" },
+    { value: "7d",        label: "7 ngày" },
+    { value: "custom",    label: "Tùy chỉnh" },
+  ];
+
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex border border-line self-start">
-        <button
-          onClick={() => { setShowCustom(false); navigate("yesterday"); }}
-          className={`px-3 py-2 text-xs tracking-wide transition-colors sm:px-4 ${currentPeriod === "yesterday" && !showCustom ? "bg-ink text-paper" : "text-muted hover:text-ink"}`}
-        >
-          Hôm qua
-        </button>
-        <button
-          onClick={() => { setShowCustom(false); navigate("7d"); }}
-          className={`border-x border-line px-3 py-2 text-xs tracking-wide transition-colors sm:px-4 ${currentPeriod === "7d" && !showCustom ? "bg-ink text-paper" : "text-muted hover:text-ink"}`}
-        >
-          7 ngày
-        </button>
-        <button
-          onClick={() => setShowCustom(true)}
-          className={`px-3 py-2 text-xs tracking-wide transition-colors sm:px-4 ${showCustom ? "bg-ink text-paper" : "text-muted hover:text-ink"}`}
-        >
-          Tùy chỉnh
-        </button>
+      <div className="flex self-start border border-line">
+        {btns.map((btn, i) => {
+          const active = btn.value === "custom" ? showCustom : currentPeriod === btn.value && !showCustom;
+          return (
+            <button
+              key={btn.value}
+              onClick={() => {
+                if (btn.value === "custom") {
+                  setShowCustom(true);
+                } else {
+                  setShowCustom(false);
+                  navigate(btn.value);
+                }
+              }}
+              className={`px-3 py-2 text-xs tracking-wide transition-colors sm:px-4 ${i > 0 ? "border-l border-line" : ""} ${active ? "bg-ink text-paper" : "text-muted hover:text-ink"}`}
+            >
+              {btn.label}
+            </button>
+          );
+        })}
       </div>
 
       {showCustom && (
