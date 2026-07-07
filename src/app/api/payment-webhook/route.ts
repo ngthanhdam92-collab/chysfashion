@@ -7,11 +7,19 @@ function extractOrderCode(text: string): string | null {
   return match ? match[0].toUpperCase() : null;
 }
 
-// Verify shared secret — Sepay sends as body.apiKey, Casso sends as body.secure_token
+// Verify shared secret
+// Sepay sends: Authorization: Apikey {secret}
+// Casso sends: body.secure_token
 function isAuthorized(body: Record<string, unknown>, req: NextRequest): boolean {
   const secret = process.env.PAYMENT_WEBHOOK_SECRET;
   if (!secret) return true; // no secret configured = allow all (dev mode)
+
+  // Parse "Authorization: Apikey {value}" header (Sepay format)
+  const authHeader = req.headers.get("authorization") ?? "";
+  const apiKeyFromAuth = authHeader.replace(/^Apikey\s+/i, "").trim();
+
   const received =
+    apiKeyFromAuth ||
     (body.apiKey as string | undefined) ||
     (body.secure_token as string | undefined) ||
     req.headers.get("x-api-key") ||
@@ -41,13 +49,16 @@ export async function POST(req: NextRequest) {
       if (desc) descriptions.push(desc);
     }
   } else {
-    // Sepay format: { content, transferType, transferAmount, ... }
+    // Sepay format: { code, content, transferType, transferAmount, ... }
     if (body.transferType && body.transferType !== "in") {
-      // Ignore outgoing transfers
       return NextResponse.json({ success: true, message: "Skipped outgoing transfer" });
     }
+    // Sepay extracts the order code into body.code directly — use it first
+    const directCode = String(body.code ?? "").trim();
+    if (directCode) descriptions.push(directCode);
+    // Fallback: parse from full content string
     const desc = String(body.content ?? body.description ?? "");
-    if (desc) descriptions.push(desc);
+    if (desc && desc !== directCode) descriptions.push(desc);
   }
 
   const results: { orderCode: string; updated: number }[] = [];
