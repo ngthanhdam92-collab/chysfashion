@@ -235,7 +235,7 @@ export async function markOrderPaid(orderCode: string) {
   if (existing) {
     const { error } = await supabase
       .from("orders")
-      .update({ paid_at: paidAt })
+      .update({ paid_at: paidAt, status: "dang_xu_ly" })
       .eq("order_code", code)
       .is("paid_at", null);
     if (error) return { error: error.message };

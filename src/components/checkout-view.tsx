@@ -242,52 +242,13 @@ export function CheckoutView({ bankSettings }: { bankSettings?: BankSettings }) 
         : null;
 
     return (
-      <div className="flex flex-col items-center py-16 text-center">
-        <CircleCheck size={48} className="text-success" strokeWidth={1.5} />
-        <h2 className="mt-5 font-serif text-2xl text-ink">Đặt hàng thành công!</h2>
-        <p className="mt-2 max-w-md text-sm text-muted">
-          Cảm ơn bạn đã mua sắm tại CHYS Fashion. Chúng tôi sẽ liên hệ xác nhận qua số điện thoại bạn đã cung cấp.
-        </p>
-
-        {/* Order code box */}
-        <div className="mt-6 rounded border border-line bg-surface px-8 py-4">
-          <p className="text-xs text-muted">Mã đơn hàng của bạn</p>
-          <p className="mt-1 font-mono text-2xl font-semibold tracking-widest text-ink">{orderCode}</p>
-          <p className="mt-1 text-xs text-muted">Lưu mã này để tra cứu trạng thái đơn hàng</p>
-        </div>
-
-        {/* Bank transfer QR */}
-        {successQrUrl && (
-          <div className="mt-6 flex flex-col items-center rounded border border-gold/40 bg-amber-50 px-8 py-5">
-            <p className="mb-1 text-sm font-semibold text-amber-800">Quét mã QR để chuyển khoản</p>
-            <p className="mb-4 text-xs text-amber-700">
-              Nội dung chuyển khoản: <span className="font-medium">{orderCode}</span>
-            </p>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={successQrUrl} alt="VietQR" className="h-56 w-56 object-contain" />
-            <p className="mt-3 text-center text-xs text-amber-700">
-              {bankSettings!.bankCode} · {bankSettings!.accountNumber}
-              <br />
-              <span className="font-medium">{bankSettings!.accountName}</span>
-            </p>
-            <p className="mt-2 text-sm font-semibold text-amber-800">
-              Số tiền: {formatVnd(total)}
-            </p>
-            <p className="mt-2 text-[11px] text-amber-600">
-              Đơn hàng sẽ được xác nhận sau khi nhận được thanh toán.
-            </p>
-          </div>
-        )}
-
-        <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row">
-          <CtaButton href={`/tra-cuu-don-hang?code=${orderCode}`} variant="primary">
-            Theo dõi đơn hàng
-          </CtaButton>
-          <CtaButton href="/san-pham" variant="outline">
-            Tiếp tục mua sắm
-          </CtaButton>
-        </div>
-      </div>
+      <SuccessScreen
+        orderCode={orderCode}
+        total={total}
+        isBankTransfer={isBankTransfer}
+        successQrUrl={successQrUrl}
+        bankSettings={bankSettings}
+      />
     );
   }
 
@@ -673,5 +634,98 @@ export function CheckoutView({ bankSettings }: { bankSettings?: BankSettings }) 
         </Link>
       </div>
     </form>
+  );
+}
+
+/* ── Success screen with payment polling ── */
+function SuccessScreen({
+  orderCode,
+  total,
+  isBankTransfer,
+  successQrUrl,
+  bankSettings,
+}: {
+  orderCode: string;
+  total: number;
+  isBankTransfer: boolean;
+  successQrUrl: string | null;
+  bankSettings?: BankSettings;
+}) {
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+
+  useEffect(() => {
+    if (!isBankTransfer) return;
+    let stopped = false;
+    async function poll() {
+      try {
+        const res = await fetch(`/api/check-payment?code=${orderCode}`);
+        const data = await res.json();
+        if (data.paid) { setPaymentConfirmed(true); return; }
+      } catch {}
+      if (!stopped) setTimeout(poll, 3000);
+    }
+    poll();
+    // Stop polling after 20 minutes
+    const timeout = setTimeout(() => { stopped = true; }, 20 * 60 * 1000);
+    return () => { stopped = true; clearTimeout(timeout); };
+  }, [orderCode, isBankTransfer]);
+
+  return (
+    <div className="flex flex-col items-center py-16 text-center">
+
+      {/* Payment confirmed banner */}
+      {paymentConfirmed ? (
+        <div className="mb-6 w-full max-w-md rounded border border-green-300 bg-green-50 px-6 py-4">
+          <CircleCheck size={36} className="mx-auto text-green-600" strokeWidth={1.5} />
+          <p className="mt-2 text-base font-semibold text-green-800">Thanh toán thành công!</p>
+          <p className="mt-1 text-sm text-green-700">Đơn hàng của bạn đã được xác nhận và đang được xử lý.</p>
+        </div>
+      ) : (
+        <CircleCheck size={48} className="text-success" strokeWidth={1.5} />
+      )}
+
+      <h2 className="mt-4 font-serif text-2xl text-ink">Đặt hàng thành công!</h2>
+      <p className="mt-2 max-w-md text-sm text-muted">
+        Cảm ơn bạn đã mua sắm tại CHYS Fashion. Chúng tôi sẽ liên hệ xác nhận qua số điện thoại bạn đã cung cấp.
+      </p>
+
+      {/* Order code box */}
+      <div className="mt-6 rounded border border-line bg-surface px-8 py-4">
+        <p className="text-xs text-muted">Mã đơn hàng của bạn</p>
+        <p className="mt-1 font-mono text-2xl font-semibold tracking-widest text-ink">{orderCode}</p>
+        <p className="mt-1 text-xs text-muted">Lưu mã này để tra cứu trạng thái đơn hàng</p>
+      </div>
+
+      {/* Bank transfer QR — hide after payment confirmed */}
+      {successQrUrl && !paymentConfirmed && (
+        <div className="mt-6 flex flex-col items-center rounded border border-gold/40 bg-amber-50 px-8 py-5">
+          <p className="mb-1 text-sm font-semibold text-amber-800">Quét mã QR để chuyển khoản</p>
+          <p className="mb-3 text-xs text-amber-700">
+            Nội dung: <span className="font-semibold">{orderCode}</span>
+          </p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={successQrUrl} alt="VietQR" className="h-56 w-56 object-contain" />
+          <p className="mt-3 text-center text-xs text-amber-700">
+            {bankSettings!.bankCode} · {bankSettings!.accountNumber}
+            <br />
+            <span className="font-medium">{bankSettings!.accountName}</span>
+          </p>
+          <p className="mt-2 text-sm font-semibold text-amber-800">{formatVnd(total)}</p>
+          <p className="mt-3 flex items-center gap-1.5 text-[11px] text-amber-500">
+            <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-amber-400" />
+            Đang chờ xác nhận thanh toán...
+          </p>
+        </div>
+      )}
+
+      <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row">
+        <CtaButton href={`/tra-cuu-don-hang?code=${orderCode}`} variant="primary">
+          Theo dõi đơn hàng
+        </CtaButton>
+        <CtaButton href="/san-pham" variant="outline">
+          Tiếp tục mua sắm
+        </CtaButton>
+      </div>
+    </div>
   );
 }
