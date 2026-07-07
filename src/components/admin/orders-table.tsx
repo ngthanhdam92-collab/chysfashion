@@ -106,6 +106,11 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
                       CK
                     </span>
                   )}
+                  {o.paidAt && (
+                    <span className="ml-1 inline-flex items-center rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700">
+                      ✓ Đã TT
+                    </span>
+                  )}
                   {duplicateIds.has(o.id) && (
                     <span
                       title="Có thể là đơn trùng lặp — cùng SĐT, đặt trong vòng 10 phút"

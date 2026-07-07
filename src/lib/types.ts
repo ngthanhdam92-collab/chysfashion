@@ -70,6 +70,7 @@ export interface Order {
   total: number;
   promoCode: string | null;
   paymentMethod: "cod" | "bank_transfer";
+  paidAt: string | null;
   status: OrderStatus;
   createdAt: string;
 }

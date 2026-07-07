@@ -20,6 +20,7 @@ interface OrderRow {
   total: number;
   promo_code: string | null;
   payment_method: "cod" | "bank_transfer" | null;
+  paid_at: string | null;
   status: OrderStatus;
   created_at: string;
 }
@@ -40,6 +41,7 @@ function mapRow(row: OrderRow): Order {
     total: Number(row.total),
     promoCode: row.promo_code ?? null,
     paymentMethod: row.payment_method ?? "cod",
+    paidAt: row.paid_at ?? null,
     status: row.status,
     createdAt: row.created_at,
   };
@@ -197,6 +199,19 @@ export async function deleteOrder(id: string) {
     .eq("id", id);
   if (error) return { error: error.message };
   if (count === 0) return { error: "Không thể xóa đơn — bảng orders chưa có RLS DELETE policy. Xem hướng dẫn bên dưới." };
+  revalidatePath("/admin/orders");
+  revalidatePath("/admin");
+  return { success: true };
+}
+
+export async function markOrderPaid(orderCode: string) {
+  const supabase = await createClient();
+  const { error, count } = await supabase
+    .from("orders")
+    .update({ paid_at: new Date().toISOString() })
+    .eq("order_code", orderCode.toUpperCase().trim())
+    .is("paid_at", null); // idempotent: skip if already marked paid
+  if (error) return { error: error.message };
   revalidatePath("/admin/orders");
   revalidatePath("/admin");
   return { success: true };

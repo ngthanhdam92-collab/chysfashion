@@ -26,7 +26,23 @@ export default async function AdminOrderDetailPage({ params }: Params) {
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-3 justify-between">
-        <h1 className="font-serif text-2xl text-ink">Đơn hàng {order.orderCode}</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="font-serif text-2xl text-ink">Đơn hàng {order.orderCode}</h1>
+          {order.paymentMethod === "bank_transfer" && (
+            <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+              Chuyển khoản
+            </span>
+          )}
+          {order.paidAt ? (
+            <span className="rounded bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+              ✓ Đã thanh toán · {new Date(order.paidAt).toLocaleString("vi-VN")}
+            </span>
+          ) : order.paymentMethod === "bank_transfer" ? (
+            <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+              Chờ thanh toán
+            </span>
+          ) : null}
+        </div>
         <OrderStatusSelect id={order.id} status={order.status} />
       </div>
 
