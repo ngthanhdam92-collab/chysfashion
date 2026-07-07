@@ -19,6 +19,7 @@ interface OrderRow {
   discount: number;
   total: number;
   promo_code: string | null;
+  payment_method: "cod" | "bank_transfer" | null;
   status: OrderStatus;
   created_at: string;
 }
@@ -38,6 +39,7 @@ function mapRow(row: OrderRow): Order {
     discount: Number(row.discount ?? 0),
     total: Number(row.total),
     promoCode: row.promo_code ?? null,
+    paymentMethod: row.payment_method ?? "cod",
     status: row.status,
     createdAt: row.created_at,
   };
@@ -55,6 +57,7 @@ export interface CreateOrderInput {
   discount: number;
   total: number;
   promoCode?: string;
+  paymentMethod?: "cod" | "bank_transfer";
 }
 
 export async function createOrder(
@@ -76,6 +79,7 @@ export async function createOrder(
     discount: input.discount,
     total: input.total,
     promo_code: input.promoCode || null,
+    payment_method: input.paymentMethod ?? "cod",
   });
 
   if (error) {

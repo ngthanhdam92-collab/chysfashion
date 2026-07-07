@@ -3,12 +3,13 @@
 import { FormEvent, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { CircleCheck, Trash2, Tag, RotateCcw } from "lucide-react";
+import { CircleCheck, Trash2, Tag, RotateCcw, Banknote, Truck } from "lucide-react";
 import { useCart } from "@/context/cart-context";
 import { formatVnd } from "@/lib/utils";
 import { createOrder } from "@/lib/orders";
 import { validatePromoCode, type ValidateResult } from "@/lib/promotions-actions";
 import { getShippingRules, calcShippingFee, type ShippingRule } from "@/lib/shipping";
+import { buildVietQrUrl, type BankSettings } from "@/lib/bank-settings";
 import { CtaButton } from "./cta-button";
 import { ProductImagePlaceholder } from "./product-image-placeholder";
 
@@ -28,12 +29,13 @@ const SELECT_CLS =
 const INPUT_CLS =
   "mt-1 w-full border border-line bg-white px-3 py-2.5 text-sm text-ink placeholder:text-muted focus:border-gold focus:outline-none";
 
-export function CheckoutView() {
+export function CheckoutView({ bankSettings }: { bankSettings?: BankSettings }) {
   const { lines, subtotal, clearCart, updateQuantity, removeLine } = useCart();
   const [orderCode, setOrderCode] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const submittingRef = useRef(false); // synchronous guard against double-submit
+  const [paymentMethod, setPaymentMethod] = useState<"cod" | "bank_transfer">("cod");
 
   /* ── Saved customer ── */
   const [savedCustomer, setSavedCustomer] = useState<SavedCustomer | null>(null);
@@ -207,6 +209,7 @@ export function CheckoutView() {
       discount,
       total,
       promoCode: promoApplied?.code,
+      paymentMethod,
     });
 
     submittingRef.current = false;
@@ -229,6 +232,12 @@ export function CheckoutView() {
 
   /* ── Success screen ── */
   if (orderCode) {
+    const isBankTransfer = paymentMethod === "bank_transfer";
+    const successQrUrl =
+      isBankTransfer && bankSettings?.accountNumber
+        ? buildVietQrUrl(bankSettings, total, orderCode)
+        : null;
+
     return (
       <div className="flex flex-col items-center py-16 text-center">
         <CircleCheck size={48} className="text-success" strokeWidth={1.5} />
@@ -243,6 +252,29 @@ export function CheckoutView() {
           <p className="mt-1 font-mono text-2xl font-semibold tracking-widest text-ink">{orderCode}</p>
           <p className="mt-1 text-xs text-muted">Lưu mã này để tra cứu trạng thái đơn hàng</p>
         </div>
+
+        {/* Bank transfer QR */}
+        {successQrUrl && (
+          <div className="mt-6 flex flex-col items-center rounded border border-gold/40 bg-amber-50 px-8 py-5">
+            <p className="mb-1 text-sm font-semibold text-amber-800">Quét mã QR để chuyển khoản</p>
+            <p className="mb-4 text-xs text-amber-700">
+              Nội dung chuyển khoản: <span className="font-medium">{orderCode}</span>
+            </p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={successQrUrl} alt="VietQR" className="h-56 w-56 object-contain" />
+            <p className="mt-3 text-center text-xs text-amber-700">
+              {bankSettings!.bankCode} · {bankSettings!.accountNumber}
+              <br />
+              <span className="font-medium">{bankSettings!.accountName}</span>
+            </p>
+            <p className="mt-2 text-sm font-semibold text-amber-800">
+              Số tiền: {formatVnd(total)}
+            </p>
+            <p className="mt-2 text-[11px] text-amber-600">
+              Đơn hàng sẽ được xác nhận sau khi nhận được thanh toán.
+            </p>
+          </div>
+        )}
 
         <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row">
           <CtaButton href={`/tra-cuu-don-hang?code=${orderCode}`} variant="primary">
@@ -431,14 +463,66 @@ export function CheckoutView() {
           <h3 className="mb-3 text-xs font-medium uppercase tracking-label text-ink">
             Phương thức thanh toán
           </h3>
-          <label className="flex items-center gap-3 border border-ink bg-cream/30 px-4 py-3 cursor-pointer">
-            <input type="radio" name="payment" defaultChecked readOnly />
+          <label
+            className={`flex cursor-pointer items-center gap-3 border px-4 py-3 transition-colors ${
+              paymentMethod === "cod"
+                ? "border-ink bg-cream/30"
+                : "border-line hover:border-ink/40"
+            }`}
+          >
+            <input
+              type="radio"
+              name="payment"
+              checked={paymentMethod === "cod"}
+              onChange={() => setPaymentMethod("cod")}
+              className="accent-gold"
+            />
+            <Truck size={16} className="shrink-0 text-muted" />
             <span className="text-sm text-ink">Thanh toán khi nhận hàng (COD)</span>
           </label>
-          <label className="mt-2 flex items-center gap-3 border border-line px-4 py-3 opacity-40 cursor-not-allowed">
-            <input type="radio" name="payment" disabled />
-            <span className="text-sm text-muted">VNPay / Momo — sắp ra mắt</span>
-          </label>
+
+          {bankSettings?.enabled && bankSettings.accountNumber && (
+            <label
+              className={`mt-2 flex cursor-pointer items-start gap-3 border px-4 py-3 transition-colors ${
+                paymentMethod === "bank_transfer"
+                  ? "border-ink bg-cream/30"
+                  : "border-line hover:border-ink/40"
+              }`}
+            >
+              <input
+                type="radio"
+                name="payment"
+                checked={paymentMethod === "bank_transfer"}
+                onChange={() => setPaymentMethod("bank_transfer")}
+                className="mt-0.5 accent-gold"
+              />
+              <Banknote size={16} className="mt-0.5 shrink-0 text-muted" />
+              <span className="text-sm text-ink">Chuyển khoản ngân hàng</span>
+            </label>
+          )}
+
+          {/* QR preview when bank transfer is selected */}
+          {paymentMethod === "bank_transfer" && bankSettings?.accountNumber && (
+            <div className="mt-3 flex flex-col items-center rounded border border-gold/30 bg-amber-50 p-4">
+              <p className="mb-3 text-xs font-medium text-amber-800">
+                Quét mã QR để chuyển khoản — nội dung sẽ cập nhật sau khi đặt hàng
+              </p>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={buildVietQrUrl(bankSettings, total, "CHYS FASHION")}
+                alt="VietQR"
+                className="h-48 w-48 object-contain"
+              />
+              <p className="mt-2 text-center text-xs text-amber-700">
+                {bankSettings.bankCode} · {bankSettings.accountNumber}
+                <br />
+                <span className="font-medium">{bankSettings.accountName}</span>
+              </p>
+              <p className="mt-2 text-center text-[11px] text-amber-600">
+                Số tiền: <span className="font-semibold">{formatVnd(total)}</span>
+              </p>
+            </div>
+          )}
         </div>
       </div>
 

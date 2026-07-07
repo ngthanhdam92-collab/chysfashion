@@ -101,6 +101,11 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
                   >
                     {o.orderCode}
                   </Link>
+                  {o.paymentMethod === "bank_transfer" && (
+                    <span className="ml-2 inline-flex items-center rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">
+                      CK
+                    </span>
+                  )}
                   {duplicateIds.has(o.id) && (
                     <span
                       title="Có thể là đơn trùng lặp — cùng SĐT, đặt trong vòng 10 phút"
