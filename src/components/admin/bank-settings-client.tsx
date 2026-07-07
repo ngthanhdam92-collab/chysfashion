@@ -34,7 +34,7 @@ export function BankSettingsClient({ initial }: { initial: BankSettings }) {
     setError(null);
     const result = await saveBankSettings(form);
     setSaving(false);
-    if ("error" in result) { setError(result.error); return; }
+    if ("error" in result) { setError(result.error ?? "Lỗi không xác định"); return; }
     setSaved(true);
   }
 
