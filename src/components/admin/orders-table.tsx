@@ -12,34 +12,41 @@ import { OrderStatusBadge, ORDER_STATUS_OPTIONS } from "./order-status-badge";
 interface SkuRow {
   key: string;
   name: string;
+  sku: string;      // e.g. "H03D" from product variants, fallback to color
   color: string;
   size: string;
   totalQty: number;
   orderCount: number;
 }
 
-function aggregateSkus(orders: Order[], statusFilter: Set<OrderStatus>): SkuRow[] {
-  const map = new Map<string, { name: string; color: string; size: string; totalQty: number; orderIds: Set<string> }>();
+function aggregateSkus(
+  orders: Order[],
+  statusFilter: Set<OrderStatus>,
+  skuLookup: Record<string, string>,
+): SkuRow[] {
+  const map = new Map<string, { name: string; sku: string; color: string; size: string; totalQty: number; orderIds: Set<string> }>();
   for (const order of orders) {
     if (statusFilter.size > 0 && !statusFilter.has(order.status)) continue;
     for (const item of order.items) {
-      const key = `${item.slug}||${item.color}||${item.size}`;
+      const lookupKey = `${item.slug}||${item.color}||${item.size}`;
+      const sku = skuLookup[lookupKey] || item.color;
+      const key = `${item.slug}||${sku}||${item.size}`;
       const row = map.get(key);
       if (row) {
         row.totalQty += item.quantity;
         row.orderIds.add(order.id);
       } else {
-        map.set(key, { name: item.name, color: item.color, size: item.size, totalQty: item.quantity, orderIds: new Set([order.id]) });
+        map.set(key, { name: item.name, sku, color: item.color, size: item.size, totalQty: item.quantity, orderIds: new Set([order.id]) });
       }
     }
   }
   return Array.from(map.entries())
-    .map(([key, v]) => ({ key, name: v.name, color: v.color, size: v.size, totalQty: v.totalQty, orderCount: v.orderIds.size }))
-    .sort((a, b) => b.totalQty - a.totalQty || a.name.localeCompare(b.name, "vi"));
+    .map(([key, v]) => ({ key, name: v.name, sku: v.sku, color: v.color, size: v.size, totalQty: v.totalQty, orderCount: v.orderIds.size }))
+    .sort((a, b) => a.sku.localeCompare(b.sku) || a.size.localeCompare(b.size) || b.totalQty - a.totalQty);
 }
 
 /* ── SKU stats panel ── */
-function SkuStatsPanel({ orders }: { orders: Order[] }) {
+function SkuStatsPanel({ orders, skuLookup }: { orders: Order[]; skuLookup: Record<string, string> }) {
   const [statusFilter, setStatusFilter] = useState<Set<OrderStatus>>(new Set(["moi", "dang_xu_ly"]));
 
   function toggleStatus(s: OrderStatus) {
@@ -50,8 +57,9 @@ function SkuStatsPanel({ orders }: { orders: Order[] }) {
     });
   }
 
-  const rows = useMemo(() => aggregateSkus(orders, statusFilter), [orders, statusFilter]);
+  const rows = useMemo(() => aggregateSkus(orders, statusFilter, skuLookup), [orders, statusFilter, skuLookup]);
   const totalQty = rows.reduce((s, r) => s + r.totalQty, 0);
+  const hasSkuCodes = rows.some(r => r.sku !== r.color);
 
   return (
     <div>
@@ -75,17 +83,17 @@ function SkuStatsPanel({ orders }: { orders: Order[] }) {
         <p className="py-10 text-center text-sm text-muted">Không có sản phẩm nào với bộ lọc này.</p>
       ) : (
         <>
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-3">
             <p className="text-xs text-muted">
-              {rows.length} SKU · tổng <span className="font-semibold text-ink">{totalQty}</span> sản phẩm
+              {rows.length} dòng · tổng <span className="font-semibold text-ink">{totalQty}</span> sản phẩm cần chuẩn bị
             </p>
           </div>
           <div className="overflow-x-auto border border-line bg-surface">
-            <table className="w-full min-w-[420px] text-sm">
+            <table className="w-full min-w-[480px] text-sm">
               <thead>
                 <tr className="border-b border-line text-left text-xs uppercase tracking-label text-muted">
                   <th className="px-4 py-3">Sản phẩm</th>
-                  <th className="px-4 py-3">Màu</th>
+                  <th className="px-4 py-3">SKU phân loại</th>
                   <th className="px-4 py-3">Size</th>
                   <th className="px-4 py-3 text-right">Số lượng</th>
                   <th className="px-4 py-3 text-right">Số đơn</th>
@@ -94,12 +102,17 @@ function SkuStatsPanel({ orders }: { orders: Order[] }) {
               <tbody>
                 {rows.map(row => (
                   <tr key={row.key} className="border-b border-line last:border-0 hover:bg-cream/40">
-                    <td className="px-4 py-3 font-medium text-ink">{row.name}</td>
-                    <td className="px-4 py-3 text-muted">{row.color}</td>
-                    <td className="px-4 py-3 text-muted">{row.size}</td>
+                    <td className="px-4 py-3 text-ink">{row.name}</td>
+                    <td className="px-4 py-3">
+                      <span className="font-mono font-medium text-ink">{row.sku}</span>
+                      {row.sku !== row.color && (
+                        <span className="ml-2 text-xs text-muted">({row.color})</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 font-medium text-ink">{row.size}</td>
                     <td className="px-4 py-3 text-right">
-                      <span className="rounded bg-gold/10 px-2 py-0.5 text-sm font-semibold text-gold-dark">
-                        {row.totalQty}
+                      <span className="rounded bg-gold/10 px-2.5 py-0.5 font-mono text-sm font-bold text-gold-dark">
+                        ×{row.totalQty}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right text-muted">{row.orderCount}</td>
@@ -121,7 +134,7 @@ function SkuStatsPanel({ orders }: { orders: Order[] }) {
   );
 }
 
-export function OrdersTable({ orders }: { orders: Order[] }) {
+export function OrdersTable({ orders, skuLookup = {} }: { orders: Order[]; skuLookup?: Record<string, string> }) {
   const [view, setView] = useState<"orders" | "sku">("orders");
   const [tab, setTab] = useState<OrderStatus | "all">("all");
   const [search, setSearch] = useState("");
@@ -186,7 +199,7 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
         </button>
       </div>
 
-      {view === "sku" && <SkuStatsPanel orders={orders} />}
+      {view === "sku" && <SkuStatsPanel orders={orders} skuLookup={skuLookup} />}
 
       {view === "orders" && <>
       <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
