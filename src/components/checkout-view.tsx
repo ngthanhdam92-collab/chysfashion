@@ -38,6 +38,7 @@ export function CheckoutView({ bankSettings }: { bankSettings?: BankSettings }) 
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "bank_transfer">("cod");
   // Pre-generate order code so QR can show immediately when bank transfer is selected
   const pendingOrderCode = useRef(`CHYS${Date.now().toString().slice(-8)}`);
+  const submitBtnRef = useRef<HTMLButtonElement>(null);
 
   /* ── Saved customer ── */
   const [savedCustomer, setSavedCustomer] = useState<SavedCustomer | null>(null);
@@ -143,6 +144,28 @@ export function CheckoutView({ bankSettings }: { bankSettings?: BankSettings }) 
       .catch(() => {})
       .finally(() => setLoadingWards(false));
   }, [district?.code]);
+
+  /* ── Poll for payment when bank transfer selected — auto-submit when paid ── */
+  useEffect(() => {
+    if (paymentMethod !== "bank_transfer") return;
+    if (orderCode) return; // already placed
+    let stopped = false;
+    async function poll() {
+      if (stopped) return;
+      try {
+        const res = await fetch(`/api/check-pending-payment?code=${pendingOrderCode.current}`);
+        const data = await res.json();
+        if (data.found && submitBtnRef.current) {
+          submitBtnRef.current.click();
+          return;
+        }
+      } catch {}
+      if (!stopped) setTimeout(poll, 3000);
+    }
+    const t = setTimeout(poll, 3000);
+    return () => { stopped = true; clearTimeout(t); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paymentMethod, orderCode]);
 
   /* ── Computed totals ── */
   const discount = promoApplied ? promoApplied.discount : 0;
@@ -622,6 +645,7 @@ export function CheckoutView({ bankSettings }: { bankSettings?: BankSettings }) 
         )}
 
         <button
+          ref={submitBtnRef}
           type="submit"
           disabled={submitting}
           className="w-full bg-ink px-6 py-4 text-[13px] font-medium tracking-label uppercase text-paper transition-colors hover:bg-ink/85 disabled:opacity-50"
