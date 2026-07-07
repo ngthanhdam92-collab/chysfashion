@@ -501,25 +501,18 @@ export function CheckoutView({ bankSettings }: { bankSettings?: BankSettings }) 
             </label>
           )}
 
-          {/* QR preview when bank transfer is selected */}
+          {/* Bank info box when bank transfer is selected */}
           {paymentMethod === "bank_transfer" && bankSettings?.accountNumber && (
-            <div className="mt-3 flex flex-col items-center rounded border border-gold/30 bg-amber-50 p-4">
-              <p className="mb-3 text-xs font-medium text-amber-800">
-                Quét mã QR để chuyển khoản — nội dung sẽ cập nhật sau khi đặt hàng
-              </p>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={buildVietQrUrl(bankSettings, total, "CHYS FASHION")}
-                alt="VietQR"
-                className="h-48 w-48 object-contain"
-              />
-              <p className="mt-2 text-center text-xs text-amber-700">
-                {bankSettings.bankCode} · {bankSettings.accountNumber}
-                <br />
-                <span className="font-medium">{bankSettings.accountName}</span>
-              </p>
-              <p className="mt-2 text-center text-[11px] text-amber-600">
-                Số tiền: <span className="font-semibold">{formatVnd(total)}</span>
+            <div className="mt-3 rounded border border-gold/30 bg-amber-50 p-4 space-y-1.5">
+              <p className="text-xs font-semibold text-amber-800">Thông tin chuyển khoản</p>
+              <div className="text-sm text-amber-900 space-y-1">
+                <p><span className="text-xs text-amber-700">Ngân hàng:</span> <span className="font-medium">{bankSettings.bankCode}</span></p>
+                <p><span className="text-xs text-amber-700">Số tài khoản:</span> <span className="font-medium font-mono">{bankSettings.accountNumber}</span></p>
+                <p><span className="text-xs text-amber-700">Chủ tài khoản:</span> <span className="font-medium">{bankSettings.accountName}</span></p>
+                <p><span className="text-xs text-amber-700">Số tiền:</span> <span className="font-semibold">{formatVnd(total)}</span></p>
+              </div>
+              <p className="pt-1 text-[11px] text-amber-600">
+                Mã QR và nội dung chuyển khoản (mã đơn hàng) sẽ hiển thị sau khi bạn đặt hàng.
               </p>
             </div>
           )}
