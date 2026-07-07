@@ -69,6 +69,13 @@ export async function createOrder(
   const supabase = createPublicClient();
   const orderCode = input.orderCode || `CHYS${Date.now().toString().slice(-8)}`;
 
+  // Check if customer already transferred before placing the order
+  const { data: pending } = await supabase
+    .from("pending_payments")
+    .select("paid_at")
+    .eq("order_code", orderCode)
+    .maybeSingle();
+
   const { error } = await supabase.from("orders").insert({
     order_code: orderCode,
     full_name: input.fullName,
@@ -83,6 +90,8 @@ export async function createOrder(
     total: input.total,
     promo_code: input.promoCode || null,
     payment_method: input.paymentMethod ?? "cod",
+    // If payment already received, stamp paid_at right in the INSERT
+    ...(pending ? { paid_at: pending.paid_at, status: "dang_xu_ly" } : {}),
   });
 
   if (error) {
@@ -90,19 +99,8 @@ export async function createOrder(
     return { error: "Không thể tạo đơn hàng, vui lòng thử lại." };
   }
 
-  // Check if customer already transferred before placing the order
-  const { data: pending } = await supabase
-    .from("pending_payments")
-    .select("paid_at")
-    .eq("order_code", orderCode)
-    .maybeSingle();
-
+  // Clean up pending record
   if (pending) {
-    await supabase
-      .from("orders")
-      .update({ paid_at: pending.paid_at })
-      .eq("order_code", orderCode);
-    // Clean up pending record
     await supabase.from("pending_payments").delete().eq("order_code", orderCode);
   }
 
