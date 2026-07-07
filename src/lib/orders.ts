@@ -90,6 +90,22 @@ export async function createOrder(
     return { error: "Không thể tạo đơn hàng, vui lòng thử lại." };
   }
 
+  // Check if customer already transferred before placing the order
+  const { data: pending } = await supabase
+    .from("pending_payments")
+    .select("paid_at")
+    .eq("order_code", orderCode)
+    .maybeSingle();
+
+  if (pending) {
+    await supabase
+      .from("orders")
+      .update({ paid_at: pending.paid_at })
+      .eq("order_code", orderCode);
+    // Clean up pending record
+    await supabase.from("pending_payments").delete().eq("order_code", orderCode);
+  }
+
   return { orderCode };
 }
 
@@ -205,13 +221,32 @@ export async function deleteOrder(id: string) {
 }
 
 export async function markOrderPaid(orderCode: string) {
+  const code = orderCode.toUpperCase().trim();
+  const paidAt = new Date().toISOString();
   const supabase = await createClient();
-  const { error, count } = await supabase
+
+  // Try to update the order directly
+  const { data: existing } = await supabase
     .from("orders")
-    .update({ paid_at: new Date().toISOString() })
-    .eq("order_code", orderCode.toUpperCase().trim())
-    .is("paid_at", null); // idempotent: skip if already marked paid
-  if (error) return { error: error.message };
+    .select("id")
+    .eq("order_code", code)
+    .maybeSingle();
+
+  if (existing) {
+    const { error } = await supabase
+      .from("orders")
+      .update({ paid_at: paidAt })
+      .eq("order_code", code)
+      .is("paid_at", null);
+    if (error) return { error: error.message };
+  } else {
+    // Order not placed yet — store payment so createOrder can pick it up later
+    const { error } = await supabase
+      .from("pending_payments")
+      .upsert({ order_code: code, paid_at: paidAt }, { onConflict: "order_code" });
+    if (error) return { error: error.message };
+  }
+
   revalidatePath("/admin/orders");
   revalidatePath("/admin");
   return { success: true };
