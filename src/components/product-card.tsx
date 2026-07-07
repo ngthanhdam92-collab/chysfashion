@@ -12,12 +12,13 @@ import { ProductImagePlaceholder } from "./product-image-placeholder";
 export function ProductCard({ product }: { product: Product }) {
   const { addItem } = useCart();
   const cover = product.images[0];
+  const hoverImage = product.images[1] ?? null; // second image for hover preview
 
   const [selectedColor, setSelectedColor] = useState(product.colors[0]?.name ?? "");
   const [selectedSize, setSelectedSize] = useState(product.sizes[0] ?? "");
   const [added, setAdded] = useState(false);
-  // Track whether user explicitly clicked a swatch — only then switch cover image
   const [colorUserSelected, setColorUserSelected] = useState(false);
+  const [hovered, setHovered] = useState(false);
 
   const hasVariants = product.variants.length > 0;
   const selectedVariant = hasVariants
@@ -29,9 +30,13 @@ export function ProductCard({ product }: { product: Product }) {
       : product.price;
   const compareAtPrice = selectedVariant?.compareAtPrice ?? product.compareAtPrice;
 
-  // Default cover = images[0] (set in admin). Only switches to variant image after user picks a color.
+  // Default cover = images[0]. Only switches to variant image after user explicitly picks a color.
   const colorObj = colorUserSelected ? product.colors.find((c) => c.name === selectedColor) : null;
   const activeCover = colorObj?.images?.[0] ?? cover;
+  // When a color is manually selected, use that color's second image as hover preview
+  const activeHoverImage = colorUserSelected
+    ? (colorObj?.images?.[1] ?? hoverImage)
+    : hoverImage;
 
   function handleAddToCart(e: React.MouseEvent) {
     e.preventDefault();
@@ -45,7 +50,7 @@ export function ProductCard({ product }: { product: Product }) {
     setTimeout(() => setAdded(false), 1600);
   }
 
-  const colorSwatches = product.colors;
+  const showHover = hovered && !!activeHoverImage;
 
   return (
     <div className="group">
@@ -53,14 +58,35 @@ export function ProductCard({ product }: { product: Product }) {
       <div className="relative overflow-hidden group/img">
         <Link href={`/san-pham/${product.slug}`} className="block">
           {activeCover ? (
-            <div className="relative aspect-[3/4] w-full overflow-hidden bg-cream">
+            <div
+              className="relative aspect-[3/4] w-full overflow-hidden bg-cream"
+              onMouseEnter={() => setHovered(true)}
+              onMouseLeave={() => setHovered(false)}
+              onTouchStart={() => setHovered(true)}
+              onTouchEnd={() => setHovered(false)}
+            >
+              {/* Primary image */}
               <Image
                 src={activeCover}
                 alt={product.name}
                 fill
                 sizes="(min-width: 1024px) 17vw, (min-width: 640px) 33vw, 50vw"
-                className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                className={`object-cover transition-all duration-500 ease-out group-hover:scale-105 ${
+                  showHover ? "opacity-0" : "opacity-100"
+                }`}
               />
+              {/* Hover preview image — renders only when a second image exists */}
+              {activeHoverImage && (
+                <Image
+                  src={activeHoverImage}
+                  alt={product.name}
+                  fill
+                  sizes="(min-width: 1024px) 17vw, (min-width: 640px) 33vw, 50vw"
+                  className={`object-cover transition-opacity duration-500 ease-out ${
+                    showHover ? "opacity-100" : "opacity-0"
+                  }`}
+                />
+              )}
             </div>
           ) : (
             <ProductImagePlaceholder
@@ -88,7 +114,7 @@ export function ProductCard({ product }: { product: Product }) {
           </div>
         )}
 
-        {/* ── QUICK-ADD PANEL — desktop hover only, size buttons only ── */}
+        {/* ── QUICK-ADD PANEL — desktop hover only ── */}
         {product.stock > 0 && product.sizes.length > 0 && (
           <div className="absolute inset-x-0 bottom-0 hidden bg-white/92 px-3 pb-3 pt-2.5 backdrop-blur-sm transition-transform duration-300 [@media(hover:hover)]:block [@media(hover:hover)]:translate-y-full [@media(hover:hover)]:group-hover/img:translate-y-0">
             <p className="mb-2.5 text-center text-[10px] tracking-label uppercase text-muted">
@@ -129,10 +155,10 @@ export function ProductCard({ product }: { product: Product }) {
         )}
       </div>
 
-      {/* ── COLOR SWATCHES — always visible below image ── */}
-      {colorSwatches.length > 0 && (
+      {/* ── COLOR SWATCHES ── */}
+      {product.colors.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5">
-          {colorSwatches.map((c) => {
+          {product.colors.map((c) => {
             const isActive = selectedColor === c.name;
             return (
               <button
