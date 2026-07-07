@@ -58,13 +58,14 @@ export interface CreateOrderInput {
   total: number;
   promoCode?: string;
   paymentMethod?: "cod" | "bank_transfer";
+  orderCode?: string;
 }
 
 export async function createOrder(
   input: CreateOrderInput
 ): Promise<{ orderCode: string } | { error: string }> {
   const supabase = createPublicClient();
-  const orderCode = `CHYS${Date.now().toString().slice(-8)}`;
+  const orderCode = input.orderCode || `CHYS${Date.now().toString().slice(-8)}`;
 
   const { error } = await supabase.from("orders").insert({
     order_code: orderCode,

@@ -36,6 +36,8 @@ export function CheckoutView({ bankSettings }: { bankSettings?: BankSettings }) 
   const [error, setError] = useState<string | null>(null);
   const submittingRef = useRef(false); // synchronous guard against double-submit
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "bank_transfer">("cod");
+  // Pre-generate order code so QR can show immediately when bank transfer is selected
+  const pendingOrderCode = useRef(`CHYS${Date.now().toString().slice(-8)}`);
 
   /* ── Saved customer ── */
   const [savedCustomer, setSavedCustomer] = useState<SavedCustomer | null>(null);
@@ -210,6 +212,7 @@ export function CheckoutView({ bankSettings }: { bankSettings?: BankSettings }) 
       total,
       promoCode: promoApplied?.code,
       paymentMethod,
+      orderCode: paymentMethod === "bank_transfer" ? pendingOrderCode.current : undefined,
     });
 
     submittingRef.current = false;
@@ -501,18 +504,30 @@ export function CheckoutView({ bankSettings }: { bankSettings?: BankSettings }) 
             </label>
           )}
 
-          {/* Bank info box when bank transfer is selected */}
+          {/* QR + bank info when bank transfer is selected */}
           {paymentMethod === "bank_transfer" && bankSettings?.accountNumber && (
-            <div className="mt-3 rounded border border-gold/30 bg-amber-50 p-4 space-y-1.5">
-              <p className="text-xs font-semibold text-amber-800">Thông tin chuyển khoản</p>
-              <div className="text-sm text-amber-900 space-y-1">
-                <p><span className="text-xs text-amber-700">Ngân hàng:</span> <span className="font-medium">{bankSettings.bankCode}</span></p>
-                <p><span className="text-xs text-amber-700">Số tài khoản:</span> <span className="font-medium font-mono">{bankSettings.accountNumber}</span></p>
-                <p><span className="text-xs text-amber-700">Chủ tài khoản:</span> <span className="font-medium">{bankSettings.accountName}</span></p>
-                <p><span className="text-xs text-amber-700">Số tiền:</span> <span className="font-semibold">{formatVnd(total)}</span></p>
+            <div className="mt-3 rounded border border-gold/30 bg-amber-50 p-4">
+              <p className="mb-3 text-center text-xs font-semibold text-amber-800">
+                Quét mã QR để chuyển khoản
+              </p>
+              <div className="flex justify-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={buildVietQrUrl(bankSettings, total, pendingOrderCode.current)}
+                  alt="VietQR"
+                  className="h-52 w-52 object-contain"
+                />
               </div>
-              <p className="pt-1 text-[11px] text-amber-600">
-                Mã QR và nội dung chuyển khoản (mã đơn hàng) sẽ hiển thị sau khi bạn đặt hàng.
+              <div className="mt-3 space-y-0.5 text-center text-xs text-amber-700">
+                <p>{bankSettings.bankCode} · <span className="font-mono font-medium">{bankSettings.accountNumber}</span></p>
+                <p className="font-medium">{bankSettings.accountName}</p>
+                <p className="mt-1 text-sm font-semibold text-amber-900">{formatVnd(total)}</p>
+                <p className="pt-1">
+                  Nội dung: <span className="font-semibold">{pendingOrderCode.current}</span>
+                </p>
+              </div>
+              <p className="mt-2 text-center text-[11px] text-amber-500">
+                Nhấn &quot;Đặt hàng&quot; để xác nhận đơn, mã đơn hàng đã có trong QR.
               </p>
             </div>
           )}
