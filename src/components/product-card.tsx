@@ -16,6 +16,8 @@ export function ProductCard({ product }: { product: Product }) {
   const [selectedColor, setSelectedColor] = useState(product.colors[0]?.name ?? "");
   const [selectedSize, setSelectedSize] = useState(product.sizes[0] ?? "");
   const [added, setAdded] = useState(false);
+  // Track whether user explicitly clicked a swatch — only then switch cover image
+  const [colorUserSelected, setColorUserSelected] = useState(false);
 
   const hasVariants = product.variants.length > 0;
   const selectedVariant = hasVariants
@@ -27,8 +29,8 @@ export function ProductCard({ product }: { product: Product }) {
       : product.price;
   const compareAtPrice = selectedVariant?.compareAtPrice ?? product.compareAtPrice;
 
-  // Cover switches to selected color's variant image if available
-  const colorObj = product.colors.find((c) => c.name === selectedColor);
+  // Default cover = images[0] (set in admin). Only switches to variant image after user picks a color.
+  const colorObj = colorUserSelected ? product.colors.find((c) => c.name === selectedColor) : null;
   const activeCover = colorObj?.images?.[0] ?? cover;
 
   function handleAddToCart(e: React.MouseEvent) {
@@ -137,7 +139,7 @@ export function ProductCard({ product }: { product: Product }) {
                 key={c.name}
                 type="button"
                 title={c.name}
-                onClick={() => setSelectedColor(c.name)}
+                onClick={() => { setSelectedColor(c.name); setColorUserSelected(true); }}
                 className={`h-5 w-5 rounded-full border-2 transition-colors ${
                   isActive ? "border-gold" : "border-transparent ring-1 ring-line"
                 }`}
