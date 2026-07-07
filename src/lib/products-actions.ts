@@ -132,7 +132,7 @@ export async function createProduct(formData: FormData) {
     return { error: error.message };
   }
 
-  revalidatePath("/san-pham");
+  revalidatePath("/", "layout");
   revalidatePath("/admin/products");
   redirect("/admin/products");
 }
@@ -149,7 +149,7 @@ export async function updateProduct(id: string, formData: FormData) {
     return { error: error.message };
   }
 
-  revalidatePath("/san-pham");
+  revalidatePath("/", "layout"); // revalidate all pages sharing root layout
   revalidatePath(`/san-pham/${slug}`);
   revalidatePath("/admin/products");
   redirect("/admin/products");
@@ -192,7 +192,7 @@ export async function updateVariantImages(
 
   if (error) return { error: error.message };
 
-  revalidatePath("/san-pham");
+  revalidatePath("/", "layout");
   revalidatePath(`/san-pham/${data.slug}`);
   revalidatePath("/admin/products");
   return { success: true };
