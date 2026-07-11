@@ -47,9 +47,9 @@ export function recommendSize(
     row: mergeWithDefault(productChart, s),
   }));
 
-  // Priority: height match
+  // Priority: height match (inclusive upper bound so boundary values like 165 match M not fall through)
   let matched = effective.find(
-    ({ row }) => height >= row.heightMin && height < row.heightMax
+    ({ row }) => height >= row.heightMin && height <= row.heightMax
   );
 
   // Clamp to edges if outside all ranges
