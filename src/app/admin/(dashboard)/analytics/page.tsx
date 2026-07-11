@@ -1,6 +1,8 @@
 import { getAllOrders } from "@/lib/orders";
 import { getAllProducts } from "@/lib/products";
 import { getTrafficData } from "@/lib/analytics";
+import { getCostEntries } from "@/lib/costs";
+import { getCostSettings } from "@/lib/cost-settings";
 import { formatVnd } from "@/lib/utils";
 import { Order, OrderItem } from "@/lib/types";
 import Link from "next/link";
@@ -71,10 +73,15 @@ export default async function AnalyticsPage({
   }
 
   // ── Load data ──────────────────────────────────────────────────────────────
-  const [allOrders, products, traffic] = await Promise.all([
+  function toDateStr(d: Date) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
+  const [allOrders, products, traffic, costEntries, costSettings] = await Promise.all([
     getAllOrders(),
     getAllProducts(),
     view === "traffic" ? getTrafficData(range) : Promise.resolve(null),
+    view === "revenue" ? getCostEntries(toDateStr(range.from), toDateStr(range.to)) : Promise.resolve([]),
+    view === "revenue" ? getCostSettings() : Promise.resolve(null),
   ]);
 
   // ── Revenue / profit data ──────────────────────────────────────────────────
@@ -124,6 +131,30 @@ export default async function AnalyticsPage({
   const margin          = productRevenue > 0 ? Math.round((totalProfit / productRevenue) * 100) : 0;
   const costDataAvailable = totalCOGS > 0;
   const avgOrderValue   = activeOrders.length > 0 ? Math.round(productRevenue / activeOrders.length) : 0;
+
+  // ── External costs ─────────────────────────────────────────────────────────
+  // Ad costs: daily entries summed over the period
+  const totalAdCost = costEntries
+    .filter((e) => e.category.startsWith("ad_"))
+    .reduce((s, e) => s + e.amount, 0);
+  // Operational costs: settings × total order count
+  const opPerOrder = costSettings
+    ? costSettings.packagingPerOrder + costSettings.printingPerOrder
+    : 0;
+  const totalOpCost = opPerOrder * activeOrders.length;
+  // Return costs: estimated from return rate setting
+  const estimatedReturns = costSettings
+    ? Math.round((activeOrders.length * costSettings.returnRatePct) / 100)
+    : 0;
+  const totalRetCost = costSettings
+    ? estimatedReturns * costSettings.returnCostPerUnit
+    : 0;
+  const totalIncidentalCost = costEntries
+    .filter((e) => e.category === "incidental")
+    .reduce((s, e) => s + e.amount, 0);
+  const totalExternalCost = totalAdCost + totalOpCost + totalRetCost + totalIncidentalCost;
+  const netProfit = totalProfit - totalExternalCost;
+  const hasExternalCosts = totalExternalCost > 0;
 
   const productRevMap: Record<string, { revenue: number; profit: number; qty: number }> = {};
   for (const order of activeOrders) {
@@ -243,6 +274,66 @@ export default async function AnalyticsPage({
               )}
             </div>
           </div>
+
+          {/* Net profit after external costs */}
+          {costDataAvailable && (
+            <div className="mt-5">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-semibold uppercase tracking-label text-muted">
+                  Lợi nhuận ròng {hasExternalCosts ? "(sau chi phí ngoài)" : "— chưa có chi phí quảng cáo / vận hành"}
+                </p>
+                <Link href="/admin/chi-phi" className="text-xs text-gold-dark hover:underline">
+                  Nhập chi phí →
+                </Link>
+              </div>
+              {hasExternalCosts ? (
+                <div className="mt-2 rounded border border-line bg-surface p-5">
+                  <div className="flex flex-wrap items-start gap-6">
+                    <div>
+                      <p className="text-xs text-muted">Lợi nhuận ròng</p>
+                      <p className={`mt-0.5 text-2xl font-bold ${netProfit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                        {formatVnd(netProfit)}
+                      </p>
+                      <p className="mt-1 text-xs text-muted">
+                        = {formatVnd(totalProfit)} (gộp) − {formatVnd(totalExternalCost)} (chi phí ngoài)
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-x-6 gap-y-2 pt-1 text-sm">
+                      {totalAdCost > 0 && (
+                        <div>
+                          <p className="text-xs text-muted">Quảng cáo</p>
+                          <p className="font-medium text-blue-600">−{formatVnd(totalAdCost)}</p>
+                        </div>
+                      )}
+                      {totalOpCost > 0 && (
+                        <div>
+                          <p className="text-xs text-muted">Vận hành</p>
+                          <p className="font-medium text-amber-600">−{formatVnd(totalOpCost)}</p>
+                        </div>
+                      )}
+                      {totalRetCost > 0 && (
+                        <div>
+                          <p className="text-xs text-muted">Hoàn hàng</p>
+                          <p className="font-medium text-red-600">−{formatVnd(totalRetCost)}</p>
+                        </div>
+                      )}
+                      {totalIncidentalCost > 0 && (
+                        <div>
+                          <p className="text-xs text-muted">Chi phí phát sinh</p>
+                          <p className="font-medium text-violet-600">−{formatVnd(totalIncidentalCost)}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-2 flex items-center gap-3 rounded border border-dashed border-line px-4 py-3 text-sm text-muted">
+                  <span>Chưa nhập chi phí cho kỳ này.</span>
+                  <Link href="/admin/chi-phi" className="text-gold-dark hover:underline">Nhập ngay</Link>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Revenue chart */}
           {chartDays <= 62 && (

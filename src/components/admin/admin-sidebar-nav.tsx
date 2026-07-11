@@ -18,6 +18,7 @@ import {
   Flame,
   BarChart3,
   Settings,
+  Calculator,
 } from "lucide-react";
 
 const NAV_GROUPS = [
@@ -42,6 +43,7 @@ const NAV_GROUPS = [
     items: [
       { href: "/admin/orders", label: "Đơn hàng", icon: Receipt },
       { href: "/admin/analytics", label: "Phân tích", icon: BarChart3 },
+      { href: "/admin/chi-phi", label: "Chi phí & Lợi nhuận", icon: Calculator },
       { href: "/admin/customers", label: "Khách hàng", icon: Users },
       { href: "/admin/promotions", label: "Khuyến mại", icon: Ticket },
       { href: "/admin/flash-sales", label: "Flash Sale", icon: Flame },
