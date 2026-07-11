@@ -27,18 +27,6 @@ const NAV_GROUPS = [
     items: [{ href: "/admin", label: "Dashboard", icon: LayoutDashboard }],
   },
   {
-    label: "Cửa hàng",
-    items: [
-      { href: "/admin/products", label: "Sản phẩm", icon: Shirt },
-      { href: "/admin/categories", label: "Danh mục", icon: Tag },
-      { href: "/admin/size-charts", label: "Bảng size", icon: Ruler },
-      { href: "/admin/banners", label: "Banner", icon: Image },
-      { href: "/admin/stories", label: "Stories / Feedback", icon: CirclePlay },
-      { href: "/admin/homepage", label: "Trang chủ", icon: LayoutTemplate },
-      { href: "/admin/menu", label: "Menu điều hướng", icon: Menu },
-    ],
-  },
-  {
     label: "Kinh doanh",
     items: [
       { href: "/admin/orders", label: "Đơn hàng", icon: Receipt },
@@ -48,6 +36,18 @@ const NAV_GROUPS = [
       { href: "/admin/promotions", label: "Khuyến mại", icon: Ticket },
       { href: "/admin/flash-sales", label: "Flash Sale", icon: Flame },
       { href: "/admin/shipping", label: "Vận chuyển", icon: Truck },
+    ],
+  },
+  {
+    label: "Cửa hàng",
+    items: [
+      { href: "/admin/products", label: "Sản phẩm", icon: Shirt },
+      { href: "/admin/categories", label: "Danh mục", icon: Tag },
+      { href: "/admin/size-charts", label: "Bảng size", icon: Ruler },
+      { href: "/admin/banners", label: "Banner", icon: Image },
+      { href: "/admin/stories", label: "Stories / Feedback", icon: CirclePlay },
+      { href: "/admin/homepage", label: "Trang chủ", icon: LayoutTemplate },
+      { href: "/admin/menu", label: "Menu điều hướng", icon: Menu },
     ],
   },
   {
