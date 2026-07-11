@@ -207,7 +207,11 @@ export function ChatWidget() {
         {/* Input bar */}
         <div
           className="shrink-0 border-t border-stone-100 bg-white px-3 py-3"
-          style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+          style={{
+            paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))",
+            paddingLeft: "calc(0.75rem + env(safe-area-inset-left))",
+            paddingRight: "calc(0.75rem + env(safe-area-inset-right))",
+          }}
         >
           <div className="flex items-center gap-2">
             <input
