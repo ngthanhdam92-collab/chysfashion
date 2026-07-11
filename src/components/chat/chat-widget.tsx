@@ -225,7 +225,8 @@ export function ChatWidget() {
               onKeyDown={handleKey}
               placeholder="Nhắn tin với CHYS..."
               disabled={loading}
-              className="min-w-0 flex-1 rounded-full border border-stone-200 bg-stone-50 px-4 py-2.5 text-sm text-stone-800 placeholder:text-stone-400 outline-none transition-colors focus:border-[#a9843f] focus:bg-white disabled:opacity-60"
+              style={{ fontSize: "16px" }}
+              className="min-w-0 flex-1 rounded-full border border-stone-200 bg-stone-50 px-4 py-2.5 text-stone-800 placeholder:text-stone-400 outline-none transition-colors focus:border-[#a9843f] focus:bg-white disabled:opacity-60"
             />
             <button
               onClick={sendMessage}
