@@ -10,7 +10,8 @@ async function groqChat(
   useFallback = false
 ): Promise<Groq.Chat.ChatCompletion> {
   return groq.chat.completions.create({
-    model: useFallback ? "llama-3.1-8b-instant" : "llama-3.3-70b-versatile",
+    // llama3-groq-70b is fine-tuned for tool use — better fallback than 8b-instant
+    model: useFallback ? "llama3-groq-70b-8192-tool-use-preview" : "llama-3.3-70b-versatile",
     messages,
     tools: TOOLS,
     tool_choice: "auto",
@@ -306,8 +307,13 @@ export async function POST(req: NextRequest) {
       const toolCalls = msg.tool_calls;
 
       if (!toolCalls || toolCalls.length === 0) {
+        const content = msg.content ?? "";
+        // Guard: model printed tool call as text instead of executing it
+        if (content.includes("<function=") || content.includes("</function>")) {
+          return Response.json({ message: "Mình cần xử lý lại, bạn thử hỏi lại nhé! 🙏" });
+        }
         return Response.json({
-          message: msg.content || "Xin lỗi bạn, mình không hiểu câu hỏi. Bạn thử hỏi lại nhé!",
+          message: content || "Xin lỗi bạn, mình không hiểu câu hỏi. Bạn thử hỏi lại nhé!",
         });
       }
 
