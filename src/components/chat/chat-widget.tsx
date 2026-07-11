@@ -114,7 +114,11 @@ export function ChatWidget() {
       <button
         onClick={() => setOpen(true)}
         aria-label="Mở chat hỗ trợ"
-        className={`fixed bottom-5 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#a9843f] text-white shadow-lg transition-all duration-200 hover:bg-[#8a6b31] active:scale-95 ${open ? "pointer-events-none opacity-0 scale-90" : "opacity-100 scale-100"}`}
+        style={{
+          bottom: "calc(1.25rem + env(safe-area-inset-bottom))",
+          right: "calc(1.25rem + env(safe-area-inset-right))",
+        }}
+        className={`fixed z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#a9843f] text-white shadow-lg transition-all duration-200 hover:bg-[#8a6b31] active:scale-95 ${open ? "pointer-events-none opacity-0 scale-90" : "opacity-100 scale-100"}`}
       >
         <MessageCircle size={24} strokeWidth={1.75} />
         {unread > 0 && (
