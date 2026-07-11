@@ -10,8 +10,7 @@ async function groqChat(
   useFallback = false
 ): Promise<Groq.Chat.ChatCompletion> {
   return groq.chat.completions.create({
-    // llama3-groq-70b is fine-tuned for tool use — better fallback than 8b-instant
-    model: useFallback ? "llama3-groq-70b-8192-tool-use-preview" : "llama-3.3-70b-versatile",
+    model: useFallback ? "llama-3.1-8b-instant" : "llama-3.3-70b-versatile",
     messages,
     tools: TOOLS,
     tool_choice: "auto",
