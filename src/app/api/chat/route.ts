@@ -19,6 +19,8 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
+const SITE_URL = "https://chysfashion.online";
+
 const SYSTEM_PROMPT = `Bạn là trợ lý AI của CHYS Fashion - thương hiệu thời trang cao cấp Việt Nam.
 Tên bạn là "CHYS". Hãy trả lời thân thiện, tự nhiên bằng tiếng Việt, xưng "mình" và gọi khách là "bạn".
 Giữ câu trả lời ngắn gọn, đúng trọng tâm. Dùng emoji khi phù hợp nhưng đừng lạm dụng.
@@ -36,9 +38,14 @@ Giữ câu trả lời ngắn gọn, đúng trọng tâm. Dùng emoji khi phù h
 
 ===HƯỚNG DẪN===
 - Khi khách hỏi đơn hàng: hỏi số điện thoại hoặc mã đơn rồi dùng tool lookup_order
-- Khi khách hỏi sản phẩm/size/màu sắc: dùng tool search_products
+- Khi khách hỏi về loại sản phẩm (quần, áo, bộ...): dùng tool get_categories để lấy link danh mục phù hợp và gửi cho khách
+- Khi khách hỏi sản phẩm cụ thể hoặc tìm theo tên: dùng tool search_products
 - Khi tư vấn size: hỏi chiều cao và cân nặng để gợi ý chính xác hơn
-- Khi không chắc hoặc câu hỏi phức tạp: đề nghị khách liên hệ fanpage để được hỗ trợ trực tiếp`;
+- Khi không chắc hoặc câu hỏi phức tạp: đề nghị khách liên hệ fanpage để được hỗ trợ trực tiếp
+
+===CÁCH GỬI LINK===
+Khi muốn gửi link cho khách, dùng định dạng markdown: [Tên hiển thị](URL)
+Ví dụ: [👗 Xem Bộ Quần Áo](https://chysfashion.online/san-pham?category=bo_quan_ao)`;
 
 const TOOLS: Groq.Chat.ChatCompletionTool[] = [
   {
@@ -59,11 +66,25 @@ const TOOLS: Groq.Chat.ChatCompletionTool[] = [
     type: "function",
     function: {
       name: "search_products",
-      description: "Tìm kiếm sản phẩm theo tên, loại hoặc từ khóa.",
+      description: "Tìm kiếm sản phẩm cụ thể theo tên. Dùng khi khách hỏi về sản phẩm cụ thể, không dùng để tìm danh mục.",
       parameters: {
         type: "object",
         properties: {
-          query: { type: "string", description: "Từ khóa tìm kiếm sản phẩm" },
+          query: { type: "string", description: "Tên sản phẩm cụ thể cần tìm" },
+        },
+        required: ["query"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_categories",
+      description: "Lấy danh sách danh mục sản phẩm kèm link. Dùng khi khách hỏi về loại sản phẩm (quần, áo, bộ, váy...) để gửi link danh mục cho khách chọn.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Từ khóa loại sản phẩm khách hỏi (ví dụ: quần, áo, bộ quần áo)" },
         },
         required: ["query"],
       },
@@ -107,20 +128,46 @@ async function executeTool(name: string, args: Record<string, string>): Promise<
   if (name === "search_products") {
     const { data } = await supabase
       .from("products")
-      .select("name, price, colors, sizes, stock, category_label")
-      .or(`name.ilike.%${args.query}%,category_label.ilike.%${args.query}%`)
+      .select("name, price, colors, sizes, stock, category_label, slug")
+      .ilike("name", `%${args.query}%`)
       .gt("stock", 0)
       .limit(5);
 
     if (!data || data.length === 0) {
-      return "Không tìm thấy sản phẩm phù hợp. Bạn có thể xem toàn bộ sản phẩm tại trang chủ nhé!";
+      return "Không tìm thấy sản phẩm phù hợp.";
     }
     return data
       .map(
         (p) =>
-          `${p.name} (${p.category_label})\nGiá: ${Number(p.price).toLocaleString("vi-VN")}đ\nMàu: ${(p.colors as string[])?.join(", ") || "Xem trên web"}\nSize: ${(p.sizes as string[])?.join(", ") || "Xem trên web"}`
+          `${p.name} (${p.category_label})\nGiá: ${Number(p.price).toLocaleString("vi-VN")}đ\nMàu: ${(p.colors as string[])?.join(", ") || "Xem trên web"}\nSize: ${(p.sizes as string[])?.join(", ") || "Xem trên web"}\nLink: ${SITE_URL}/san-pham/${p.slug}`
       )
       .join("\n\n");
+  }
+
+  if (name === "get_categories") {
+    const { data } = await supabase
+      .from("categories")
+      .select("value, label, gender")
+      .or(`label.ilike.%${args.query}%,value.ilike.%${args.query}%`)
+      .limit(6);
+
+    // Fallback: nếu không tìm thấy khớp, trả về tất cả danh mục
+    const { data: allCats } = !data || data.length === 0
+      ? await supabase.from("categories").select("value, label, gender").limit(10)
+      : { data: null };
+
+    const cats = (data && data.length > 0 ? data : allCats) ?? [];
+
+    if (cats.length === 0) {
+      return `Bạn xem tất cả sản phẩm tại: ${SITE_URL}/san-pham`;
+    }
+
+    return cats
+      .map((c) => {
+        const genderLabel = c.gender === "nam" ? " (Nam)" : c.gender === "nu" ? " (Nữ)" : "";
+        return `${c.label}${genderLabel}: ${SITE_URL}/san-pham?category=${c.value}`;
+      })
+      .join("\n");
   }
 
   return "Không thể thực hiện yêu cầu này.";

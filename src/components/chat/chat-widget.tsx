@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, type ReactNode } from "react";
 import { MessageCircle, X, Send, ChevronDown } from "lucide-react";
 
 interface Message {
@@ -28,6 +28,34 @@ function TypingDots() {
   );
 }
 
+function parseLinks(text: string): ReactNode[] {
+  const parts = text.split(/(\[([^\]]+)\]\((https?:\/\/[^\)]+)\))/g);
+  const result: ReactNode[] = [];
+  let i = 0;
+  while (i < parts.length) {
+    if (parts[i]?.match(/^\[([^\]]+)\]\((https?:\/\/[^\)]+)\)$/)) {
+      const label = parts[i + 1];
+      const url = parts[i + 2];
+      result.push(
+        <a
+          key={i}
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 underline underline-offset-2 font-medium"
+        >
+          {label} →
+        </a>
+      );
+      i += 3;
+    } else {
+      if (parts[i]) result.push(parts[i]);
+      i++;
+    }
+  }
+  return result;
+}
+
 function MessageBubble({ msg }: { msg: Message }) {
   const isUser = msg.role === "user";
   return (
@@ -39,7 +67,7 @@ function MessageBubble({ msg }: { msg: Message }) {
             : "rounded-bl-sm bg-stone-100 text-stone-800"
         }`}
       >
-        {msg.content}
+        {isUser ? msg.content : parseLinks(msg.content)}
       </div>
     </div>
   );
