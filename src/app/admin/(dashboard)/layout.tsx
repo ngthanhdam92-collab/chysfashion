@@ -27,20 +27,20 @@ export default async function DashboardLayout({
 
   const sidebarContent = (
     <>
-      {/* Logo — desktop only (mobile shows in shell header) */}
-      <div className="hidden h-16 items-center border-b border-line px-6 lg:flex">
-        <span className="font-serif text-xl tracking-[0.1em] text-ink">CHYS</span>
-        <span className="ml-2 text-[10px] tracking-label uppercase text-muted">Quản lý</span>
+      {/* Logo — desktop only */}
+      <div className="hidden h-16 items-center border-b border-white/[0.06] px-6 lg:flex">
+        <span className="font-serif text-xl tracking-[0.1em] text-white">CHYS</span>
+        <span className="ml-2 mt-0.5 text-[10px] tracking-label uppercase text-white/25">Quản lý</span>
       </div>
       <AdminSidebarNav />
-      <div className="border-t border-line p-3">
-        <p className="truncate px-3 py-1 text-xs text-muted">{email}</p>
+      <div className="border-t border-white/[0.06] p-3">
+        <p className="truncate px-3 py-1 text-[11px] text-white/20">{email}</p>
         <form action={signOut}>
           <button
             type="submit"
-            className="flex w-full items-center gap-3 rounded px-3 py-2.5 text-sm text-ink hover:bg-cream"
+            className="flex w-full items-center gap-3 rounded px-3 py-2.5 text-sm text-white/35 transition-colors hover:bg-white/5 hover:text-white/65"
           >
-            <LogOut size={17} strokeWidth={1.75} />
+            <LogOut size={16} strokeWidth={1.75} />
             Đăng xuất
           </button>
         </form>

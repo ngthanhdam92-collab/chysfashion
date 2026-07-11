@@ -62,13 +62,13 @@ export function AdminSidebarNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex-1 space-y-6 px-3 py-5">
+    <nav className="flex-1 space-y-5 px-3 py-5">
       {NAV_GROUPS.map((group) => (
         <div key={group.label}>
-          <p className="px-3 text-[10px] font-medium tracking-label uppercase text-stone">
+          <p className="px-3 text-[10px] font-semibold tracking-label uppercase text-white/20">
             {group.label}
           </p>
-          <div className="mt-2 space-y-0.5">
+          <div className="mt-1.5 space-y-0.5">
             {group.items.map((item) => {
               const active =
                 item.href === "/admin"
@@ -80,11 +80,11 @@ export function AdminSidebarNav() {
                   href={item.href}
                   className={`flex items-center gap-3 rounded-md border-l-2 px-3 py-2.5 text-sm transition-colors ${
                     active
-                      ? "border-gold bg-gold/10 font-medium text-gold-dark"
-                      : "border-transparent text-ink hover:bg-cream"
+                      ? "border-[#c9a459] bg-[#c9a459]/10 font-medium text-[#e8d4a0]"
+                      : "border-transparent text-white/40 hover:bg-white/5 hover:text-white/75"
                   }`}
                 >
-                  <item.icon size={17} strokeWidth={1.75} />
+                  <item.icon size={16} strokeWidth={1.75} className="shrink-0" />
                   {item.label}
                 </Link>
               );
