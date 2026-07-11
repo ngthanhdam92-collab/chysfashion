@@ -5,6 +5,19 @@ import { recommendSize, DEFAULT_SIZE_CHART, type SizeChartRow } from "@/lib/size
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+async function groqChat(
+  messages: Groq.Chat.ChatCompletionMessageParam[],
+  useFallback = false
+): Promise<Groq.Chat.ChatCompletion> {
+  return groq.chat.completions.create({
+    model: useFallback ? "llama-3.1-8b-instant" : "llama-3.3-70b-versatile",
+    messages,
+    tools: TOOLS,
+    tool_choice: "auto",
+    max_tokens: 800,
+  });
+}
+
 // Simple in-memory rate limit: 30 messages per IP per hour
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
@@ -286,13 +299,8 @@ export async function POST(req: NextRequest) {
 
   try {
     for (let i = 0; i < 5; i++) {
-      const response = await groq.chat.completions.create({
-        model: "llama-3.3-70b-versatile",
-        messages: current,
-        tools: TOOLS,
-        tool_choice: "auto",
-        max_tokens: 1024,
-      });
+      // Try 70B first; fall back to fast 8B if unavailable/rate-limited
+      const response = await groqChat(current).catch(() => groqChat(current, true));
 
       const msg = response.choices[0].message;
       const toolCalls = msg.tool_calls;
