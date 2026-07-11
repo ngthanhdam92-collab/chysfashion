@@ -1,6 +1,7 @@
 import Groq from "groq-sdk";
 import { NextRequest } from "next/server";
 import { createPublicClient } from "@/lib/supabase/public";
+import { recommendSize, DEFAULT_SIZE_CHART, type SizeChartRow } from "@/lib/size-chart";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -40,7 +41,7 @@ Giữ câu trả lời ngắn gọn, đúng trọng tâm. Dùng emoji khi phù h
 - Khi khách hỏi đơn hàng: hỏi số điện thoại hoặc mã đơn rồi dùng tool lookup_order
 - Khi khách hỏi về loại sản phẩm (quần, áo, bộ...): dùng tool get_categories để lấy link danh mục phù hợp và gửi cho khách
 - Khi khách hỏi sản phẩm cụ thể hoặc tìm theo tên: dùng tool search_products
-- Khi tư vấn size: hỏi chiều cao và cân nặng để gợi ý chính xác hơn
+- Khi khách hỏi về size: hỏi gộp 1 lần "bạn đang xem sản phẩm nào (tên hoặc loại như áo thun, quần...), chiều cao và cân nặng của bạn là bao nhiêu?" — hỏi cả 3 trong 1 câu, không hỏi từng thứ một. Khi có đủ 3 thông tin thì dùng tool get_size_recommendation
 - Khi không chắc hoặc câu hỏi phức tạp: đề nghị khách liên hệ fanpage để được hỗ trợ trực tiếp
 
 ===CÁCH GỬI LINK===
@@ -73,6 +74,22 @@ const TOOLS: Groq.Chat.ChatCompletionTool[] = [
           query: { type: "string", description: "Tên sản phẩm cụ thể cần tìm" },
         },
         required: ["query"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_size_recommendation",
+      description: "Tư vấn size cho khách dựa trên chiều cao, cân nặng và sản phẩm/loại sản phẩm. Chỉ gọi khi có đủ cả 3 thông tin: sản phẩm hoặc loại sản phẩm, chiều cao (cm), cân nặng (kg).",
+      parameters: {
+        type: "object",
+        properties: {
+          product_query: { type: "string", description: "Tên hoặc loại sản phẩm khách muốn mua (ví dụ: áo thun basic nam, quần tây, bộ quần áo)" },
+          height: { type: "number", description: "Chiều cao khách (cm)" },
+          weight: { type: "number", description: "Cân nặng khách (kg)" },
+        },
+        required: ["product_query", "height", "weight"],
       },
     },
   },
@@ -142,6 +159,63 @@ async function executeTool(name: string, args: Record<string, string>): Promise<
           `${p.name} (${p.category_label})\nGiá: ${Number(p.price).toLocaleString("vi-VN")}đ\nMàu: ${(p.colors as string[])?.join(", ") || "Xem trên web"}\nSize: ${(p.sizes as string[])?.join(", ") || "Xem trên web"}\nLink: ${SITE_URL}/san-pham/${p.slug}`
       )
       .join("\n\n");
+  }
+
+  if (name === "get_size_recommendation") {
+    const height = Number(args.height);
+    const weight = Number(args.weight);
+    const query = args.product_query;
+
+    // Find product matching name or category label
+    const { data: products } = await supabase
+      .from("products")
+      .select("name, sizes, size_chart_id, slug, category_label")
+      .or(`name.ilike.%${query}%,category_label.ilike.%${query}%`)
+      .gt("stock", 0)
+      .limit(1);
+
+    const product = products?.[0];
+    if (!product) {
+      return `Không tìm thấy sản phẩm phù hợp với "${query}". Bạn có thể xem tất cả sản phẩm tại ${SITE_URL}/san-pham`;
+    }
+
+    // Fetch size chart if assigned, otherwise use defaults
+    let productChart: Record<string, Partial<SizeChartRow>> = {};
+    let chartSource = "bảng size chung";
+
+    if (product.size_chart_id) {
+      const { data: chartData } = await supabase
+        .from("size_charts")
+        .select("name, data")
+        .eq("id", product.size_chart_id)
+        .single();
+      if (chartData?.data) {
+        productChart = chartData.data as Record<string, Partial<SizeChartRow>>;
+        chartSource = `bảng size "${chartData.name}"`;
+      }
+    }
+
+    const availableSizes = (product.sizes as string[]) ?? Object.keys(DEFAULT_SIZE_CHART);
+    const recommended = recommendSize(height, weight, availableSizes, productChart);
+
+    if (!recommended) {
+      return `Không thể xác định size phù hợp cho sản phẩm "${product.name}". Vui lòng liên hệ fanpage để được tư vấn trực tiếp.`;
+    }
+
+    // Find adjacent size up for "if prefer looser" suggestion
+    const idx = availableSizes.indexOf(recommended);
+    const sizeUp = idx < availableSizes.length - 1 ? availableSizes[idx + 1] : null;
+
+    const lines = [
+      `Sản phẩm: ${product.name} (${product.category_label})`,
+      `Chiều cao: ${height}cm | Cân nặng: ${weight}kg`,
+      `Size gợi ý: ${recommended}`,
+      sizeUp ? `Size lớn hơn (nếu thích rộng): ${sizeUp}` : null,
+      `Link sản phẩm: ${SITE_URL}/san-pham/${product.slug}`,
+      `Nguồn: ${chartSource}`,
+    ].filter(Boolean);
+
+    return lines.join("\n");
   }
 
   if (name === "get_categories") {
