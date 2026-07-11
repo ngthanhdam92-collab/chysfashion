@@ -106,27 +106,35 @@ export function ChatWidget() {
     setMessages(nextMessages);
     setLoading(true);
 
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: nextMessages.map((m) => ({ role: m.role, content: m.content })),
-        }),
-      });
-
-      const data = await res.json();
-      const reply: Message = { role: "assistant", content: data.message };
-      setMessages((prev) => [...prev, reply]);
-      if (!open) setUnread((n) => n + 1);
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: "Xin lỗi bạn, mình gặp lỗi kết nối. Vui lòng thử lại nhé!" },
-      ]);
-    } finally {
-      setLoading(false);
+    const MAX_RETRIES = 3;
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      if (attempt > 0) {
+        await new Promise((r) => setTimeout(r, 2500));
+      }
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            messages: nextMessages.map((m) => ({ role: m.role, content: m.content })),
+          }),
+        });
+        const data = await res.json();
+        setMessages((prev) => [...prev, { role: "assistant", content: data.message }]);
+        if (!open) setUnread((n) => n + 1);
+        setLoading(false);
+        return;
+      } catch {
+        // keep typing dots, retry silently
+      }
     }
+
+    // All retries failed
+    setLoading(false);
+    setMessages((prev) => [
+      ...prev,
+      { role: "assistant", content: "Mạng đang yếu bạn ơi, bạn thử nhắn lại nhé! 🙏" },
+    ]);
   }, [input, loading, messages, open]);
 
   const handleKey = (e: React.KeyboardEvent) => {

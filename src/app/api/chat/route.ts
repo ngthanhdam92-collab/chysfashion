@@ -284,38 +284,46 @@ export async function POST(req: NextRequest) {
   // Agentic loop — max 5 iterations for tool use
   let current = messages;
 
-  for (let i = 0; i < 5; i++) {
-    const response = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      messages: current,
-      tools: TOOLS,
-      tool_choice: "auto",
-      max_tokens: 1024,
-    });
-
-    const msg = response.choices[0].message;
-    const toolCalls = msg.tool_calls;
-
-    if (!toolCalls || toolCalls.length === 0) {
-      return Response.json({
-        message: msg.content || "Xin lỗi bạn, mình không hiểu câu hỏi. Bạn thử hỏi lại nhé!",
+  try {
+    for (let i = 0; i < 5; i++) {
+      const response = await groq.chat.completions.create({
+        model: "llama-3.3-70b-versatile",
+        messages: current,
+        tools: TOOLS,
+        tool_choice: "auto",
+        max_tokens: 1024,
       });
+
+      const msg = response.choices[0].message;
+      const toolCalls = msg.tool_calls;
+
+      if (!toolCalls || toolCalls.length === 0) {
+        return Response.json({
+          message: msg.content || "Xin lỗi bạn, mình không hiểu câu hỏi. Bạn thử hỏi lại nhé!",
+        });
+      }
+
+      // Execute tools
+      const toolResults: Groq.Chat.ChatCompletionMessageParam[] = await Promise.all(
+        toolCalls.map(async (call) => {
+          const args = JSON.parse(call.function.arguments) as Record<string, string>;
+          const result = await executeTool(call.function.name, args);
+          return {
+            role: "tool" as const,
+            tool_call_id: call.id,
+            content: result,
+          };
+        })
+      );
+
+      current = [...current, msg, ...toolResults];
     }
-
-    // Execute tools
-    const toolResults: Groq.Chat.ChatCompletionMessageParam[] = await Promise.all(
-      toolCalls.map(async (call) => {
-        const args = JSON.parse(call.function.arguments) as Record<string, string>;
-        const result = await executeTool(call.function.name, args);
-        return {
-          role: "tool" as const,
-          tool_call_id: call.id,
-          content: result,
-        };
-      })
+  } catch (err) {
+    console.error("[chat/route] error:", err);
+    return Response.json(
+      { message: "Mình đang bận tí, bạn thử lại sau vài giây nhé! 🙏" },
+      { status: 200 }
     );
-
-    current = [...current, msg, ...toolResults];
   }
 
   return Response.json({ message: "Xin lỗi bạn, mình gặp sự cố kỹ thuật. Vui lòng thử lại nhé!" });
