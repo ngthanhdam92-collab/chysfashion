@@ -2,6 +2,7 @@ import { CartProvider } from "@/context/cart-context";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
+import { ChatWidget } from "@/components/chat/chat-widget";
 import { getNavLinks } from "@/lib/nav-links";
 import { getHomepageSettings } from "@/lib/homepage-settings";
 
@@ -21,6 +22,7 @@ export default async function StorefrontLayout({
       <Header navLinks={navLinks} announcement={settings.announcementBar} />
       <main className="flex-1">{children}</main>
       <Footer />
+      <ChatWidget />
     </CartProvider>
   );
 }
