@@ -42,7 +42,7 @@ function parseLinks(text: string): ReactNode[] {
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 underline underline-offset-2 font-medium"
+          className="inline-flex items-center gap-1 underline underline-offset-2 font-medium text-blue-600"
         >
           {label} →
         </a>

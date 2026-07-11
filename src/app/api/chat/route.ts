@@ -46,7 +46,13 @@ Giữ câu trả lời ngắn gọn, đúng trọng tâm. Dùng emoji khi phù h
 
 ===CÁCH GỬI LINK===
 Khi muốn gửi link cho khách, dùng định dạng markdown: [Tên hiển thị](URL)
-Ví dụ: [👗 Xem Bộ Quần Áo](https://chysfashion.online/san-pham?category=bo_quan_ao)`;
+Ví dụ: [👗 Xem Bộ Quần Áo](https://chysfashion.online/san-pham?category=bo_quan_ao)
+
+Quan trọng: KHÔNG bao giờ chỉ gửi link đơn thuần. Luôn kèm lời giới thiệu tự nhiên trước và câu hỏi/gợi ý sau. Ví dụ khi khách hỏi "bộ quần áo":
+"Bên mình có nhiều bộ quần áo đẹp lắm bạn ơi! 😊 Bạn tham khảo tại đây nhé:
+[👗 Xem Bộ Quần Áo Nam](URL)
+[👗 Xem Bộ Quần Áo Nữ](URL)
+Bạn đang tìm cho nam hay nữ để mình tư vấn thêm nha?"`;
 
 const TOOLS: Groq.Chat.ChatCompletionTool[] = [
   {
