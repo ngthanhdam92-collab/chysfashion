@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Minus, Plus, Check, X, Ruler, Flame, AlertTriangle } from "lucide-react";
+import { Minus, Plus, Check, X, Ruler, Flame } from "lucide-react";
 import { Product } from "@/lib/types";
 import { formatVnd } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
@@ -61,8 +61,6 @@ export function ProductPurchasePanel({ product, selectedColor, onColorChange, ac
     : null;
   const availableStock = hasVariants ? selectedVariant?.stock ?? 0 : product.stock;
   const outOfStock = availableStock === 0;
-  const isVeryLowStock = availableStock > 0 && availableStock <= 3;
-  const isLowStock = availableStock > 0 && availableStock <= 10;
 
   function handleColorSelect(name: string) {
     setColor(name);
@@ -258,20 +256,6 @@ export function ProductPurchasePanel({ product, selectedColor, onColorChange, ac
           </div>
         </div>
 
-        {isLowStock && (
-          <div className={`mt-3 flex items-center gap-2 rounded border px-3 py-2 text-sm ${
-            isVeryLowStock
-              ? "border-red-200 bg-red-50 text-red-700"
-              : "border-amber-200 bg-amber-50 text-amber-700"
-          }`}>
-            <AlertTriangle size={14} className="shrink-0" />
-            <span>
-              {isVeryLowStock
-                ? `Sắp hết hàng! Chỉ còn ${availableStock} sản phẩm`
-                : `Còn ít hàng — chỉ còn ${availableStock} sản phẩm`}
-            </span>
-          </div>
-        )}
       </div>
 
       {outOfStock ? (
