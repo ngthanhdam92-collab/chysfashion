@@ -163,6 +163,50 @@ export async function updateProduct(id: string, formData: FormData) {
   redirect("/admin/products");
 }
 
+export async function updateVariantStock(
+  productId: string,
+  color: string,
+  size: string,
+  newStock: number
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+
+  // Fetch current product to get existing variants
+  const { data, error: fetchErr } = await supabase
+    .from("products")
+    .select("variants, stock")
+    .eq("id", productId)
+    .single();
+  if (fetchErr || !data) return { error: fetchErr?.message ?? "Không tìm thấy sản phẩm" };
+
+  const hasVariants = color !== "—" && size !== "—";
+
+  if (hasVariants) {
+    // Update the matching variant's stock
+    const variants = (data.variants as { color: string; size: string; stock: number; [k: string]: unknown }[]) ?? [];
+    const updated = variants.map((v) =>
+      v.color === color && v.size === size ? { ...v, stock: Math.max(0, newStock) } : v
+    );
+    const totalStock = updated.reduce((s, v) => s + (v.stock ?? 0), 0);
+    const { error } = await supabase
+      .from("products")
+      .update({ variants: updated, stock: totalStock })
+      .eq("id", productId);
+    if (error) return { error: error.message };
+  } else {
+    // Product without variants — update stock directly
+    const { error } = await supabase
+      .from("products")
+      .update({ stock: Math.max(0, newStock) })
+      .eq("id", productId);
+    if (error) return { error: error.message };
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/products");
+  return {};
+}
+
 export async function deleteProduct(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("products").delete().eq("id", id);

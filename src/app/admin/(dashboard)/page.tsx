@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { Receipt, Clock, Truck, Wallet, AlertTriangle } from "lucide-react";
+import { Receipt, Clock, Truck, Wallet } from "lucide-react";
 import { getAllOrders } from "@/lib/orders";
 import { getAllProducts } from "@/lib/products";
 import { formatVnd } from "@/lib/utils";
 import { StatCard } from "@/components/admin/stat-card";
 import { AvatarInitials } from "@/components/admin/avatar-initials";
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
+import { LowStockPanel } from "@/components/admin/low-stock-panel";
 import { OrderStatus } from "@/lib/types";
 
 function trendText(today: number, yesterday: number) {
@@ -20,7 +21,6 @@ function trendText(today: number, yesterday: number) {
 }
 
 const LOW_STOCK_THRESHOLD = 10;
-const VERY_LOW_STOCK_THRESHOLD = 3;
 
 export default async function AdminDashboardPage() {
   const [orders, products] = await Promise.all([getAllOrders(), getAllProducts()]);
@@ -171,69 +171,7 @@ export default async function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Low stock alert panel */}
-      {lowStockItems.length > 0 && (
-        <div className="mt-8">
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <AlertTriangle size={16} className="text-amber-500" />
-              <h2 className="font-serif text-lg text-ink">Cảnh báo tồn kho thấp</h2>
-              <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-600">
-                {lowStockItems.length} variant
-              </span>
-            </div>
-            <Link href="/admin/products" className="text-xs text-gold-dark hover:underline">
-              Quản lý sản phẩm
-            </Link>
-          </div>
-          <div className="overflow-hidden rounded-sm bg-white shadow-[0_1px_4px_rgba(0,0,0,0.07),0_0_0_1px_rgba(0,0,0,0.04)]">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[520px] text-sm">
-                <thead>
-                  <tr className="border-b border-[#f0eeea] bg-[#faf9f7] text-left text-[11px] uppercase tracking-label text-muted">
-                    <th className="px-5 py-3">Sản phẩm</th>
-                    <th className="px-5 py-3">Màu</th>
-                    <th className="px-5 py-3">Size</th>
-                    <th className="px-5 py-3">Tồn kho</th>
-                    <th className="px-5 py-3"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#f0eeea]">
-                  {lowStockItems.map((item, i) => {
-                    const veryLow = item.stock <= VERY_LOW_STOCK_THRESHOLD;
-                    return (
-                      <tr key={`${item.productId}-${item.color}-${item.size}-${i}`} className="transition-colors hover:bg-[#faf9f7]">
-                        <td className="px-5 py-3.5 font-medium text-ink">{item.productName}</td>
-                        <td className="px-5 py-3.5 text-muted">{item.color}</td>
-                        <td className="px-5 py-3.5 text-muted">{item.size}</td>
-                        <td className="px-5 py-3.5">
-                          <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                            item.stock === 0
-                              ? "bg-gray-100 text-gray-500"
-                              : veryLow
-                              ? "bg-red-100 text-red-700"
-                              : "bg-amber-100 text-amber-700"
-                          }`}>
-                            {item.stock === 0 ? "Hết hàng" : `Còn ${item.stock}`}
-                          </span>
-                        </td>
-                        <td className="px-5 py-3.5 text-right">
-                          <Link
-                            href={`/admin/products/${item.slug}/edit`}
-                            className="text-xs text-gold-dark hover:underline"
-                          >
-                            Chỉnh sửa
-                          </Link>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
+      <LowStockPanel items={lowStockItems} />
     </div>
   );
 }
