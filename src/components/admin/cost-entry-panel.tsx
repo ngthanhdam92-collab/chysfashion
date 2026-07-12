@@ -66,27 +66,6 @@ export function CostEntryPanel({ date, adEntries, settings, orderCount }: Props)
     });
   }
 
-  // ── Operational settings ──────────────────────────────────────────────────
-  const [pkg, setPkg] = useState(fmtInput(settings.packagingPerOrder));
-  const [prt, setPrt] = useState(fmtInput(settings.printingPerOrder));
-  const [opSaved, setOpSaved] = useState(false);
-
-  const opPerOrder = parseNum(pkg) + parseNum(prt);
-  const totalOp = opPerOrder * orderCount;
-
-  function handleSaveOp() {
-    startTransition(async () => {
-      await saveCostSettings({
-        ...settings,
-        packagingPerOrder: parseNum(pkg),
-        printingPerOrder: parseNum(prt),
-      });
-      setOpSaved(true);
-      router.refresh();
-      setTimeout(() => setOpSaved(false), 2500);
-    });
-  }
-
   // ── Return rate settings ──────────────────────────────────────────────────
   const [ratePct, setRatePct] = useState(
     settings.returnRatePct > 0 ? String(settings.returnRatePct) : "",
@@ -112,7 +91,7 @@ export function CostEntryPanel({ date, adEntries, settings, orderCount }: Props)
     });
   }
 
-  const grandTotal = totalAd + totalOp + totalRet;
+  const grandTotal = totalAd + totalRet;
 
   return (
     <div className="space-y-5">
@@ -127,12 +106,6 @@ export function CostEntryPanel({ date, adEntries, settings, orderCount }: Props)
             <div className="text-right">
               <p className="text-[11px] text-muted">Quảng cáo</p>
               <p className="font-semibold text-blue-600">{formatVnd(totalAd)}</p>
-            </div>
-          )}
-          {totalOp > 0 && (
-            <div className="text-right">
-              <p className="text-[11px] text-muted">Vận hành</p>
-              <p className="font-semibold text-amber-600">{formatVnd(totalOp)}</p>
             </div>
           )}
           {totalRet > 0 && (
@@ -186,69 +159,7 @@ export function CostEntryPanel({ date, adEntries, settings, orderCount }: Props)
         />
       </Section>
 
-      {/* ── 2. Operational costs (settings, per order) ── */}
-      <Section
-        title="Chi phí vận hành"
-        badge="Cài đặt cố định / đơn"
-        total={totalOp}
-        totalColor="text-amber-600"
-        sub={orderCount > 0 ? `${orderCount} đơn × ${formatVnd(opPerOrder)}/đơn` : undefined}
-      >
-        <p className="mb-4 text-xs text-muted">
-          Nhập chi phí cho <strong>1 đơn hàng</strong>. Hệ thống tự nhân với số đơn mỗi ngày.
-          Chỉ cần lưu 1 lần — áp dụng cho tất cả các ngày.
-        </p>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-amber-600">
-              Túi gói hàng / đơn
-            </label>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={pkg}
-              onChange={numInput(pkg, setPkg)}
-              placeholder="0"
-              className="w-full border border-line bg-white px-3 py-2 text-right font-mono text-sm focus:border-gold focus:outline-none"
-            />
-            <span className="mt-0.5 block text-right text-[10px] text-muted">VND / đơn</span>
-          </div>
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-amber-600">
-              Giấy in đơn / đơn
-            </label>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={prt}
-              onChange={numInput(prt, setPrt)}
-              placeholder="0"
-              className="w-full border border-line bg-white px-3 py-2 text-right font-mono text-sm focus:border-gold focus:outline-none"
-            />
-            <span className="mt-0.5 block text-right text-[10px] text-muted">VND / đơn</span>
-          </div>
-        </div>
-        {opPerOrder > 0 && (
-          <p className="mt-3 text-xs text-muted">
-            Tổng / đơn:{" "}
-            <span className="font-semibold text-amber-600">{formatVnd(opPerOrder)}</span>
-            {orderCount > 0 && (
-              <>
-                {" "}→ ngày này ({orderCount} đơn):{" "}
-                <span className="font-semibold text-amber-600">{formatVnd(totalOp)}</span>
-              </>
-            )}
-          </p>
-        )}
-        <SaveRow
-          onSave={handleSaveOp}
-          saved={opSaved}
-          pending={pending}
-          label="Lưu cài đặt vận hành"
-        />
-      </Section>
-
-      {/* ── 3. Return rate (settings, %) ── */}
+      {/* ── 2. Return rate (settings, %) ── */}
       <Section
         title="Hoàn hàng / Giao thất bại"
         badge="Ước tính theo %"
