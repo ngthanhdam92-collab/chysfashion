@@ -38,6 +38,7 @@ export interface Product {
   variants: ProductVariant[];
   videoUrl: string | null;
   relatedProductIds: string[];
+  upsellProductIds: string[];
   sizeChartId: string | null;
   sizeChart: Record<string, Partial<SizeChartRow>>;
   costPrice?: number;

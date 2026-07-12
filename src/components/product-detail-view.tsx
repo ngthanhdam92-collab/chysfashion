@@ -8,9 +8,10 @@ import { Product } from "@/lib/types";
 import { formatVnd } from "@/lib/utils";
 import { ProductImagePlaceholder } from "@/components/product-image-placeholder";
 import { ProductPurchasePanel } from "@/components/product-purchase-panel";
+import { UpsellSection } from "@/components/upsell-section";
 import type { FlashSaleWithProducts } from "@/lib/flash-sales";
 
-export function ProductDetailView({ product, suggestedProducts, flashSale }: { product: Product; suggestedProducts?: Product[]; flashSale?: FlashSaleWithProducts | null }) {
+export function ProductDetailView({ product, suggestedProducts, upsellProducts, flashSale }: { product: Product; suggestedProducts?: Product[]; upsellProducts?: Product[]; flashSale?: FlashSaleWithProducts | null }) {
   const [selectedColor, setSelectedColor] = useState(
     product.colors[0]?.name ?? ""
   );
@@ -106,6 +107,9 @@ export function ProductDetailView({ product, suggestedProducts, flashSale }: { p
           activeColorImage={colorOverrideSrc ?? undefined}
           flashSale={flashSale ?? undefined}
         />
+        {upsellProducts && upsellProducts.length > 0 && (
+          <UpsellSection currentProduct={product} upsellProducts={upsellProducts} />
+        )}
         {suggestedProducts && suggestedProducts.length > 0 && (
           <RelatedSuggestions products={suggestedProducts} />
         )}

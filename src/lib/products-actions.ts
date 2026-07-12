@@ -89,6 +89,13 @@ function buildProductPayload(formData: FormData, slug: string) {
     if (Array.isArray(parsed)) relatedProductIds = parsed.filter((v) => typeof v === "string");
   } catch {}
 
+  let upsellProductIds: string[] = [];
+  try {
+    const raw = String(formData.get("upsellProductIds") || "[]");
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) upsellProductIds = parsed.filter((v) => typeof v === "string");
+  } catch {}
+
   const sizeChartId = String(formData.get("sizeChartId") || "").trim() || null;
 
   return {
@@ -115,6 +122,7 @@ function buildProductPayload(formData: FormData, slug: string) {
     variants,
     video_url: videoUrl,
     related_product_ids: relatedProductIds,
+    upsell_product_ids: upsellProductIds,
     size_chart_id: sizeChartId,
     cost_price: fallbackCostPrice,
   };

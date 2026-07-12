@@ -24,6 +24,7 @@ interface ProductRow {
   variants: ProductVariant[] | null;
   video_url: string | null;
   related_product_ids: string[] | null;
+  upsell_product_ids: string[] | null;
   size_chart_id: string | null;
   cost_price: number | null;
 }
@@ -54,6 +55,7 @@ function mapRow(
     variants: row.variants ?? [],
     videoUrl: row.video_url ?? null,
     relatedProductIds: row.related_product_ids ?? [],
+    upsellProductIds: row.upsell_product_ids ?? [],
     sizeChartId: row.size_chart_id ?? null,
     sizeChart: (sizeChartData ?? {}) as Record<string, Partial<SizeChartRow>>,
     costPrice: row.cost_price ? Number(row.cost_price) : undefined,
@@ -139,6 +141,16 @@ export async function getProductById(id: string): Promise<Product | undefined> {
   const row = data as ProductRow;
   const sizeChartData = await fetchSizeChart(row.size_chart_id);
   return mapRow(row, sizeChartData);
+}
+
+export async function getUpsellProducts(product: Product, limit = 3): Promise<Product[]> {
+  if (product.upsellProductIds.length === 0) return [];
+  const supabase = createPublicClient();
+  const ids = product.upsellProductIds.slice(0, limit);
+  const { data, error } = await supabase.from("products").select("*").in("id", ids);
+  if (error || !data) return [];
+  const map = new Map((data as ProductRow[]).map((r) => [r.id, mapRow(r)]));
+  return ids.map((id) => map.get(id)).filter(Boolean) as Product[];
 }
 
 export async function getRelatedProducts(product: Product, limit = 4): Promise<Product[]> {

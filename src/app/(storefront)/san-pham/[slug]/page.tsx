@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { ChevronDown } from "lucide-react";
-import { getProductBySlug, getRelatedProducts } from "@/lib/products";
+import { getProductBySlug, getRelatedProducts, getUpsellProducts } from "@/lib/products";
 import { getActiveFlashSale } from "@/lib/flash-sales";
 import { ProductDetailView } from "@/components/product-detail-view";
 import { RecentlyViewedSection } from "@/components/recently-viewed-section";
@@ -21,8 +21,9 @@ export default async function ProductDetailPage({ params }: Params) {
   const product = await getProductBySlug(slug);
   if (!product) notFound();
 
-  const [related, activeFlashSale] = await Promise.all([
+  const [related, upsell, activeFlashSale] = await Promise.all([
     getRelatedProducts(product),
+    getUpsellProducts(product),
     getActiveFlashSale(),
   ]);
 
@@ -38,7 +39,7 @@ export default async function ProductDetailPage({ params }: Params) {
           { label: product.name },
         ]}
       />
-      <ProductDetailView product={product} suggestedProducts={related} flashSale={flashSaleForProduct} />
+      <ProductDetailView product={product} suggestedProducts={related} upsellProducts={upsell} flashSale={flashSaleForProduct} />
 
       <div className="mt-10 lg:grid lg:grid-cols-2 lg:gap-16">
         <div className="lg:col-start-2">

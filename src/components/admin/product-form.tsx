@@ -122,6 +122,10 @@ export function ProductForm({ product, categories, allProducts = [], sizeCharts 
   const [relatedIds, setRelatedIds] = useState<string[]>(product?.relatedProductIds ?? []);
   const [relatedSearch, setRelatedSearch] = useState("");
 
+  // ===== Mua kèm thường thấy =====
+  const [upsellIds, setUpsellIds] = useState<string[]>(product?.upsellProductIds ?? []);
+  const [upsellSearch, setUpsellSearch] = useState("");
+
   const cls0Options = (classifications[0]?.options ?? []).filter((o) => o.name.trim());
   const cls1Options = (classifications[1]?.options ?? []).filter((o) => o.name.trim());
 
@@ -247,12 +251,17 @@ export function ProductForm({ product, categories, allProducts = [], sizeCharts 
   const sizesValue = cls1Options.map((o) => o.name).join("\n");
   const variantImagesJson = JSON.stringify(variantImages);
   const relatedIdsJson = JSON.stringify(relatedIds);
+  const upsellIdsJson = JSON.stringify(upsellIds);
 
   // Products available to pick (exclude self)
   const pickableProducts = allProducts.filter((p) => p.id !== product?.id);
   const searchLower = relatedSearch.trim().toLowerCase();
   const searchResults = searchLower
     ? pickableProducts.filter((p) => p.name.toLowerCase().includes(searchLower)).slice(0, 8)
+    : [];
+  const upsellSearchLower = upsellSearch.trim().toLowerCase();
+  const upsellSearchResults = upsellSearchLower
+    ? pickableProducts.filter((p) => p.name.toLowerCase().includes(upsellSearchLower)).slice(0, 8)
     : [];
   const selectedRelated = pickableProducts.filter((p) => relatedIds.includes(p.id));
 
@@ -958,6 +967,93 @@ export function ProductForm({ product, categories, allProducts = [], sizeCharts 
         {relatedIds.length === 0 && relatedSearch.trim() === "" && (
           <p className="mt-1.5 text-xs text-muted">
             Nhập tên sản phẩm để tìm kiếm và thêm vào danh sách gợi ý. Tối đa 8 sản phẩm.
+          </p>
+        )}
+      </div>
+
+      {/* ===== MUA KÈM THƯỜNG THẤY ===== */}
+      <input type="hidden" name="upsellProductIds" value={upsellIdsJson} />
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <span className="h-2 w-2 rounded-full bg-amber-500" />
+          <span className="text-sm font-medium text-ink">Mua kèm thường thấy</span>
+          <span className="text-xs text-muted">(hiển thị nổi bật trong trang sản phẩm, tối đa 3)</span>
+        </div>
+
+        {/* Selected upsell products */}
+        {upsellIds.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-2">
+            {upsellIds.map((id) => {
+              const p = allProducts.find((x) => x.id === id);
+              if (!p) return null;
+              return (
+                <div key={p.id} className="flex items-center gap-1.5 border border-amber-200 bg-amber-50 pl-1.5 pr-2 py-1">
+                  {p.images[0] && (
+                    <div className="relative h-8 w-6 shrink-0 overflow-hidden">
+                      <Image src={p.images[0]} alt="" fill sizes="24px" className="object-cover" />
+                    </div>
+                  )}
+                  <span className="max-w-[140px] truncate text-xs text-ink">{p.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => setUpsellIds((ids) => ids.filter((i) => i !== p.id))}
+                    className="shrink-0 text-muted hover:text-error"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Search input */}
+        {upsellIds.length < 3 && (
+          <div className="relative">
+            <input
+              type="text"
+              value={upsellSearch}
+              onChange={(e) => setUpsellSearch(e.target.value)}
+              placeholder="Tìm sản phẩm thường mua kèm..."
+              className="w-full border border-line bg-white px-3 py-2 text-sm focus:border-gold focus:outline-none"
+            />
+            {upsellSearchResults.length > 0 && (
+              <div className="absolute z-20 top-full left-0 right-0 border border-t-0 border-line bg-white shadow-lg">
+                {upsellSearchResults.map((p) => {
+                  const alreadyPicked = upsellIds.includes(p.id);
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      disabled={alreadyPicked}
+                      onClick={() => {
+                        if (!alreadyPicked) setUpsellIds((ids) => [...ids, p.id]);
+                        setUpsellSearch("");
+                      }}
+                      className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors ${
+                        alreadyPicked ? "bg-cream text-muted cursor-default" : "hover:bg-cream text-ink"
+                      }`}
+                    >
+                      {p.images[0] && (
+                        <div className="relative h-10 w-7 shrink-0 overflow-hidden">
+                          <Image src={p.images[0]} alt="" fill sizes="28px" className="object-cover" />
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{p.name}</p>
+                        <p className="text-xs text-muted">{p.categoryLabel}</p>
+                      </div>
+                      {alreadyPicked && <span className="ml-auto shrink-0 text-xs text-muted">Đã chọn</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+        {upsellIds.length === 0 && upsellSearch.trim() === "" && (
+          <p className="mt-1.5 text-xs text-muted">
+            Chọn 1–3 sản phẩm thường được mua cùng. Khách có thể thêm cả bộ vào giỏ chỉ một lần bấm.
           </p>
         )}
       </div>
