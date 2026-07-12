@@ -19,6 +19,7 @@ import {
   BarChart3,
   Settings,
   Calculator,
+  TrendingUp,
 } from "lucide-react";
 
 const NAV_GROUPS = [
@@ -31,6 +32,7 @@ const NAV_GROUPS = [
     items: [
       { href: "/admin/orders", label: "Đơn hàng", icon: Receipt },
       { href: "/admin/analytics", label: "Phân tích", icon: BarChart3 },
+      { href: "/admin/loi-nhuan", label: "Báo cáo lợi nhuận", icon: TrendingUp },
       { href: "/admin/chi-phi", label: "Chi phí & Lợi nhuận", icon: Calculator },
       { href: "/admin/customers", label: "Khách hàng", icon: Users },
       { href: "/admin/promotions", label: "Khuyến mại", icon: Ticket },
