@@ -13,6 +13,7 @@ export interface StockMovement {
   productName: string;
   color: string;
   size: string;
+  sku: string;
   type: MovementType;
   quantity: number; // signed: + tăng tồn, - giảm tồn, 0 chỉ ghi nhận
   note: string | null;
@@ -41,6 +42,7 @@ interface MovementRow {
   product_name: string;
   color: string;
   size: string;
+  sku: string;
   type: MovementType;
   quantity: number;
   note: string | null;
@@ -54,6 +56,7 @@ function mapRow(row: MovementRow): StockMovement {
     productName: row.product_name,
     color: row.color,
     size: row.size,
+    sku: row.sku ?? "",
     type: row.type,
     quantity: row.quantity,
     note: row.note,

@@ -175,8 +175,8 @@ export function KhoClient({
                 <tr className="border-b border-[#f0eeea] bg-[#faf9f7] text-left text-[11px] uppercase tracking-label text-muted">
                   <th className="px-5 py-3">Thời gian</th>
                   <th className="px-5 py-3">Sản phẩm</th>
-                  <th className="px-5 py-3">Màu / Size</th>
-                  <th className="px-5 py-3">Loại</th>
+                  <th className="px-5 py-3">SKU / Phân loại</th>
+                  <th className="px-5 py-3">Loại phiếu</th>
                   <th className="px-5 py-3 text-right">Số lượng</th>
                   <th className="px-5 py-3">Ghi chú</th>
                 </tr>
@@ -197,8 +197,16 @@ export function KhoClient({
                         {formatDate(m.createdAt)}
                       </td>
                       <td className="px-5 py-3 font-medium text-ink">{m.productName}</td>
-                      <td className="px-5 py-3 text-muted">
-                        {m.color && m.size ? `${m.color} / ${m.size}` : "—"}
+                      <td className="px-5 py-3">
+                        {m.sku && (
+                          <span className="mr-1.5 font-mono text-xs font-semibold text-ink">{m.sku}</span>
+                        )}
+                        {(m.color || m.size) && (
+                          <span className="text-xs text-muted">
+                            {[m.color, m.size].filter(Boolean).join(" / ")}
+                          </span>
+                        )}
+                        {!m.sku && !m.color && !m.size && <span className="text-xs text-muted">—</span>}
                       </td>
                       <td className="px-5 py-3">
                         <span className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${MOVEMENT_COLORS[m.type]}`}>

@@ -9,6 +9,7 @@ export async function createStockMovement(payload: {
   productName: string;
   color: string;
   size: string;
+  sku: string;
   type: MovementType;
   quantity: number; // absolute value — direction determined by type
   note: string;
@@ -31,6 +32,7 @@ export async function createStockMovement(payload: {
     product_name: payload.productName,
     color: payload.color,
     size: payload.size,
+    sku: payload.sku,
     type: payload.type,
     quantity: delta,
     note: payload.note || null,
