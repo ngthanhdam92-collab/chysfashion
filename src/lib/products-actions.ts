@@ -198,6 +198,120 @@ export async function updateVariantImages(
   return { success: true };
 }
 
+export async function createBulkProducts(formData: FormData) {
+  const category = String(formData.get("category") || "");
+  const categoryLabel = String(formData.get("categoryLabel") || "");
+  const gender = String(formData.get("gender") || "unisex");
+  const description = String(formData.get("description") || "");
+  const detailsRaw = String(formData.get("details") || "");
+  const isNew = formData.get("isNew") === "on";
+  const isBestSeller = formData.get("isBestSeller") === "on";
+  const rating = Number(formData.get("rating") || 5);
+  const reviewCount = Number(formData.get("reviewCount") || 0);
+  const sizeChartId = String(formData.get("sizeChartId") || "").trim() || null;
+
+  // Parse colors (format: "name,hex\n...")
+  const colorsRaw = String(formData.get("colors") || "");
+  const colorsTemplate = colorsRaw
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map((l) => {
+      const [name, hex] = l.split(",").map((s) => s.trim());
+      return { name: name || "Màu", hex: hex || "#171310" };
+    });
+
+  // Parse sizes
+  const sizes = parseLines(String(formData.get("sizes") || ""));
+
+  // Parse variant template (price/stock per color×size combo, no SKU)
+  type VariantTemplate = {
+    color: string; size: string; price: number;
+    compareAtPrice?: number; costPrice?: number; stock: number;
+  };
+  let variantsTemplate: VariantTemplate[] = [];
+  try {
+    const parsed = JSON.parse(String(formData.get("variantsTemplate") || "[]"));
+    if (Array.isArray(parsed)) variantsTemplate = parsed;
+  } catch {}
+
+  // Parse items [{name, images, variantImages, sku}]
+  type ItemInput = { name: string; images: string[]; variantImages: Record<string, string[]>; sku: string };
+  let items: ItemInput[] = [];
+  try {
+    const parsed = JSON.parse(String(formData.get("items") || "[]"));
+    if (Array.isArray(parsed)) items = parsed;
+  } catch {}
+
+  const validItems = items.filter((it) => it.name?.trim());
+  if (validItems.length === 0) return { error: "Chưa có sản phẩm nào hợp lệ." };
+
+  const details = parseLines(detailsRaw);
+
+  const supabase = await createClient();
+
+  const payloads = validItems.map((item) => {
+    const name = item.name.trim();
+    const slug = slugify(name);
+
+    const colors: ProductColor[] = colorsTemplate.map((c) => ({
+      name: c.name,
+      hex: c.hex,
+      images: item.variantImages?.[c.name] ?? [],
+    }));
+
+    const variants = variantsTemplate.map((v) => ({
+      color: v.color,
+      size: v.size,
+      price: Math.max(0, Number(v.price) || 0),
+      ...(v.compareAtPrice ? { compareAtPrice: Math.max(0, Number(v.compareAtPrice)) } : {}),
+      ...(v.costPrice ? { costPrice: Math.max(0, Number(v.costPrice)) } : {}),
+      stock: Math.max(0, Math.floor(Number(v.stock) || 0)),
+      sku: item.sku ?? "",
+    }));
+
+    const totalStock = variants.reduce((s, v) => s + v.stock, 0);
+    const variantPrices = variants.map((v) => v.price).filter((p) => p > 0);
+    const displayPrice = variantPrices.length > 0 ? Math.min(...variantPrices) : 0;
+    const variantComparePrices = variants
+      .map((v) => v.compareAtPrice)
+      .filter((p): p is number => typeof p === "number" && p > 0);
+    const displayCompareAtPrice = variantComparePrices.length > 0 ? Math.min(...variantComparePrices) : null;
+
+    return {
+      slug,
+      name,
+      category,
+      category_label: categoryLabel,
+      gender,
+      price: displayPrice,
+      compare_at_price: displayCompareAtPrice,
+      colors,
+      sizes,
+      description,
+      details,
+      is_new: isNew,
+      is_bestseller: isBestSeller,
+      rating,
+      review_count: reviewCount,
+      images: item.images ?? [],
+      stock: totalStock,
+      variants,
+      video_url: null,
+      related_product_ids: [],
+      size_chart_id: sizeChartId,
+      cost_price: null,
+    };
+  });
+
+  const { error } = await supabase.from("products").insert(payloads);
+  if (error) return { error: error.message };
+
+  revalidatePath("/", "layout");
+  revalidatePath("/admin/products");
+  redirect("/admin/products");
+}
+
 export async function updateProductFlag(
   id: string,
   flag: "is_bestseller" | "is_new",
