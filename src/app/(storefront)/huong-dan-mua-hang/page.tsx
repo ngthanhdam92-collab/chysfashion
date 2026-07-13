@@ -1,6 +1,12 @@
 import { SimplePage } from "@/components/simple-page";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata = { title: "Hướng dẫn mua hàng — CHYS Fashion" };
+export async function generateMetadata() {
+  return buildPageMetadata("huong-dan-mua-hang", {
+    title: "Hướng dẫn mua hàng — CHYS Fashion",
+    description: "Hướng dẫn đặt hàng, thanh toán và nhận hàng tại CHYS Fashion đơn giản chỉ trong vài bước.",
+  });
+}
 
 export default function GuidePage() {
   return (

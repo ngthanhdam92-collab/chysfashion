@@ -13,7 +13,30 @@ interface Params {
 export async function generateMetadata({ params }: Params) {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
-  return { title: product ? `${product.name} — CHYS Fashion` : "Sản phẩm" };
+  if (!product) return { title: "Sản phẩm — CHYS Fashion" };
+
+  const title = product.metaTitle || `${product.name} — CHYS Fashion`;
+  const description =
+    product.metaDescription ||
+    (product.description ? product.description.slice(0, 160) : "");
+  const ogImage = product.images?.[0];
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website" as const,
+      ...(ogImage ? { images: [{ url: ogImage }] } : {}),
+    },
+    twitter: {
+      card: "summary_large_image" as const,
+      title,
+      description,
+      ...(ogImage ? { images: [ogImage] } : {}),
+    },
+  };
 }
 
 export default async function ProductDetailPage({ params }: Params) {

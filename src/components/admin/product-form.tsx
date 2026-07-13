@@ -1058,6 +1058,48 @@ export function ProductForm({ product, categories, allProducts = [], sizeCharts 
         )}
       </div>
 
+      {/* ===== SEO ===== */}
+      <div className="border-t border-line pt-6">
+        <p className="mb-3 text-xs font-medium uppercase tracking-label text-muted">
+          SEO — Công cụ tìm kiếm
+        </p>
+        <div className="space-y-3">
+          <div>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="text-xs text-muted" htmlFor="metaTitle">
+                Meta title — để trống dùng tên sản phẩm
+              </label>
+              <span className="text-[10px] text-muted">tối đa 60 ký tự</span>
+            </div>
+            <input
+              id="metaTitle"
+              name="metaTitle"
+              defaultValue={product?.metaTitle ?? ""}
+              maxLength={80}
+              placeholder={product?.name ? `${product.name} — CHYS Fashion` : "Tên sản phẩm — CHYS Fashion"}
+              className="w-full border border-line bg-white px-3 py-2.5 text-sm focus:border-gold focus:outline-none"
+            />
+          </div>
+          <div>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="text-xs text-muted" htmlFor="metaDescription">
+                Meta description — để trống dùng mô tả sản phẩm
+              </label>
+              <span className="text-[10px] text-muted">tối đa 160 ký tự</span>
+            </div>
+            <textarea
+              id="metaDescription"
+              name="metaDescription"
+              defaultValue={product?.metaDescription ?? ""}
+              maxLength={200}
+              rows={2}
+              placeholder="Mô tả ngắn hiển thị trên Google..."
+              className="w-full resize-none border border-line bg-white px-3 py-2.5 text-sm focus:border-gold focus:outline-none"
+            />
+          </div>
+        </div>
+      </div>
+
       {error && <p className="text-sm text-error">{error}</p>}
 
       <button

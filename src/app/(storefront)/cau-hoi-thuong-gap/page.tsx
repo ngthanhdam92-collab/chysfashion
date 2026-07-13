@@ -1,6 +1,12 @@
 import { SimplePage } from "@/components/simple-page";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata = { title: "Câu hỏi thường gặp — CHYS Fashion" };
+export async function generateMetadata() {
+  return buildPageMetadata("cau-hoi-thuong-gap", {
+    title: "Câu hỏi thường gặp — CHYS Fashion",
+    description: "Giải đáp các thắc mắc về đặt hàng, thanh toán, vận chuyển và đổi trả của CHYS Fashion.",
+  });
+}
 
 const FAQS = [
   {

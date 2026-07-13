@@ -14,6 +14,14 @@ import { getActiveFlashSale } from "@/lib/flash-sales";
 import { FlashSaleSection } from "@/components/flash-sale-section";
 import { CtaButton } from "@/components/cta-button";
 import { ProductSlider } from "@/components/product-slider";
+import { buildPageMetadata } from "@/lib/seo";
+
+export async function generateMetadata() {
+  return buildPageMetadata("home", {
+    title: "CHYS Fashion — Thời trang cao cấp",
+    description: "CHYS Fashion — thương hiệu thời trang cao cấp với thiết kế tối giản, tinh tế, chất liệu cao cấp dành cho phái mạnh và phái đẹp.",
+  });
+}
 
 const USPS = [
   { icon: Truck, title: "Miễn phí vận chuyển", desc: "Cho đơn hàng từ 500.000đ" },

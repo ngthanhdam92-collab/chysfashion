@@ -97,6 +97,8 @@ function buildProductPayload(formData: FormData, slug: string) {
   } catch {}
 
   const sizeChartId = String(formData.get("sizeChartId") || "").trim() || null;
+  const metaTitle = String(formData.get("metaTitle") || "").trim() || null;
+  const metaDescription = String(formData.get("metaDescription") || "").trim() || null;
 
   return {
     slug,
@@ -125,6 +127,8 @@ function buildProductPayload(formData: FormData, slug: string) {
     upsell_product_ids: upsellProductIds,
     size_chart_id: sizeChartId,
     cost_price: fallbackCostPrice,
+    meta_title: metaTitle,
+    meta_description: metaDescription,
   };
 }
 

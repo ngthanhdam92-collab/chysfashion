@@ -27,6 +27,8 @@ interface ProductRow {
   upsell_product_ids: string[] | null;
   size_chart_id: string | null;
   cost_price: number | null;
+  meta_title: string | null;
+  meta_description: string | null;
 }
 
 function mapRow(
@@ -59,6 +61,8 @@ function mapRow(
     sizeChartId: row.size_chart_id ?? null,
     sizeChart: (sizeChartData ?? {}) as Record<string, Partial<SizeChartRow>>,
     costPrice: row.cost_price ? Number(row.cost_price) : undefined,
+    metaTitle: row.meta_title ?? null,
+    metaDescription: row.meta_description ?? null,
   };
 }
 

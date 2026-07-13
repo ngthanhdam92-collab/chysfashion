@@ -1,7 +1,13 @@
 import { Mail, Phone, MapPin } from "lucide-react";
 import { SimplePage } from "@/components/simple-page";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata = { title: "Liên hệ — CHYS Fashion" };
+export async function generateMetadata() {
+  return buildPageMetadata("lien-he", {
+    title: "Liên hệ — CHYS Fashion",
+    description: "Liên hệ CHYS Fashion qua email, điện thoại hoặc đến trực tiếp cửa hàng.",
+  });
+}
 
 export default function ContactPage() {
   return (

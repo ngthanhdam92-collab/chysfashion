@@ -1,7 +1,13 @@
 import { ProductImagePlaceholder } from "@/components/product-image-placeholder";
 import { CtaButton } from "@/components/cta-button";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata = { title: "Về chúng tôi — CHYS Fashion" };
+export async function generateMetadata() {
+  return buildPageMetadata("ve-chung-toi", {
+    title: "Về chúng tôi — CHYS Fashion",
+    description: "CHYS Fashion — thương hiệu thời trang cao cấp với thiết kế tối giản, tinh tế, bền vững.",
+  });
+}
 
 export default function AboutPage() {
   return (

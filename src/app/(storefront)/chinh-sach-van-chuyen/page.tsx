@@ -1,6 +1,12 @@
 import { SimplePage } from "@/components/simple-page";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata = { title: "Chính sách vận chuyển — CHYS Fashion" };
+export async function generateMetadata() {
+  return buildPageMetadata("chinh-sach-van-chuyen", {
+    title: "Chính sách vận chuyển — CHYS Fashion",
+    description: "Thông tin phí vận chuyển, thời gian giao hàng và các đối tác giao nhận của CHYS Fashion.",
+  });
+}
 
 export default function ShippingPolicyPage() {
   return (

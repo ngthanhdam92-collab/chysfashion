@@ -1,6 +1,12 @@
 import { SimplePage } from "@/components/simple-page";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata = { title: "Chính sách bảo mật — CHYS Fashion" };
+export async function generateMetadata() {
+  return buildPageMetadata("chinh-sach-bao-mat", {
+    title: "Chính sách bảo mật — CHYS Fashion",
+    description: "Cam kết bảo mật thông tin khách hàng của CHYS Fashion theo tiêu chuẩn bảo mật cao nhất.",
+  });
+}
 
 export default function PrivacyPolicyPage() {
   return (

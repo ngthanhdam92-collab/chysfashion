@@ -21,6 +21,7 @@ import {
   Calculator,
   TrendingUp,
   Warehouse,
+  SearchCheck,
 } from "lucide-react";
 
 const NAV_GROUPS = [
@@ -52,6 +53,7 @@ const NAV_GROUPS = [
       { href: "/admin/stories", label: "Stories / Feedback", icon: CirclePlay },
       { href: "/admin/homepage", label: "Trang chủ", icon: LayoutTemplate },
       { href: "/admin/menu", label: "Menu điều hướng", icon: Menu },
+      { href: "/admin/seo", label: "SEO Settings", icon: SearchCheck },
     ],
   },
   {

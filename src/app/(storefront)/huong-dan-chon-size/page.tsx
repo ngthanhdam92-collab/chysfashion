@@ -1,6 +1,12 @@
 import { SimplePage } from "@/components/simple-page";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata = { title: "Hướng dẫn chọn size — CHYS Fashion" };
+export async function generateMetadata() {
+  return buildPageMetadata("huong-dan-chon-size", {
+    title: "Hướng dẫn chọn size — CHYS Fashion",
+    description: "Bảng hướng dẫn chọn size quần áo CHYS Fashion chính xác theo số đo cơ thể.",
+  });
+}
 
 const SIZES = [
   { size: "S", chest: "88-92", waist: "72-76", height: "160-165" },

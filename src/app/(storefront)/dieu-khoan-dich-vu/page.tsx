@@ -1,6 +1,12 @@
 import { SimplePage } from "@/components/simple-page";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata = { title: "Điều khoản dịch vụ — CHYS Fashion" };
+export async function generateMetadata() {
+  return buildPageMetadata("dieu-khoan-dich-vu", {
+    title: "Điều khoản dịch vụ — CHYS Fashion",
+    description: "Điều khoản và điều kiện sử dụng dịch vụ mua sắm tại CHYS Fashion.",
+  });
+}
 
 export default function TermsPage() {
   return (

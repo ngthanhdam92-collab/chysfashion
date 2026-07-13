@@ -1,6 +1,12 @@
 import { SimplePage } from "@/components/simple-page";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata = { title: "Chính sách đổi trả — CHYS Fashion" };
+export async function generateMetadata() {
+  return buildPageMetadata("chinh-sach-doi-tra", {
+    title: "Chính sách đổi trả — CHYS Fashion",
+    description: "Chính sách đổi trả trong 30 ngày của CHYS Fashion — đơn giản, nhanh chóng, không rườm rà.",
+  });
+}
 
 export default function ReturnPolicyPage() {
   return (

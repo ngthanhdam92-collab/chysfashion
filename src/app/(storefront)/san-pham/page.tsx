@@ -6,10 +6,14 @@ import { getAllProducts } from "@/lib/products";
 import { getCategories } from "@/lib/categories";
 import { Product } from "@/lib/types";
 import { Breadcrumb, type BreadcrumbItem } from "@/components/breadcrumb";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata = {
-  title: "Sản phẩm — CHYS Fashion",
-};
+export async function generateMetadata() {
+  return buildPageMetadata("san-pham", {
+    title: "Sản phẩm — CHYS Fashion",
+    description: "Khám phá bộ sưu tập thời trang cao cấp CHYS Fashion — áo, quần, phụ kiện cho nam và nữ.",
+  });
+}
 
 interface Params {
   searchParams: Promise<{

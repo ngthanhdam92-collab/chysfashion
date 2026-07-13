@@ -42,6 +42,8 @@ export interface Product {
   sizeChartId: string | null;
   sizeChart: Record<string, Partial<SizeChartRow>>;
   costPrice?: number;
+  metaTitle?: string | null;
+  metaDescription?: string | null;
 }
 
 export interface OrderItem {
