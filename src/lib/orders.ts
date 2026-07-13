@@ -218,6 +218,26 @@ export async function deleteOrder(id: string) {
   return { success: true };
 }
 
+export async function bulkUpdateOrderStatus(ids: string[], status: OrderStatus) {
+  if (ids.length === 0) return { success: true };
+  const supabase = await createClient();
+  const { error } = await supabase.from("orders").update({ status }).in("id", ids);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/orders");
+  revalidatePath("/admin");
+  return { success: true };
+}
+
+export async function bulkDeleteOrders(ids: string[]) {
+  if (ids.length === 0) return { success: true };
+  const supabase = await createClient();
+  const { error } = await supabase.from("orders").delete().in("id", ids);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/orders");
+  revalidatePath("/admin");
+  return { success: true };
+}
+
 export async function markOrderPaid(orderCode: string) {
   const code = orderCode.toUpperCase().trim();
   const paidAt = new Date().toISOString();
