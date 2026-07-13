@@ -40,6 +40,20 @@ export function PixelSettingsClient({ initial }: { initial: PixelSettings }) {
         </p>
       </div>
 
+      {/* Facebook Domain Verification */}
+      <div>
+        <label className="text-xs font-medium text-muted">Facebook Domain Verification Code</label>
+        <input
+          value={form.fbDomainVerification}
+          onChange={(e) => set("fbDomainVerification", e.target.value.trim())}
+          placeholder="VD: abc123xyz456..."
+          className="mt-1 w-full border border-line bg-white px-3 py-2.5 font-mono text-sm text-ink placeholder:font-sans placeholder:text-muted focus:border-gold focus:outline-none"
+        />
+        <p className="mt-1 text-[11px] text-muted">
+          Facebook Business Manager → Brand Safety → Domains → Verify → Meta-tag → chỉ lấy phần <span className="font-mono">content="..."</span>
+        </p>
+      </div>
+
       {/* TikTok Pixel */}
       <div>
         <label className="text-xs font-medium text-muted">TikTok Pixel ID</label>

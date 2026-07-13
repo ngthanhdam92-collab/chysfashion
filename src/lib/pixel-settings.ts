@@ -3,9 +3,10 @@ import { createPublicClient } from "./supabase/public";
 export interface PixelSettings {
   fbPixelId: string;
   ttPixelId: string;
+  fbDomainVerification: string;
 }
 
-const DEFAULT: PixelSettings = { fbPixelId: "", ttPixelId: "" };
+const DEFAULT: PixelSettings = { fbPixelId: "", ttPixelId: "", fbDomainVerification: "" };
 
 function parse(raw: unknown): PixelSettings {
   if (!raw || typeof raw !== "object") return DEFAULT;
@@ -13,6 +14,7 @@ function parse(raw: unknown): PixelSettings {
   return {
     fbPixelId: typeof d.fbPixelId === "string" ? d.fbPixelId.trim() : "",
     ttPixelId: typeof d.ttPixelId === "string" ? d.ttPixelId.trim() : "",
+    fbDomainVerification: typeof d.fbDomainVerification === "string" ? d.fbDomainVerification.trim() : "",
   };
 }
 
