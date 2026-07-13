@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Receipt, Clock, Truck, Wallet } from "lucide-react";
 import { getAllOrders } from "@/lib/orders";
+import { startOfDayVN } from "@/lib/date-vn";
 import { getAllProducts } from "@/lib/products";
 import { formatVnd } from "@/lib/utils";
 import { StatCard } from "@/components/admin/stat-card";
@@ -25,8 +26,7 @@ const LOW_STOCK_THRESHOLD = 10;
 export default async function AdminDashboardPage() {
   const [orders, products] = await Promise.all([getAllOrders(), getAllProducts()]);
 
-  const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const todayStart = startOfDay(new Date());
+  const todayStart = startOfDayVN();
   const yesterdayStart = new Date(todayStart.getTime() - 86400000);
 
   const ordersToday = orders.filter((o) => new Date(o.createdAt) >= todayStart);
@@ -45,6 +45,7 @@ export default async function AdminDashboardPage() {
   const shippingCount = orders.filter((o) => o.status === "dang_xu_ly").length;
 
   const todayLabel = new Date().toLocaleDateString("vi-VN", {
+    timeZone: "Asia/Ho_Chi_Minh",
     weekday: "long", day: "2-digit", month: "2-digit",
   });
 

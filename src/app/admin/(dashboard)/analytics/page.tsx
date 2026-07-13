@@ -1,4 +1,5 @@
 import { getAllOrders } from "@/lib/orders";
+import { startOfDayVN, dayKeyVN } from "@/lib/date-vn";
 import { getAllProducts } from "@/lib/products";
 import { getTrafficData } from "@/lib/analytics";
 import { getCostEntries } from "@/lib/costs";
@@ -14,7 +15,7 @@ type View   = "revenue" | "traffic";
 
 function periodRange(period: Period, fromParam?: string, toParam?: string): { from: Date; to: Date } {
   const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const todayStart = startOfDayVN(now);
 
   if (period === "today") {
     return { from: todayStart, to: now };
@@ -46,7 +47,7 @@ function formatDate(iso: string): string {
 }
 
 function dayKey(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  return dayKeyVN(date);
 }
 
 function formatDayLabel(key: string): string {
@@ -73,14 +74,11 @@ export default async function AnalyticsPage({
   }
 
   // ── Load data ──────────────────────────────────────────────────────────────
-  function toDateStr(d: Date) {
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  }
   const [allOrders, products, traffic, costEntries, costSettings] = await Promise.all([
     getAllOrders(),
     getAllProducts(),
     view === "traffic" ? getTrafficData(range) : Promise.resolve(null),
-    view === "revenue" ? getCostEntries(toDateStr(range.from), toDateStr(range.to)) : Promise.resolve([]),
+    view === "revenue" ? getCostEntries(dayKeyVN(range.from), dayKeyVN(range.to)) : Promise.resolve([]),
     view === "revenue" ? getCostSettings() : Promise.resolve(null),
   ]);
 

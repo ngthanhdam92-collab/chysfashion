@@ -1,4 +1,5 @@
 import { getAllOrders } from "@/lib/orders";
+import { todayStrVN, dayKeyVN, monthKeyVN } from "@/lib/date-vn";
 import { getAllProducts } from "@/lib/products";
 import { getCostEntries } from "@/lib/costs";
 import { getCostSettings } from "@/lib/cost-settings";
@@ -10,8 +11,7 @@ export const metadata = { title: "Báo cáo lợi nhuận — Admin CHYS" };
 // ── Date helpers ──────────────────────────────────────────────────────────────
 
 function todayStr(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  return todayStrVN();
 }
 
 function pad(n: number) { return String(n).padStart(2, "0"); }
@@ -29,11 +29,11 @@ function monthRange(ym: string): { from: string; to: string } {
 }
 
 function dayKey(date: Date): string {
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  return dayKeyVN(date);
 }
 
 function monthKey(date: Date): string {
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}`;
+  return monthKeyVN(date);
 }
 
 // ISO week key e.g. "2025-W27"

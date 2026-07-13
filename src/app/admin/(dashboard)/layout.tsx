@@ -20,6 +20,7 @@ export default async function DashboardLayout({
   const email = user?.email ?? "";
   const displayName = email.split("@")[0] || "Admin";
   const today = new Date().toLocaleDateString("vi-VN", {
+    timeZone: "Asia/Ho_Chi_Minh",
     weekday: "long",
     day: "2-digit",
     month: "2-digit",

@@ -1,4 +1,5 @@
 import { getCostEntries } from "@/lib/costs";
+import { todayStrVN, dayKeyVN } from "@/lib/date-vn";
 import { getCostSettings } from "@/lib/cost-settings";
 import { getAllOrders } from "@/lib/orders";
 import { getAllProducts } from "@/lib/products";
@@ -13,8 +14,7 @@ import { OrderItem } from "@/lib/types";
 export const metadata = { title: "Chi phí — Admin CHYS" };
 
 function todayStr() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return todayStrVN();
 }
 
 function addDays(dateStr: string, delta: number): string {
@@ -61,9 +61,7 @@ export default async function ChiPhiPage({
 
   // Orders for this date (not cancelled)
   const dayOrders = allOrders.filter((o) => {
-    const d = new Date(o.createdAt);
-    const dk = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    return dk === date && o.status !== "da_huy";
+    return dayKeyVN(new Date(o.createdAt)) === date && o.status !== "da_huy";
   });
   const orderCount = dayOrders.length;
 
