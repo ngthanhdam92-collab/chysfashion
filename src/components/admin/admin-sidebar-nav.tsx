@@ -22,6 +22,7 @@ import {
   TrendingUp,
   Warehouse,
   SearchCheck,
+  ShoppingCart,
 } from "lucide-react";
 
 const NAV_GROUPS = [
@@ -33,6 +34,7 @@ const NAV_GROUPS = [
     label: "Kinh doanh",
     items: [
       { href: "/admin/orders", label: "Đơn hàng", icon: Receipt },
+      { href: "/admin/gio-hang-bo", label: "Giỏ hàng bỏ dở", icon: ShoppingCart },
       { href: "/admin/analytics", label: "Phân tích", icon: BarChart3 },
       { href: "/admin/loi-nhuan", label: "Báo cáo lợi nhuận", icon: TrendingUp },
       { href: "/admin/chi-phi", label: "Chi phí & Lợi nhuận", icon: Calculator },

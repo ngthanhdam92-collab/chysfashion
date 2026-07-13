@@ -12,6 +12,7 @@ import { getShippingRules, calcShippingFee, type ShippingRule } from "@/lib/ship
 import { buildVietQrUrl, type BankSettings } from "@/lib/bank-settings";
 import { CtaButton } from "./cta-button";
 import { ProductImagePlaceholder } from "./product-image-placeholder";
+import { upsertAbandonedCart, recoverAbandonedCart } from "@/lib/abandoned-carts";
 
 /* ── Vietnamese address types ── */
 interface Province { code: number; name: string; }
@@ -19,6 +20,7 @@ interface District { code: number; name: string; }
 interface Ward    { code: number; name: string; }
 
 const CUSTOMER_KEY = "chys-customer";
+const SESSION_KEY  = "chys-cart-session";
 interface SavedCustomer {
   fullName: string; phone: string; email: string; street: string;
   provinceCode: number; districtCode: number; wardCode: number;
@@ -35,6 +37,7 @@ export function CheckoutView({ bankSettings }: { bankSettings?: BankSettings }) 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const submittingRef = useRef(false); // synchronous guard against double-submit
+  const sessionIdRef  = useRef<string>("");
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "bank_transfer">("cod");
   // Pre-generate order code so QR can show immediately when bank transfer is selected
   const pendingOrderCode = useRef(`CHYS${Date.now().toString().slice(-8)}`);
@@ -145,6 +148,34 @@ export function CheckoutView({ bankSettings }: { bankSettings?: BankSettings }) 
       .finally(() => setLoadingWards(false));
   }, [district?.code]);
 
+  /* ── Abandoned cart tracking ── */
+  // On mount: create/restore session ID and snapshot the cart immediately
+  useEffect(() => {
+    if (lines.length === 0) return;
+    let sid = localStorage.getItem(SESSION_KEY);
+    if (!sid) { sid = crypto.randomUUID(); localStorage.setItem(SESSION_KEY, sid); }
+    sessionIdRef.current = sid;
+    upsertAbandonedCart({ sessionId: sid, items: lines, subtotal }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // When contact info or cart value changes: debounced update (1.5 s)
+  useEffect(() => {
+    if (!sessionIdRef.current || lines.length === 0) return;
+    const t = setTimeout(() => {
+      upsertAbandonedCart({
+        sessionId: sessionIdRef.current,
+        items: lines,
+        subtotal,
+        fullName: fullName || undefined,
+        phone: phone || undefined,
+        email: email || undefined,
+      }).catch(() => {});
+    }, 1500);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fullName, phone, email, subtotal]);
+
   /* ── Poll for payment when bank transfer selected — auto-submit when paid ── */
   useEffect(() => {
     if (paymentMethod !== "bank_transfer") return;
@@ -241,6 +272,11 @@ export function CheckoutView({ bankSettings }: { bankSettings?: BankSettings }) 
     submittingRef.current = false;
     setSubmitting(false);
     if ("error" in result) { setError(result.error); return; }
+
+    // Mark cart as recovered so it disappears from admin abandoned list
+    if (sessionIdRef.current) {
+      recoverAbandonedCart(sessionIdRef.current, result.orderCode).catch(() => {});
+    }
 
     // Save customer info for next visit
     try {
