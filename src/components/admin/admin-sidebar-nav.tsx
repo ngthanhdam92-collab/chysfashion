@@ -23,6 +23,7 @@ import {
   Warehouse,
   SearchCheck,
   ShoppingCart,
+  Crosshair,
 } from "lucide-react";
 
 const NAV_GROUPS = [
@@ -62,6 +63,7 @@ const NAV_GROUPS = [
     label: "Hệ thống",
     items: [
       { href: "/admin/settings", label: "Cài đặt", icon: Settings },
+      { href: "/admin/pixel", label: "Tracking Pixel", icon: Crosshair },
     ],
   },
 ];
