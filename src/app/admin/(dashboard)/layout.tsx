@@ -5,6 +5,7 @@ import { AdminSidebarNav } from "@/components/admin/admin-sidebar-nav";
 import { AvatarInitials } from "@/components/admin/avatar-initials";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { OrderNotifier } from "@/components/admin/order-notifier";
+import { NotificationBell } from "@/components/admin/notification-bell";
 
 export default async function DashboardLayout({
   children,
@@ -50,6 +51,8 @@ export default async function DashboardLayout({
 
   const headerContent = (
     <>
+      <NotificationBell />
+      <div className="h-5 w-px bg-line" />
       <div className="text-right">
         <p className="text-sm text-ink">
           Xin chào, <span className="font-medium capitalize">{displayName}</span>
