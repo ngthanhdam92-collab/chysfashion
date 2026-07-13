@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Be_Vietnam_Pro } from "next/font/google";
 import Script from "next/script";
+import { PixelScripts } from "@/components/pixel-scripts";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -40,7 +41,13 @@ export default function RootLayout({
         <Script src="/polyfills.js" strategy="beforeInteractive" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+      <body className="min-h-full flex flex-col font-sans">
+        <PixelScripts
+          fbPixelId={process.env.NEXT_PUBLIC_FB_PIXEL_ID}
+          ttPixelId={process.env.NEXT_PUBLIC_TIKTOK_PIXEL_ID}
+        />
+        {children}
+      </body>
     </html>
   );
 }

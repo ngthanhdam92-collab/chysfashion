@@ -13,6 +13,7 @@ import { buildVietQrUrl, type BankSettings } from "@/lib/bank-settings";
 import { CtaButton } from "./cta-button";
 import { ProductImagePlaceholder } from "./product-image-placeholder";
 import { upsertAbandonedCart, recoverAbandonedCart } from "@/lib/abandoned-carts";
+import { trackPurchase, trackInitiateCheckout } from "@/lib/pixel-events";
 
 /* ── Vietnamese address types ── */
 interface Province { code: number; name: string; }
@@ -242,6 +243,7 @@ export function CheckoutView({ bankSettings }: { bankSettings?: BankSettings }) 
     submittingRef.current = true;
     setSubmitting(true);
     setError(null);
+    trackInitiateCheckout({ value: subtotal });
 
     const fullAddress = [street, ward.name, district.name, province.name].filter(Boolean).join(", ");
 
@@ -712,6 +714,11 @@ function SuccessScreen({
   bankSettings?: BankSettings;
 }) {
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+
+  // Fire Purchase pixel event once when success screen mounts
+  useEffect(() => {
+    trackPurchase({ value: total, orderId: orderCode });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!isBankTransfer) return;
