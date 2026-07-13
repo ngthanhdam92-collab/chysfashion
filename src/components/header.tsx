@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search, ShoppingBag, User, ChevronDown, X } from "lucide-react";
+import { Search, ShoppingBag, User, ChevronDown, X, Heart } from "lucide-react";
 import { useCart } from "@/context/cart-context";
+import { useWishlist } from "@/context/wishlist-context";
 import type { NavLink } from "@/lib/nav-links";
 import type { AnnouncementBar } from "@/lib/homepage-settings";
 
@@ -15,6 +16,7 @@ interface HeaderProps {
 
 export function Header({ navLinks, announcement }: HeaderProps) {
   const { totalCount } = useCart();
+  const { count: wishlistCount } = useWishlist();
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -161,6 +163,16 @@ export function Header({ navLinks, announcement }: HeaderProps) {
           <button className="hidden p-2 lg:inline-flex" aria-label="Tài khoản" type="button">
             <User size={19} />
           </button>
+
+          {/* Wishlist */}
+          <Link href="/yeu-thich" className="relative p-2" aria-label="Yêu thích">
+            <Heart size={19} />
+            {wishlistCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-gold text-[10px] text-paper">
+                {wishlistCount}
+              </span>
+            )}
+          </Link>
 
           {/* Cart */}
           <Link href="/gio-hang" className="relative p-2" aria-label="Giỏ hàng">

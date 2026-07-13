@@ -3,14 +3,17 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check, Heart } from "lucide-react";
 import { Product } from "@/lib/types";
 import { formatVnd } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
+import { useWishlist } from "@/context/wishlist-context";
 import { ProductImagePlaceholder } from "./product-image-placeholder";
 
 export function ProductCard({ product }: { product: Product }) {
   const { addItem } = useCart();
+  const { isInWishlist, toggleItem } = useWishlist();
+  const wished = isInWishlist(product.slug);
   const cover = product.images[0];
   const hoverImage = product.images[1] ?? null; // second image for hover preview
 
@@ -37,6 +40,19 @@ export function ProductCard({ product }: { product: Product }) {
   const activeHoverImage = colorUserSelected
     ? (colorObj?.images?.[1] ?? hoverImage)
     : hoverImage;
+
+  function handleWishlistToggle(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleItem({
+      productId: product.id,
+      slug: product.slug,
+      name: product.name,
+      price,
+      compareAtPrice: compareAtPrice ?? null,
+      image: activeCover || null,
+    });
+  }
 
   function handleAddToCart(e: React.MouseEvent) {
     e.preventDefault();
@@ -106,6 +122,16 @@ export function ProductCard({ product }: { product: Product }) {
             <span className="bg-gold px-2.5 py-1 text-[10px] tracking-label uppercase text-paper">Sale</span>
           )}
         </div>
+
+        {/* Wishlist toggle */}
+        <button
+          type="button"
+          onClick={handleWishlistToggle}
+          aria-label={wished ? "Xóa khỏi yêu thích" : "Thêm vào yêu thích"}
+          className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 shadow-sm backdrop-blur-sm transition-colors hover:bg-white"
+        >
+          <Heart size={15} className={wished ? "fill-red-500 text-red-500" : "text-ink"} />
+        </button>
 
         {/* Out of stock */}
         {product.stock === 0 && (

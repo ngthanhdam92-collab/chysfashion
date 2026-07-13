@@ -1,4 +1,5 @@
 import { CartProvider } from "@/context/cart-context";
+import { WishlistProvider } from "@/context/wishlist-context";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
@@ -17,12 +18,14 @@ export default async function StorefrontLayout({
   ]);
 
   return (
-    <CartProvider>
-      <AnalyticsTracker />
-      <Header navLinks={navLinks} announcement={settings.announcementBar} />
-      <main className="flex-1">{children}</main>
-      <Footer />
-      <ChatWidget />
-    </CartProvider>
+    <WishlistProvider>
+      <CartProvider>
+        <AnalyticsTracker />
+        <Header navLinks={navLinks} announcement={settings.announcementBar} />
+        <main className="flex-1">{children}</main>
+        <Footer />
+        <ChatWidget />
+      </CartProvider>
+    </WishlistProvider>
   );
 }

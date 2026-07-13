@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Minus, Plus, Check, X, Ruler, Flame } from "lucide-react";
+import { Minus, Plus, Check, X, Ruler, Flame, Heart } from "lucide-react";
 import { Product } from "@/lib/types";
 import { formatVnd } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
+import { useWishlist } from "@/context/wishlist-context";
 import { DEFAULT_SIZE_CHART, mergeWithDefault, recommendSize, SizeChartRow } from "@/lib/size-chart";
 import { CountdownTimer } from "./countdown-timer";
 import type { FlashSaleWithProducts } from "@/lib/flash-sales";
@@ -21,6 +22,8 @@ interface Props {
 export function ProductPurchasePanel({ product, selectedColor, onColorChange, activeColorImage, flashSale }: Props) {
   const router = useRouter();
   const { addItem } = useCart();
+  const { isInWishlist, toggleItem } = useWishlist();
+  const wished = isInWishlist(product.slug);
   const [color, setColor] = useState(selectedColor ?? product.colors[0]?.name ?? "");
   const [size, setSize] = useState(product.sizes[0] ?? "");
   const [quantity, setQuantity] = useState(1);
@@ -87,6 +90,17 @@ export function ProductPurchasePanel({ product, selectedColor, onColorChange, ac
   function handleBuyNow() {
     handleAddToCart();
     router.push("/gio-hang");
+  }
+
+  function handleWishlistToggle() {
+    toggleItem({
+      productId: product.id,
+      slug: product.slug,
+      name: product.name,
+      price,
+      compareAtPrice: compareAtPrice ?? null,
+      image: activeColorImage ?? product.colors.find((c) => c.name === activeColor)?.images?.[0] ?? product.images[0] ?? null,
+    });
   }
 
   return (
@@ -286,6 +300,20 @@ export function ProductPurchasePanel({ product, selectedColor, onColorChange, ac
           >
             Mua ngay
           </button>
+          <button
+            type="button"
+            onClick={handleWishlistToggle}
+            aria-label={wished ? "Xóa khỏi yêu thích" : "Thêm vào yêu thích"}
+            title={wished ? "Xóa khỏi yêu thích" : "Thêm vào yêu thích"}
+            className={`flex items-center justify-center gap-2 border px-6 py-3.5 text-[12px] tracking-label uppercase transition-colors sm:flex-none sm:px-3.5 ${
+              wished
+                ? "border-red-300 bg-red-50 text-red-600 hover:bg-red-100"
+                : "border-line text-ink hover:border-ink"
+            }`}
+          >
+            <Heart size={16} className={wished ? "fill-red-500 text-red-500" : ""} />
+            <span className="sm:hidden">{wished ? "Đã yêu thích" : "Yêu thích"}</span>
+          </button>
         </div>
       )}
 
@@ -304,6 +332,16 @@ export function ProductPurchasePanel({ product, selectedColor, onColorChange, ac
               {formatVnd(flashPrice ?? price)}
             </p>
           </div>
+          <button
+            type="button"
+            onClick={handleWishlistToggle}
+            aria-label={wished ? "Xóa khỏi yêu thích" : "Thêm vào yêu thích"}
+            className={`shrink-0 border p-2.5 transition-colors ${
+              wished ? "border-red-300 bg-red-50" : "border-line hover:border-ink"
+            }`}
+          >
+            <Heart size={16} className={wished ? "fill-red-500 text-red-500" : ""} />
+          </button>
           <button
             onClick={handleBuyNow}
             className="shrink-0 border border-ink px-4 py-2.5 text-[11px] tracking-label uppercase text-ink transition-colors hover:bg-ink hover:text-paper"
