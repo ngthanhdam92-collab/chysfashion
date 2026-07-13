@@ -26,17 +26,27 @@ export async function createStockMovement(payload: {
       ? payload.quantity // caller passes signed value for adjustment
       : 0; // doi_tra_hong — no stock change
 
-  // Insert movement record
-  const { error: insErr } = await supabase.from("stock_movements").insert({
+  // Insert movement record — try with sku first, fallback without if column missing
+  const insertBase = {
     product_id: payload.productId,
     product_name: payload.productName,
     color: payload.color,
     size: payload.size,
-    sku: payload.sku,
     type: payload.type,
     quantity: delta,
     note: payload.note || null,
-  });
+  };
+
+  let { error: insErr } = await supabase
+    .from("stock_movements")
+    .insert({ ...insertBase, sku: payload.sku });
+
+  if (insErr?.message?.includes("sku")) {
+    // Column not yet migrated — insert without sku
+    const retry = await supabase.from("stock_movements").insert(insertBase);
+    insErr = retry.error;
+  }
+
   if (insErr) return { error: insErr.message };
 
   // Update product stock if delta != 0
