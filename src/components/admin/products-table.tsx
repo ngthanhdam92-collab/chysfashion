@@ -1,19 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
-import { Pencil, ImageIcon } from "lucide-react";
+import { Pencil, ImageIcon, ChevronUp, ChevronDown } from "lucide-react";
 import { Product } from "@/lib/types";
 import { formatVnd } from "@/lib/utils";
 import { DeleteProductButton } from "./delete-product-button";
 import { VariantImagesModal } from "./variant-images-modal";
+import { moveProductUp, moveProductDown } from "@/lib/products-actions";
 
 interface Props {
   products: Product[];
+  allSortedIds: string[];
 }
 
-export function ProductsTable({ products }: Props) {
+export function ProductsTable({ products, allSortedIds }: Props) {
   const [modalProduct, setModalProduct] = useState<Product | null>(null);
+  const [pending, startTransition] = useTransition();
+  const [movingId, setMovingId] = useState<string | null>(null);
+
+  function handleMove(id: string, direction: "up" | "down") {
+    setMovingId(id);
+    startTransition(async () => {
+      if (direction === "up") await moveProductUp(id);
+      else await moveProductDown(id);
+      setMovingId(null);
+    });
+  }
 
   return (
     <>
@@ -21,6 +34,7 @@ export function ProductsTable({ products }: Props) {
         <table className="w-full min-w-[560px] text-sm">
           <thead>
             <tr className="border-b border-line text-left text-xs uppercase tracking-label text-muted">
+              <th className="px-3 py-3 w-16 text-center">Thứ tự</th>
               <th className="px-4 py-3">Sản phẩm</th>
               <th className="px-4 py-3">Danh mục</th>
               <th className="px-4 py-3">Giá</th>
@@ -30,8 +44,37 @@ export function ProductsTable({ products }: Props) {
             </tr>
           </thead>
           <tbody>
-            {products.map((p) => (
-              <tr key={p.id} className="border-b border-line last:border-0">
+            {products.map((p) => {
+              const globalIdx = allSortedIds.indexOf(p.id);
+              const isFirst = globalIdx === 0;
+              const isLast = globalIdx === allSortedIds.length - 1;
+              const isMoving = movingId === p.id && pending;
+              return (
+              <tr key={p.id} className={`border-b border-line last:border-0 ${isMoving ? "opacity-50" : ""}`}>
+                {/* Sort order controls */}
+                <td className="px-3 py-3">
+                  <div className="flex flex-col items-center gap-0.5">
+                    <button
+                      type="button"
+                      onClick={() => handleMove(p.id, "up")}
+                      disabled={isFirst || pending}
+                      className="flex h-6 w-6 items-center justify-center rounded text-muted transition-colors hover:bg-cream hover:text-ink disabled:cursor-not-allowed disabled:opacity-25"
+                      title="Lên trên"
+                    >
+                      <ChevronUp size={14} />
+                    </button>
+                    <span className="text-[10px] text-muted">{globalIdx + 1}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleMove(p.id, "down")}
+                      disabled={isLast || pending}
+                      className="flex h-6 w-6 items-center justify-center rounded text-muted transition-colors hover:bg-cream hover:text-ink disabled:cursor-not-allowed disabled:opacity-25"
+                      title="Xuống dưới"
+                    >
+                      <ChevronDown size={14} />
+                    </button>
+                  </div>
+                </td>
                 <td className="px-4 py-3 text-ink">{p.name}</td>
                 <td className="px-4 py-3 text-muted">{p.categoryLabel}</td>
                 <td className="px-4 py-3 text-ink">{formatVnd(p.price)}</td>
@@ -84,10 +127,11 @@ export function ProductsTable({ products }: Props) {
                   </div>
                 </td>
               </tr>
-            ))}
+              );
+            })}
             {products.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-10 text-center text-muted">
+                <td colSpan={7} className="px-4 py-10 text-center text-muted">
                   Chưa có sản phẩm nào.
                 </td>
               </tr>

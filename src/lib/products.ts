@@ -91,7 +91,7 @@ export interface ProductFilters {
 
 export async function getAllProducts(filters?: ProductFilters): Promise<Product[]> {
   const supabase = createPublicClient();
-  let query = supabase.from("products").select("*").order("created_at", { ascending: false });
+  let query = supabase.from("products").select("*").order("sort_order", { ascending: true }).order("created_at", { ascending: false });
 
   if (filters?.gender) {
     query = query.in("gender", [filters.gender, "unisex"]);

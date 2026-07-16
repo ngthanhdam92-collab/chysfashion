@@ -53,7 +53,7 @@ export default async function AdminProductsPage({ searchParams }: Params) {
         </div>
       </div>
 
-      <ProductsTable products={pageProducts} />
+      <ProductsTable products={pageProducts} allSortedIds={allProducts.map((p) => p.id)} />
 
       {/* Pagination */}
       {totalPages > 1 && (

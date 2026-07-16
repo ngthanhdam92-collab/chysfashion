@@ -211,6 +211,48 @@ export async function updateVariantStock(
   return {};
 }
 
+export async function moveProductUp(id: string) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("products")
+    .select("id, sort_order")
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false });
+  if (!data) return;
+
+  const idx = data.findIndex((p) => p.id === id);
+  if (idx <= 0) return; // already first
+
+  const above = data[idx - 1];
+  const current = data[idx];
+  await supabase.from("products").update({ sort_order: above.sort_order }).eq("id", current.id);
+  await supabase.from("products").update({ sort_order: current.sort_order }).eq("id", above.id);
+
+  revalidatePath("/admin/products");
+  revalidatePath("/san-pham");
+}
+
+export async function moveProductDown(id: string) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("products")
+    .select("id, sort_order")
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false });
+  if (!data) return;
+
+  const idx = data.findIndex((p) => p.id === id);
+  if (idx < 0 || idx >= data.length - 1) return; // already last
+
+  const below = data[idx + 1];
+  const current = data[idx];
+  await supabase.from("products").update({ sort_order: below.sort_order }).eq("id", current.id);
+  await supabase.from("products").update({ sort_order: current.sort_order }).eq("id", below.id);
+
+  revalidatePath("/admin/products");
+  revalidatePath("/san-pham");
+}
+
 export async function deleteProduct(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("products").delete().eq("id", id);
