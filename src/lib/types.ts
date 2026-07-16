@@ -40,7 +40,7 @@ export interface Product {
   relatedProductIds: string[];
   upsellProductIds: string[];
   sizeChartId: string | null;
-  sizeChart: Record<string, Partial<SizeChartRow>>;
+  sizeChart: Record<string, unknown>;
   costPrice?: number;
   metaTitle?: string | null;
   metaDescription?: string | null;

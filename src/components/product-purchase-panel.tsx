@@ -7,7 +7,7 @@ import { Product } from "@/lib/types";
 import { formatVnd } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
 import { useWishlist } from "@/context/wishlist-context";
-import { DEFAULT_SIZE_CHART, mergeWithDefault, recommendSize, SizeChartRow } from "@/lib/size-chart";
+import { parseSizeChartData, recommendSizeFromData } from "@/lib/size-chart";
 import { CountdownTimer } from "./countdown-timer";
 import type { FlashSaleWithProducts } from "@/lib/flash-sales";
 
@@ -389,7 +389,7 @@ function StarRating({ rating }: { rating: number }) {
 
 interface SizeGuideModalProps {
   sizes: string[];
-  sizeChart: Record<string, Partial<SizeChartRow>>;
+  sizeChart: Record<string, unknown>;
   onClose: () => void;
   onSelectSize: (size: string) => void;
 }
@@ -400,11 +400,75 @@ function SizeGuideModal({ sizes, sizeChart, onClose, onSelectSize }: SizeGuideMo
   const [result, setResult] = useState<string | null>(null);
   const [calculated, setCalculated] = useState(false);
 
-  // Sizes that have chart data (product custom or default fallback)
-  const chartSizes = sizes.filter((s) => sizeChart[s] || DEFAULT_SIZE_CHART[s]);
+  const chartData = parseSizeChartData(sizeChart);
+  const { columns, rows } = chartData;
+
+  // Sizes that appear in both product.sizes and the chart rows
+  const chartSizes = sizes.filter((s) => rows[s]);
+
+  // Only show calculator if chart has height columns
+  const canRecommend =
+    columns.some((c) => c.key === "heightMin") &&
+    columns.some((c) => c.key === "heightMax");
+
+  // Find height/weight columns for grouped display (show as range "min–max")
+  const heightMinKey = columns.find((c) => c.key === "heightMin");
+  const heightMaxKey = columns.find((c) => c.key === "heightMax");
+  const weightMinKey = columns.find((c) => c.key === "weightMin");
+  const weightMaxKey = columns.find((c) => c.key === "weightMax");
+
+  // Build display columns: collapse heightMin+heightMax into one row, same for weight
+  type DisplayRow = { label: string; unit?: string; render: (s: string) => string };
+  const displayRows: DisplayRow[] = [];
+  const usedKeys = new Set<string>();
+
+  if (heightMinKey && heightMaxKey) {
+    displayRows.push({
+      label: "Chiều cao",
+      unit: heightMinKey.unit,
+      render: (s) => {
+        const r = rows[s];
+        if (!r) return "—";
+        const min = r.heightMin ?? 0;
+        const max = r.heightMax ?? 0;
+        return min && max ? `${min}–${max}` : String(min || max || "—");
+      },
+    });
+    usedKeys.add("heightMin");
+    usedKeys.add("heightMax");
+  }
+
+  if (weightMinKey && weightMaxKey) {
+    displayRows.push({
+      label: "Cân nặng",
+      unit: weightMinKey.unit,
+      render: (s) => {
+        const r = rows[s];
+        if (!r) return "—";
+        const min = r.weightMin ?? 0;
+        const max = r.weightMax ?? 0;
+        return min && max ? `${min}–${max}` : String(min || max || "—");
+      },
+    });
+    usedKeys.add("weightMin");
+    usedKeys.add("weightMax");
+  }
+
+  // Remaining columns shown individually
+  for (const col of columns) {
+    if (usedKeys.has(col.key)) continue;
+    displayRows.push({
+      label: col.label,
+      unit: col.unit,
+      render: (s) => {
+        const val = rows[s]?.[col.key];
+        return val !== undefined && val !== 0 ? String(val) : "—";
+      },
+    });
+  }
 
   function calculate() {
-    const r = recommendSize(height, weight, sizes, sizeChart);
+    const r = recommendSizeFromData(height, weight, sizes, chartData);
     setResult(r);
     setCalculated(true);
   }
@@ -425,68 +489,68 @@ function SizeGuideModal({ sizes, sizeChart, onClose, onSelectSize }: SizeGuideMo
         </div>
 
         <div className="space-y-6 px-5 py-5">
-          {/* Calculator */}
-          <div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="mb-1.5 block text-xs text-muted">Chiều cao</label>
-                <div className="flex items-center border border-line">
-                  <input
-                    type="number" value={height} min={140} max={210}
-                    onChange={(e) => { setHeight(Number(e.target.value)); setCalculated(false); }}
-                    className="min-w-0 flex-1 px-3 py-2.5 text-sm focus:outline-none"
-                  />
-                  <span className="shrink-0 border-l border-line px-3 py-2.5 text-xs text-muted">cm</span>
+          {/* Calculator — only if chart has height data */}
+          {canRecommend && (
+            <div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1.5 block text-xs text-muted">Chiều cao</label>
+                  <div className="flex items-center border border-line">
+                    <input
+                      type="number" value={height} min={140} max={210}
+                      onChange={(e) => { setHeight(Number(e.target.value)); setCalculated(false); }}
+                      className="min-w-0 flex-1 px-3 py-2.5 text-sm focus:outline-none"
+                    />
+                    <span className="shrink-0 border-l border-line px-3 py-2.5 text-xs text-muted">cm</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs text-muted">Cân nặng</label>
+                  <div className="flex items-center border border-line">
+                    <input
+                      type="number" value={weight} min={30} max={150}
+                      onChange={(e) => { setWeight(Number(e.target.value)); setCalculated(false); }}
+                      className="min-w-0 flex-1 px-3 py-2.5 text-sm focus:outline-none"
+                    />
+                    <span className="shrink-0 border-l border-line px-3 py-2.5 text-xs text-muted">kg</span>
+                  </div>
                 </div>
               </div>
-              <div>
-                <label className="mb-1.5 block text-xs text-muted">Cân nặng</label>
-                <div className="flex items-center border border-line">
-                  <input
-                    type="number" value={weight} min={30} max={150}
-                    onChange={(e) => { setWeight(Number(e.target.value)); setCalculated(false); }}
-                    className="min-w-0 flex-1 px-3 py-2.5 text-sm focus:outline-none"
-                  />
-                  <span className="shrink-0 border-l border-line px-3 py-2.5 text-xs text-muted">kg</span>
+              <button
+                type="button" onClick={calculate}
+                className="mt-3 bg-ink px-5 py-2.5 text-[11px] tracking-label uppercase text-paper hover:bg-ink/85"
+              >
+                Tính toán
+              </button>
+              {calculated && (
+                <div className={`mt-3 flex items-center justify-between border px-4 py-3 ${result ? "border-blue-200 bg-blue-50" : "border-line bg-cream"}`}>
+                  {result ? (
+                    <>
+                      <p className="text-sm text-ink">
+                        Gợi ý size phù hợp:{" "}
+                        <span className="text-base font-bold text-blue-600">{result}</span>
+                      </p>
+                      {sizes.includes(result) ? (
+                        <button
+                          type="button" onClick={() => onSelectSize(result)}
+                          className="shrink-0 bg-ink px-4 py-1.5 text-[11px] tracking-label uppercase text-paper hover:bg-ink/85"
+                        >
+                          Chọn size này
+                        </button>
+                      ) : (
+                        <span className="shrink-0 text-xs text-muted">Không có size này</span>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-sm text-muted">Không xác định được size phù hợp.</p>
+                  )}
                 </div>
-              </div>
+              )}
             </div>
-
-            <button
-              type="button" onClick={calculate}
-              className="mt-3 bg-ink px-5 py-2.5 text-[11px] tracking-label uppercase text-paper hover:bg-ink/85"
-            >
-              Tính toán
-            </button>
-
-            {calculated && (
-              <div className={`mt-3 flex items-center justify-between border px-4 py-3 ${result ? "border-blue-200 bg-blue-50" : "border-line bg-cream"}`}>
-                {result ? (
-                  <>
-                    <p className="text-sm text-ink">
-                      Gợi ý size phù hợp:{" "}
-                      <span className="text-base font-bold text-blue-600">{result}</span>
-                    </p>
-                    {sizes.includes(result) ? (
-                      <button
-                        type="button" onClick={() => onSelectSize(result)}
-                        className="shrink-0 bg-ink px-4 py-1.5 text-[11px] tracking-label uppercase text-paper hover:bg-ink/85"
-                      >
-                        Chọn size này
-                      </button>
-                    ) : (
-                      <span className="shrink-0 text-xs text-muted">Không có size này</span>
-                    )}
-                  </>
-                ) : (
-                  <p className="text-sm text-muted">Không xác định được size phù hợp.</p>
-                )}
-              </div>
-            )}
-          </div>
+          )}
 
           {/* Size chart table */}
-          {chartSizes.length > 0 && (
+          {chartSizes.length > 0 && displayRows.length > 0 && (
             <div>
               <p className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-ink">
                 Thông số sản phẩm
@@ -509,32 +573,16 @@ function SizeGuideModal({ sizes, sizeChart, onClose, onSelectSize }: SizeGuideMo
                     </tr>
                   </thead>
                   <tbody>
-                    {(
-                      [
-                        { label: "Chiều cao (cm)", key: "height" },
-                        { label: "Cân nặng (kg)",  key: "weight" },
-                        { label: "Dài thân trước", key: "bodyLength" },
-                        { label: "1/2 ngang ngực", key: "chest" },
-                        { label: "Dài tay",         key: "sleeveLength" },
-                        { label: "Rộng bắp tay",    key: "bicep" },
-                        { label: "Rộng cửa tay",    key: "cuff" },
-                        { label: "Ngang cổ",         key: "neck" },
-                      ] as { label: string; key: string }[]
-                    ).map(({ label, key }, rowIdx) => (
-                      <tr key={key} className={`border-b border-line ${rowIdx % 2 === 0 ? "" : "bg-cream/50"}`}>
-                        <td className="px-3 py-2 text-xs text-muted">{label}</td>
-                        {chartSizes.map((s) => {
-                          const d = mergeWithDefault(sizeChart, s);
-                          const val =
-                            key === "height" ? `${d.heightMin}–${d.heightMax}`
-                            : key === "weight" ? `${d.weightMin}–${d.weightMax}`
-                            : (d as unknown as Record<string, unknown>)[key];
-                          return (
-                            <td key={s} className={`px-3 py-2 text-center text-sm ${result === s ? "font-semibold text-blue-600" : "text-ink"}`}>
-                              {val as string}
-                            </td>
-                          );
-                        })}
+                    {displayRows.map(({ label, unit, render }, rowIdx) => (
+                      <tr key={label} className={`border-b border-line ${rowIdx % 2 === 0 ? "" : "bg-cream/50"}`}>
+                        <td className="px-3 py-2 text-xs text-muted">
+                          {label}{unit ? ` (${unit})` : ""}
+                        </td>
+                        {chartSizes.map((s) => (
+                          <td key={s} className={`px-3 py-2 text-center text-sm ${result === s ? "font-semibold text-blue-600" : "text-ink"}`}>
+                            {render(s)}
+                          </td>
+                        ))}
                       </tr>
                     ))}
                   </tbody>
@@ -547,7 +595,7 @@ function SizeGuideModal({ sizes, sizeChart, onClose, onSelectSize }: SizeGuideMo
           <div className="space-y-1 rounded border border-line bg-cream/60 px-4 py-3 text-xs text-muted">
             <p className="font-semibold text-ink">Trường hợp số đo nằm trong khoảng giữa các size:</p>
             <ul className="mt-1 list-inside list-disc space-y-1">
-              <li>Với áo thun, hãy ưu tiên theo chiều cao</li>
+              <li>Ưu tiên theo chiều cao, cân nặng dùng để điều chỉnh khi nằm vùng giữa</li>
               <li>Ví dụ: chiều cao theo size L nhưng cân nặng theo size M → chọn L</li>
               <li>97% khách hàng đã chọn đúng size theo cách này</li>
             </ul>

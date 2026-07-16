@@ -11,6 +11,132 @@ export interface SizeChartRow {
   neck: number;
 }
 
+// ── Dynamic column format ─────────────────────────────────────────────────────
+
+export interface SizeChartColumn {
+  key: string;
+  label: string;
+  unit?: string;
+}
+
+export interface SizeChartData {
+  columns: SizeChartColumn[];
+  rows: Record<string, Record<string, number>>;
+}
+
+export const DEFAULT_COLUMNS: SizeChartColumn[] = [
+  { key: "heightMin",    label: "Cao min",     unit: "cm" },
+  { key: "heightMax",    label: "Cao max",     unit: "cm" },
+  { key: "weightMin",    label: "Nặng min",    unit: "kg" },
+  { key: "weightMax",    label: "Nặng max",    unit: "kg" },
+  { key: "bodyLength",   label: "Dài thân",    unit: "cm" },
+  { key: "chest",        label: "½ Ngực",      unit: "cm" },
+  { key: "sleeveLength", label: "Dài tay",     unit: "cm" },
+  { key: "bicep",        label: "Bắp tay",     unit: "cm" },
+  { key: "cuff",         label: "Cửa tay",     unit: "cm" },
+  { key: "neck",         label: "Ngang cổ",    unit: "cm" },
+];
+
+export const COLUMN_PRESETS: Record<string, SizeChartColumn[]> = {
+  "Áo thun / sơ mi": [
+    { key: "heightMin",    label: "Cao min",     unit: "cm" },
+    { key: "heightMax",    label: "Cao max",     unit: "cm" },
+    { key: "weightMin",    label: "Nặng min",    unit: "kg" },
+    { key: "weightMax",    label: "Nặng max",    unit: "kg" },
+    { key: "bodyLength",   label: "Dài thân",    unit: "cm" },
+    { key: "chest",        label: "½ Ngực",      unit: "cm" },
+    { key: "sleeveLength", label: "Dài tay",     unit: "cm" },
+    { key: "bicep",        label: "Bắp tay",     unit: "cm" },
+    { key: "neck",         label: "Ngang cổ",    unit: "cm" },
+  ],
+  "Quần / shorts": [
+    { key: "heightMin",    label: "Cao min",     unit: "cm" },
+    { key: "heightMax",    label: "Cao max",     unit: "cm" },
+    { key: "weightMin",    label: "Nặng min",    unit: "kg" },
+    { key: "weightMax",    label: "Nặng max",    unit: "kg" },
+    { key: "waist",        label: "Vòng eo",     unit: "cm" },
+    { key: "hip",          label: "Vòng mông",   unit: "cm" },
+    { key: "inseam",       label: "Dài trong",   unit: "cm" },
+    { key: "totalLength",  label: "Dài tổng",    unit: "cm" },
+  ],
+  "Đầm / váy": [
+    { key: "heightMin",    label: "Cao min",     unit: "cm" },
+    { key: "heightMax",    label: "Cao max",     unit: "cm" },
+    { key: "weightMin",    label: "Nặng min",    unit: "kg" },
+    { key: "weightMax",    label: "Nặng max",    unit: "kg" },
+    { key: "bust",         label: "Vòng ngực",   unit: "cm" },
+    { key: "waist",        label: "Vòng eo",     unit: "cm" },
+    { key: "hip",          label: "Vòng mông",   unit: "cm" },
+    { key: "dressLength",  label: "Dài đầm",     unit: "cm" },
+  ],
+  "Áo khoác / vest": [
+    { key: "heightMin",    label: "Cao min",     unit: "cm" },
+    { key: "heightMax",    label: "Cao max",     unit: "cm" },
+    { key: "weightMin",    label: "Nặng min",    unit: "kg" },
+    { key: "weightMax",    label: "Nặng max",    unit: "kg" },
+    { key: "shoulder",     label: "Ngang vai",   unit: "cm" },
+    { key: "chest",        label: "½ Ngực",      unit: "cm" },
+    { key: "bodyLength",   label: "Dài thân",    unit: "cm" },
+    { key: "sleeveLength", label: "Dài tay",     unit: "cm" },
+  ],
+};
+
+// Parse raw DB data — handles both old fixed format and new dynamic format
+export function parseSizeChartData(raw: Record<string, unknown>): SizeChartData {
+  if (Array.isArray(raw.columns) && raw.rows && typeof raw.rows === "object") {
+    return {
+      columns: raw.columns as SizeChartColumn[],
+      rows: raw.rows as Record<string, Record<string, number>>,
+    };
+  }
+  // Legacy format: top-level keys are size names
+  const rows: Record<string, Record<string, number>> = {};
+  for (const [k, v] of Object.entries(raw)) {
+    if (v && typeof v === "object" && !Array.isArray(v)) {
+      rows[k] = v as Record<string, number>;
+    }
+  }
+  return { columns: DEFAULT_COLUMNS, rows };
+}
+
+export function recommendSizeFromData(
+  height: number,
+  weight: number,
+  availableSizes: string[],
+  data: SizeChartData
+): string | null {
+  const { columns, rows } = data;
+  const hasHeightMin = columns.some((c) => c.key === "heightMin");
+  const hasHeightMax = columns.some((c) => c.key === "heightMax");
+  if (!hasHeightMin || !hasHeightMax) return null;
+
+  const available = availableSizes.filter((s) => rows[s]);
+  if (available.length === 0) return null;
+
+  let matched = available.find((s) => {
+    const r = rows[s];
+    return height >= (r.heightMin ?? 0) && height <= (r.heightMax ?? 9999);
+  });
+
+  if (!matched) {
+    matched =
+      height < (rows[available[0]]?.heightMin ?? 0)
+        ? available[0]
+        : available[available.length - 1];
+  }
+
+  const hasWeightMax = columns.some((c) => c.key === "weightMax");
+  if (matched && hasWeightMax) {
+    const row = rows[matched];
+    if (weight > (row?.weightMax ?? 9999)) {
+      const idx = available.indexOf(matched);
+      if (idx < available.length - 1) matched = available[idx + 1];
+    }
+  }
+
+  return matched ?? null;
+}
+
 // Default chart — used as fallback when product has no custom chart
 export const DEFAULT_SIZE_CHART: Record<string, SizeChartRow> = {
   XS:    { heightMin: 145, heightMax: 155, weightMin: 40, weightMax: 48,  bodyLength: 63, chest: 45, sleeveLength: 33,   bicep: 18.2, cuff: 15,   neck: 14.5 },

@@ -1,6 +1,4 @@
 import { createPublicClient } from "./supabase/public";
-import type { SizeChartRow } from "./size-chart";
-
 interface SizeChartTemplateRow {
   id: string;
   name: string;
@@ -11,7 +9,7 @@ interface SizeChartTemplateRow {
 export interface SizeChartTemplate {
   id: string;
   name: string;
-  data: Record<string, Partial<SizeChartRow>>;
+  data: Record<string, unknown>;
   createdAt: string;
 }
 
