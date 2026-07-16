@@ -292,6 +292,8 @@ export function CheckoutView({ bankSettings }: { bankSettings?: BankSettings }) 
 
     setOrderCode(result.orderCode);
     clearCart();
+    // Đổi URL để Facebook Custom Conversion bắt được (không reload trang)
+    window.history.replaceState({}, "", `/dat-hang-thanh-cong?code=${result.orderCode}`);
   }
 
   /* ── Success screen ── */
