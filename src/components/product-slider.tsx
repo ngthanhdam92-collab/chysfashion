@@ -1,16 +1,18 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
+import Link from "next/link";
 import { ProductCard } from "@/components/product-card";
 import type { Product } from "@/lib/types";
 
 interface Props {
   products: Product[];
   desktopCols?: 4 | 6;
+  viewMoreHref?: string;
 }
 
-export function ProductSlider({ products, desktopCols = 6 }: Props) {
+export function ProductSlider({ products, desktopCols = 6, viewMoreHref }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canLeft, setCanLeft] = useState(false);
   const [canRight, setCanRight] = useState(false);
@@ -26,63 +28,72 @@ export function ProductSlider({ products, desktopCols = 6 }: Props) {
     update();
     const el = scrollRef.current;
     el?.addEventListener("scroll", update, { passive: true });
-    return () => el?.removeEventListener("scroll", update);
+    window.addEventListener("resize", update);
+    return () => {
+      el?.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
   }, []);
 
   function slide(dir: "left" | "right") {
     const el = scrollRef.current;
     if (!el) return;
-    const cardW = el.querySelector("div")?.offsetWidth ?? 160;
-    el.scrollBy({ left: dir === "right" ? cardW + 16 : -(cardW + 16), behavior: "smooth" });
+    const card = el.querySelector(".slider-card") as HTMLElement;
+    const amount = (card?.offsetWidth ?? 168) + 16;
+    el.scrollBy({ left: dir === "right" ? amount : -amount, behavior: "smooth" });
   }
 
-  const gridClass =
+  // 2 cards visible on mobile; desktopCols on larger breakpoints
+  const cardClass =
     desktopCols === 4
-      ? "sm:grid-cols-4"
-      : "sm:grid-cols-3 lg:grid-cols-6";
+      ? "w-[calc(50%-8px)] sm:w-[calc(25%-12px)]"
+      : "w-[calc(50%-8px)] sm:w-[calc(33.333%-11px)] lg:w-[calc(16.667%-14px)]";
 
   return (
-    <>
-      {/* ── MOBILE: carousel with arrows ── */}
-      <div className="relative sm:hidden">
-        {canLeft && (
-          <button
-            type="button"
-            onClick={() => slide("left")}
-            aria-label="Trước"
-            className="absolute -left-2 top-1/3 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-white shadow-md"
-          >
-            <ChevronLeft size={16} strokeWidth={2} />
-          </button>
-        )}
-        {canRight && (
-          <button
-            type="button"
-            onClick={() => slide("right")}
-            aria-label="Tiếp"
-            className="absolute -right-2 top-1/3 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-white shadow-md"
-          >
-            <ChevronRight size={16} strokeWidth={2} />
-          </button>
-        )}
-        <div
-          ref={scrollRef}
-          className="flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    <div className="relative">
+      {canLeft && (
+        <button
+          type="button"
+          onClick={() => slide("left")}
+          aria-label="Trước"
+          className="absolute -left-3 top-1/3 z-10 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-white shadow-md sm:flex"
         >
-          {products.map((product) => (
-            <div key={product.id} className="w-[168px] shrink-0">
-              <ProductCard product={product} />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── DESKTOP: regular grid ── */}
-      <div className={`hidden sm:grid sm:gap-x-4 sm:gap-y-8 ${gridClass}`}>
+          <ChevronLeft size={16} strokeWidth={2} />
+        </button>
+      )}
+      {canRight && (
+        <button
+          type="button"
+          onClick={() => slide("right")}
+          aria-label="Tiếp"
+          className="absolute -right-3 top-1/3 z-10 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-white shadow-md sm:flex"
+        >
+          <ChevronRight size={16} strokeWidth={2} />
+        </button>
+      )}
+      <div
+        ref={scrollRef}
+        className="flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
         {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
+          <div key={product.id} className={`slider-card shrink-0 ${cardClass}`}>
+            <ProductCard product={product} />
+          </div>
         ))}
+        {viewMoreHref && (
+          <div className={`slider-card shrink-0 ${cardClass}`}>
+            <Link
+              href={viewMoreHref}
+              className="flex h-full min-h-[220px] flex-col items-center justify-center gap-3 border border-line bg-white transition-colors hover:border-gold/50 hover:bg-cream/40"
+            >
+              <ArrowRight size={20} className="text-blue-500" />
+              <span className="text-sm font-medium text-blue-600 underline underline-offset-2">
+                Xem thêm
+              </span>
+            </Link>
+          </div>
+        )}
       </div>
-    </>
+    </div>
   );
 }

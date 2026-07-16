@@ -156,18 +156,14 @@ export default async function HomePage() {
                 {catProducts.length > 0 && (
                   <div className="bg-white">
                     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-                      <div className="mb-6 flex items-center justify-between">
-                        <h3 className="text-base font-black uppercase tracking-widest text-ink sm:text-lg">
-                          Sản phẩm {cat.label}
-                        </h3>
-                        <Link
-                          href={`/san-pham?category=${cat.value}`}
-                          className="text-[11px] uppercase tracking-label text-muted underline hover:text-ink"
-                        >
-                          Xem thêm
-                        </Link>
-                      </div>
-                      <ProductSlider products={catProducts} desktopCols={4} />
+                      <h3 className="mb-6 text-base font-black uppercase tracking-widest text-ink sm:text-lg">
+                        Sản phẩm {cat.label}
+                      </h3>
+                      <ProductSlider
+                        products={catProducts}
+                        desktopCols={4}
+                        viewMoreHref={`/san-pham?category=${cat.value}`}
+                      />
                     </div>
                   </div>
                 )}
@@ -181,16 +177,8 @@ export default async function HomePage() {
       {bestSellers.length > 0 && (
         <section className="bg-cream/50">
           <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-            <div className="mb-8 flex items-end justify-between">
-              <h2 className="font-serif text-2xl text-ink sm:text-3xl">Sản phẩm bán chạy</h2>
-              <Link
-                href="/san-pham"
-                className="text-[11px] tracking-label uppercase text-ink hover:text-gold-dark"
-              >
-                Xem thêm →
-              </Link>
-            </div>
-            <ProductSlider products={bestSellers} desktopCols={6} />
+            <h2 className="mb-8 font-serif text-2xl text-ink sm:text-3xl">Sản phẩm bán chạy</h2>
+            <ProductSlider products={bestSellers} desktopCols={6} viewMoreHref="/san-pham" />
           </div>
         </section>
       )}
@@ -198,16 +186,12 @@ export default async function HomePage() {
       {/* ── 5. BỘ SƯU TẬP MỚI — 6 cột ── */}
       {newArrivals.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-          <div className="mb-8 flex items-end justify-between">
-            <h2 className="font-serif text-2xl text-ink sm:text-3xl">{newCollectionLabel}</h2>
-            <Link
-              href={newCollectionCat ? `/san-pham?category=${newCollectionCat}` : "/san-pham"}
-              className="text-[11px] tracking-label uppercase text-ink hover:text-gold-dark"
-            >
-              Xem thêm →
-            </Link>
-          </div>
-          <ProductSlider products={newArrivals} desktopCols={6} />
+          <h2 className="mb-8 font-serif text-2xl text-ink sm:text-3xl">{newCollectionLabel}</h2>
+          <ProductSlider
+            products={newArrivals}
+            desktopCols={6}
+            viewMoreHref={newCollectionCat ? `/san-pham?category=${newCollectionCat}` : "/san-pham"}
+          />
         </section>
       )}
 
