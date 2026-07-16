@@ -17,12 +17,27 @@ function googleCategory(cat: string) {
   return CATEGORY_MAP[cat] ?? "Apparel & Accessories > Clothing";
 }
 
-function esc(s: string) {
+// Strip HTML tags and HTML entities, then escape for XML
+function clean(s: string): string {
   return s
+    .replace(/<[^>]*>/g, " ")           // remove HTML tags
+    .replace(/&[a-z#0-9]+;/gi, " ")     // remove HTML entities (&nbsp; &amp; etc)
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "") // remove invalid XML control chars
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function esc(s: string): string {
+  return clean(s)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+// For URLs: only escape & (no HTML stripping needed)
+function escUrl(s: string): string {
+  return s.replace(/&/g, "&amp;");
 }
 
 function mapGender(g: string) {
@@ -53,9 +68,9 @@ export async function GET() {
         `    <g:id>${esc(p.id)}</g:id>`,
         `    <g:title>${esc(p.name)}</g:title>`,
         `    <g:description>${desc}</g:description>`,
-        `    <g:link>${esc(url)}</g:link>`,
-        `    <g:image_link>${esc(p.images[0])}</g:image_link>`,
-        ...extraImages.map((img) => `    <g:additional_image_link>${esc(img)}</g:additional_image_link>`),
+        `    <g:link>${escUrl(url)}</g:link>`,
+        `    <g:image_link>${escUrl(p.images[0])}</g:image_link>`,
+        ...extraImages.map((img) => `    <g:additional_image_link>${escUrl(img)}</g:additional_image_link>`),
         `    <g:availability>${availability}</g:availability>`,
         `    <g:price>${regularPrice} VND</g:price>`,
         ...(salePrice !== null ? [`    <g:sale_price>${salePrice} VND</g:sale_price>`] : []),
