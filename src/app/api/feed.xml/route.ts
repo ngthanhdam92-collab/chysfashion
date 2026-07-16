@@ -76,7 +76,7 @@ export async function GET() {
         ...(salePrice !== null ? [`    <g:sale_price>${salePrice} VND</g:sale_price>`] : []),
         `    <g:condition>new</g:condition>`,
         `    <g:brand>${BRAND}</g:brand>`,
-        `    <g:google_product_category>${googleCategory(p.category)}</g:google_product_category>`,
+        `    <g:google_product_category>${esc(googleCategory(p.category))}</g:google_product_category>`,
         `    <g:gender>${mapGender(p.gender)}</g:gender>`,
         `    <g:age_group>adult</g:age_group>`,
         ...(color ? [`    <g:color>${esc(color)}</g:color>`] : []),
