@@ -117,7 +117,7 @@ export function SizeChartForm({ template, action }: Props) {
     const def = DEFAULT_SIZE_CHART[s] ?? {};
     const rowCells: Record<string, string> = {};
     for (const col of columns) {
-      rowCells[col.key] = String((def as Record<string, number>)[col.key] ?? "");
+      rowCells[col.key] = String((def as unknown as Record<string, number>)[col.key] ?? "");
     }
     setSizes((prev) => [...prev, s]);
     setCells((prev) => ({ ...prev, [s]: rowCells }));

@@ -17,7 +17,7 @@ function mapTemplateRow(row: SizeChartTemplateRow): SizeChartTemplate {
   return {
     id: row.id,
     name: row.name,
-    data: (row.data ?? {}) as Record<string, Partial<SizeChartRow>>,
+    data: (row.data ?? {}) as Record<string, unknown>,
     createdAt: row.created_at,
   };
 }
