@@ -53,7 +53,32 @@ export default async function ProductDetailPage({ params }: Params) {
   const flashSaleForProduct =
     activeFlashSale?.productIds.includes(product.id) ? activeFlashSale : null;
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.description || product.name,
+    image: product.images,
+    brand: { "@type": "Brand", name: "Chys Fashion" },
+    offers: {
+      "@type": "Offer",
+      url: `https://chysfashion.online/san-pham/${product.slug}`,
+      priceCurrency: "VND",
+      price: product.price,
+      availability:
+        product.stock > 0
+          ? "https://schema.org/InStock"
+          : "https://schema.org/OutOfStock",
+      itemCondition: "https://schema.org/NewCondition",
+    },
+  };
+
   return (
+    <>
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <Breadcrumb
         items={[
@@ -123,5 +148,6 @@ export default async function ProductDetailPage({ params }: Params) {
         }}
       />
     </div>
+    </>
   );
 }

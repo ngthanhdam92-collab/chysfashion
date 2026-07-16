@@ -26,6 +26,9 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "CHYS Admin",
   },
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION,
+  },
 };
 
 export default async function RootLayout({
