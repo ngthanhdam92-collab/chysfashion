@@ -211,6 +211,17 @@ export async function updateVariantStock(
   return {};
 }
 
+export async function reorderProducts(orderedIds: string[]) {
+  const supabase = await createClient();
+  await Promise.all(
+    orderedIds.map((id, idx) =>
+      supabase.from("products").update({ sort_order: idx + 1 }).eq("id", id)
+    )
+  );
+  revalidatePath("/admin/products");
+  revalidatePath("/san-pham");
+}
+
 export async function moveProductUp(id: string) {
   const supabase = await createClient();
   const { data } = await supabase
