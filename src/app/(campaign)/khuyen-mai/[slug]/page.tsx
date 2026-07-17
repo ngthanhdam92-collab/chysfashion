@@ -1,9 +1,8 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
-import Image from "next/image";
 import { getCampaignBySlug } from "@/lib/campaigns";
 import { CampaignCountdown } from "@/components/campaign-countdown";
 import { CampaignProductGallery } from "@/components/campaign-product-gallery";
+import { CampaignOrderForm } from "@/components/campaign-order-form";
 
 interface Params {
   params: Promise<{ slug: string }>;
@@ -66,7 +65,7 @@ export default async function CampaignPage({ params }: Params) {
               </div>
             )}
             <a
-              href="#products"
+              href="#order-form"
               className="flex-1 rounded bg-red-600 py-2.5 text-center text-sm font-bold uppercase tracking-wide text-white"
             >
               MUA NGAY
@@ -125,41 +124,14 @@ export default async function CampaignPage({ params }: Params) {
         </div>
       </div>
 
-      {/* Products grid */}
-      <div className="bg-gray-50 px-3 py-4" id="products">
-        <h3 className="mb-3 text-center text-sm font-bold uppercase tracking-wide text-red-600">
-          SẢN PHẨM CỦA SHOP
-        </h3>
-        <div className="grid grid-cols-2 gap-3">
-          {campaign.products.map((product) => (
-            <Link key={product.id} href={`/san-pham/${product.slug}`} className="block bg-white pb-2 shadow-sm">
-              <div className="relative aspect-square w-full overflow-hidden bg-gray-100">
-                {product.images[0] && (
-                  <Image
-                    src={product.images[0]}
-                    alt={product.name}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 448px) 50vw, 224px"
-                  />
-                )}
-              </div>
-              <div className="px-2 pt-2 text-center">
-                <div className="flex items-baseline justify-center gap-2">
-                  <span className="text-base font-bold text-red-600">
-                    {product.price.toLocaleString("vi-VN")}
-                  </span>
-                  {product.compareAtPrice && (
-                    <span className="text-xs text-gray-400 line-through">
-                      {product.compareAtPrice.toLocaleString("vi-VN")}đ
-                    </span>
-                  )}
-                </div>
-                <p className="mt-0.5 line-clamp-1 text-xs text-gray-600">{product.name}</p>
-              </div>
-            </Link>
-          ))}
+      {/* Inline order form */}
+      <div className="bg-white" id="order-form">
+        <div className="border-b border-gray-100 bg-red-600 px-4 py-3 text-center">
+          <p className="text-sm font-bold uppercase tracking-wide text-white">
+            ĐẶT HÀNG NGAY — NHẬN NGAY ƯU ĐÃI
+          </p>
         </div>
+        <CampaignOrderForm products={campaign.products} />
       </div>
 
       {/* Footer */}
