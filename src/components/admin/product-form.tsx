@@ -524,8 +524,8 @@ export function ProductForm({ product, categories, allProducts = [], sizeCharts 
           <input
             id="categoryLabel" name="categoryLabel" type="hidden"
             defaultValue={
-              product?.categoryLabel ??
               categories.find((c) => c.value === product?.category)?.label ??
+              product?.categoryLabel ??
               categories[0]?.label ?? ""
             }
           />
