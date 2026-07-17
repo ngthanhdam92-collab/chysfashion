@@ -93,8 +93,8 @@ export default async function CampaignPage({ params }: Params) {
       )}
 
       {/* Countdown */}
-      <div className="border-b bg-white px-4 py-3 text-center">
-        <p className="text-sm font-semibold text-red-600">Khuyến mãi sắp kết thúc!!!</p>
+      <div className="border-b bg-white px-3 pb-3 pt-2 text-center">
+        <p className="mb-1 text-sm font-semibold text-red-600">Khuyến mãi sắp kết thúc!!!</p>
         <CampaignCountdown countdownHours={campaign.countdownHours} />
       </div>
 

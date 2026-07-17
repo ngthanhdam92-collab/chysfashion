@@ -36,13 +36,13 @@ export function CampaignCountdown({ countdownHours }: Props) {
   ];
 
   return (
-    <div className="flex justify-center gap-3 py-2">
+    <div className="flex gap-2 py-2">
       {units.map(({ label, value }) => (
-        <div key={label} className="flex flex-col items-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded bg-red-600 text-2xl font-bold tabular-nums text-white shadow">
+        <div key={label} className="flex flex-1 flex-col items-center">
+          <div className="flex w-full items-center justify-center rounded bg-red-600 py-3 text-3xl font-bold tabular-nums text-white shadow">
             {pad(value)}
           </div>
-          <span className="mt-1 text-[11px] text-gray-500">{label}</span>
+          <span className="mt-1 text-xs font-medium text-gray-600">{label}</span>
         </div>
       ))}
     </div>
