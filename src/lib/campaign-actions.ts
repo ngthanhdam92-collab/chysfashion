@@ -25,6 +25,10 @@ export async function createCampaign(formData: FormData) {
   if (!title) return { error: "Tên chiến dịch là bắt buộc" };
   if (!endsAt) return { error: "Thời gian kết thúc là bắt buộc" };
 
+  const description = String(formData.get("description") || "").trim() || null;
+  const countdownHours = Number(formData.get("countdownHours") || 1);
+  const discountPercent = Number(formData.get("discountPercent") || 0) || null;
+
   const { error } = await supabase.from("campaigns").insert({
     title,
     slug,
@@ -32,6 +36,9 @@ export async function createCampaign(formData: FormData) {
     ends_at: endsAt,
     product_ids: productIds,
     is_active: true,
+    description,
+    countdown_hours: countdownHours,
+    discount_percent: discountPercent,
   });
 
   if (error) return { error: error.message };
@@ -50,12 +57,19 @@ export async function updateCampaign(id: string, formData: FormData) {
 
   if (!title) return { error: "Tên chiến dịch là bắt buộc" };
 
+  const description = String(formData.get("description") || "").trim() || null;
+  const countdownHours = Number(formData.get("countdownHours") || 1);
+  const discountPercent = Number(formData.get("discountPercent") || 0) || null;
+
   const { error } = await supabase.from("campaigns").update({
     title,
     slug,
     banner_message: bannerMessage,
     ends_at: endsAt,
     product_ids: productIds,
+    description,
+    countdown_hours: countdownHours,
+    discount_percent: discountPercent,
   }).eq("id", id);
 
   if (error) return { error: error.message };

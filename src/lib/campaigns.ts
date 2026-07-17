@@ -12,6 +12,9 @@ interface CampaignRow {
   product_ids: string[];
   is_active: boolean;
   created_at: string;
+  description: string | null;
+  countdown_hours: number;
+  discount_percent: number | null;
 }
 
 export interface Campaign {
@@ -23,6 +26,9 @@ export interface Campaign {
   productIds: string[];
   isActive: boolean;
   createdAt: string;
+  description: string | null;
+  countdownHours: number;
+  discountPercent: number | null;
 }
 
 export interface CampaignWithProducts extends Campaign {
@@ -39,6 +45,9 @@ function mapRow(row: CampaignRow): Campaign {
     productIds: row.product_ids ?? [],
     isActive: row.is_active,
     createdAt: row.created_at,
+    description: row.description ?? null,
+    countdownHours: row.countdown_hours ?? 1,
+    discountPercent: row.discount_percent ?? null,
   };
 }
 

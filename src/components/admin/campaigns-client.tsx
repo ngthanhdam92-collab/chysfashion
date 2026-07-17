@@ -45,6 +45,9 @@ export function CampaignsClient({ campaigns: initial, products }: Props) {
   const [slug, setSlug] = useState("");
   const [bannerMessage, setBannerMessage] = useState("");
   const [endsAt, setEndsAt] = useState("");
+  const [description, setDescription] = useState("");
+  const [countdownHours, setCountdownHours] = useState(1);
+  const [discountPercent, setDiscountPercent] = useState<number | "">(0);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [productSearch, setProductSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +55,9 @@ export function CampaignsClient({ campaigns: initial, products }: Props) {
 
   function openCreate() {
     setEditingId(null);
-    setTitle(""); setSlug(""); setBannerMessage(""); setEndsAt(""); setSelectedIds([]);
+    setTitle(""); setSlug(""); setBannerMessage(""); setEndsAt("");
+    setDescription(""); setCountdownHours(1); setDiscountPercent(0);
+    setSelectedIds([]);
     setProductSearch(""); setError(null);
     setFormOpen(true);
   }
@@ -63,6 +68,9 @@ export function CampaignsClient({ campaigns: initial, products }: Props) {
     setSlug(c.slug);
     setBannerMessage(c.bannerMessage ?? "");
     setEndsAt(toDatetimeLocal(c.endsAt));
+    setDescription(c.description ?? "");
+    setCountdownHours(c.countdownHours ?? 1);
+    setDiscountPercent(c.discountPercent ?? 0);
     setSelectedIds(c.productIds);
     setProductSearch(""); setError(null);
     setFormOpen(true);
@@ -90,6 +98,9 @@ export function CampaignsClient({ campaigns: initial, products }: Props) {
     fd.set("slug", slug || slugify(title));
     fd.set("bannerMessage", bannerMessage);
     fd.set("endsAt", endsAt ? new Date(endsAt).toISOString() : "");
+    fd.set("description", description);
+    fd.set("countdownHours", String(countdownHours));
+    fd.set("discountPercent", String(discountPercent || 0));
     fd.set("productIds", JSON.stringify(selectedIds));
 
     const result = editingId
@@ -245,6 +256,50 @@ export function CampaignsClient({ campaigns: initial, products }: Props) {
                   onChange={(e) => setBannerMessage(e.target.value)}
                   placeholder="VD: SALE OFF 48% — Freeship khi mua 2 sản phẩm"
                   className="mt-1 w-full border border-line bg-white px-3 py-2.5 text-sm focus:border-gold focus:outline-none"
+                />
+              </div>
+
+              {/* Countdown hours */}
+              <div>
+                <label className="text-xs text-muted">Countdown (chạy vòng lặp)</label>
+                <select
+                  value={countdownHours}
+                  onChange={(e) => setCountdownHours(Number(e.target.value))}
+                  className="mt-1 w-full border border-line bg-white px-3 py-2.5 text-sm focus:border-gold focus:outline-none"
+                >
+                  <option value={1}>1 giờ</option>
+                  <option value={6}>6 giờ</option>
+                  <option value={12}>12 giờ</option>
+                  <option value={24}>24 giờ</option>
+                </select>
+              </div>
+
+              {/* Discount percent */}
+              <div>
+                <label className="text-xs text-muted">% giảm giá (hiển thị badge SALE OFF)</label>
+                <input
+                  type="number"
+                  min={0}
+                  max={99}
+                  value={discountPercent}
+                  onChange={(e) => setDiscountPercent(e.target.value === "" ? "" : Number(e.target.value))}
+                  placeholder="VD: 48 → SALE OFF 48%"
+                  className="mt-1 w-full border border-line bg-white px-3 py-2.5 text-sm focus:border-gold focus:outline-none"
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="text-xs text-muted">
+                  Mô tả sản phẩm{" "}
+                  <span className="text-muted/60">(mỗi dòng = 1 bullet point)</span>
+                </label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={5}
+                  placeholder={"Size: S M L XL 2XL\nChất liệu: Cotton cao cấp\nThiết kế trẻ trung, năng động"}
+                  className="mt-1 w-full border border-line bg-white px-3 py-2 text-sm focus:border-gold focus:outline-none"
                 />
               </div>
 

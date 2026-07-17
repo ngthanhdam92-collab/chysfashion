@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { getCampaignBySlug } from "@/lib/campaigns";
 import { CampaignCountdown } from "@/components/campaign-countdown";
 import { CampaignProductGallery } from "@/components/campaign-product-gallery";
@@ -15,7 +16,7 @@ export async function generateMetadata({ params }: Params) {
   return { title: `${campaign.title} — CHYS Fashion` };
 }
 
-function formatPrice(n: number) {
+function fmt(n: number) {
   return n.toLocaleString("vi-VN") + "đ";
 }
 
@@ -24,81 +25,147 @@ export default async function CampaignPage({ params }: Params) {
   const campaign = await getCampaignBySlug(slug);
   if (!campaign) notFound();
 
+  const featured = campaign.products[0];
+  const allImages = campaign.products.flatMap((p) => p.images).slice(0, 12);
+
   return (
     <div className="mx-auto max-w-md">
-      {/* Sticky countdown */}
-      <div className="sticky top-0 z-50">
-        <CampaignCountdown endsAt={campaign.endsAt} />
-      </div>
 
-      {/* Campaign header */}
-      <div className="bg-[#1a1a2e] px-4 py-6 text-center text-white">
-        <p className="font-playfair text-lg font-bold tracking-widest">CHYS FASHION</p>
-        <h1 className="mt-2 text-2xl font-bold">{campaign.title}</h1>
+      {/* Header */}
+      <div className="bg-[#1a1a2e] px-4 py-5 text-center text-white">
+        <p className="text-xs font-semibold tracking-[0.2em] uppercase opacity-70">CHYS FASHION</p>
+        <h1 className="mt-1 text-xl font-bold leading-tight">{campaign.title}</h1>
         {campaign.bannerMessage && (
-          <div className="mt-3 rounded border border-white/30 bg-white/10 px-3 py-2 text-sm">
+          <div className="mx-auto mt-3 max-w-xs rounded border border-white/20 bg-white/10 px-3 py-2 text-sm leading-snug">
             {campaign.bannerMessage}
           </div>
         )}
       </div>
 
-      {/* Products */}
-      <div className="divide-y divide-gray-100">
-        {campaign.products.map((product) => (
-          <div key={product.id} className="pb-6">
-            {/* Image gallery */}
-            <CampaignProductGallery images={product.images} name={product.name} />
+      {/* Image carousel */}
+      {allImages.length > 0 && (
+        <CampaignProductGallery
+          images={allImages}
+          name={campaign.title}
+        />
+      )}
 
-            {/* Product info */}
-            <div className="px-4 pt-4">
-              <h2 className="text-base font-semibold text-gray-900">{product.name}</h2>
-
-              {/* Price */}
-              <div className="mt-2 flex items-baseline gap-3">
-                <span className="text-2xl font-bold text-red-600">
-                  {formatPrice(product.price)}
+      {/* Product name + Sale badge + CTA */}
+      {featured && (
+        <div className="px-4 pt-3 pb-2">
+          <h2 className="text-base font-bold uppercase text-gray-900 leading-tight">
+            {featured.name}
+          </h2>
+          <div className="mt-2 flex items-center gap-2">
+            {campaign.discountPercent && (
+              <div className="flex items-center gap-1 rounded bg-red-600 px-3 py-1.5">
+                <span className="text-xs font-bold text-white">SALE OFF</span>
+                <span className="text-lg font-black text-white leading-none">
+                  {campaign.discountPercent}%
                 </span>
-                {product.compareAtPrice && (
-                  <span className="text-sm text-gray-400 line-through">
-                    {formatPrice(product.compareAtPrice)}
-                  </span>
+              </div>
+            )}
+            <a
+              href="#products"
+              className="flex-1 rounded bg-red-600 py-2.5 text-center text-sm font-bold uppercase tracking-wide text-white"
+            >
+              MUA NGAY
+            </a>
+          </div>
+        </div>
+      )}
+
+      {/* Price box */}
+      {featured && (
+        <div className="flex items-baseline gap-2 bg-[#1e40af] px-4 py-3">
+          <span className="text-sm font-semibold text-white/80">GIÁ CHỈ :</span>
+          <span className="text-2xl font-black text-white">{fmt(featured.price)}</span>
+          <span className="text-sm text-white/70">/1 SP</span>
+          {featured.compareAtPrice && (
+            <span className="ml-1 text-sm text-white/50 line-through">
+              {fmt(featured.compareAtPrice)}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Countdown */}
+      <div className="border-b bg-white px-4 py-3 text-center">
+        <p className="text-sm font-semibold text-red-600">Khuyến mãi sắp kết thúc!!!</p>
+        <CampaignCountdown countdownHours={campaign.countdownHours} />
+      </div>
+
+      {/* Description bullets */}
+      {campaign.description && (
+        <div className="px-4 py-4">
+          <ul className="space-y-2">
+            {campaign.description
+              .split("\n")
+              .map((l) => l.trim())
+              .filter(Boolean)
+              .map((line, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                  <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-red-500" />
+                  {line}
+                </li>
+              ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Shipping badges */}
+      <div className="grid grid-cols-2 divide-x divide-gray-200 border-y border-gray-200 bg-gray-50 px-2 py-3 text-xs text-gray-600">
+        <div className="flex items-center gap-2 px-2">
+          <span className="text-lg">🔄</span>
+          <span>6 tháng, 1 đổi 1 trong 7 ngày nếu phát sinh lỗi</span>
+        </div>
+        <div className="flex items-center gap-2 px-2">
+          <span className="text-lg">🚚</span>
+          <span>Giao hàng toàn quốc.</span>
+        </div>
+      </div>
+
+      {/* Products grid */}
+      <div className="bg-gray-50 px-3 py-4" id="products">
+        <h3 className="mb-3 text-center text-sm font-bold uppercase tracking-wide text-red-600">
+          SẢN PHẨM CỦA SHOP
+        </h3>
+        <div className="grid grid-cols-2 gap-3">
+          {campaign.products.map((product) => (
+            <Link key={product.id} href={`/san-pham/${product.slug}`} className="block bg-white pb-2 shadow-sm">
+              <div className="relative aspect-square w-full overflow-hidden bg-gray-100">
+                {product.images[0] && (
+                  <Image
+                    src={product.images[0]}
+                    alt={product.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 448px) 50vw, 224px"
+                  />
                 )}
               </div>
-
-              {/* Features */}
-              {product.details.length > 0 && (
-                <ul className="mt-3 space-y-1">
-                  {product.details.map((d) => (
-                    <li key={d} className="flex items-start gap-2 text-sm text-gray-600">
-                      <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-red-500" />
-                      {d}
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              {/* Shipping badges */}
-              <div className="mt-3 flex gap-3 text-xs text-gray-500">
-                <span className="flex items-center gap-1">🔄 Đổi trả 30 ngày</span>
-                <span className="flex items-center gap-1">🚚 Giao toàn quốc</span>
+              <div className="px-2 pt-2 text-center">
+                <div className="flex items-baseline justify-center gap-2">
+                  <span className="text-base font-bold text-red-600">
+                    {product.price.toLocaleString("vi-VN")}
+                  </span>
+                  {product.compareAtPrice && (
+                    <span className="text-xs text-gray-400 line-through">
+                      {product.compareAtPrice.toLocaleString("vi-VN")}đ
+                    </span>
+                  )}
+                </div>
+                <p className="mt-0.5 line-clamp-1 text-xs text-gray-600">{product.name}</p>
               </div>
-
-              {/* CTA */}
-              <Link
-                href={`/san-pham/${product.slug}`}
-                className="mt-4 block w-full bg-red-600 py-3.5 text-center text-sm font-bold uppercase tracking-wider text-white hover:bg-red-700"
-              >
-                ĐẶT HÀNG NGAY
-              </Link>
-            </div>
-          </div>
-        ))}
+            </Link>
+          ))}
+        </div>
       </div>
 
       {/* Footer */}
-      <div className="bg-[#1a1a2e] px-4 py-6 text-center text-white/60 text-xs">
-        <p className="font-bold text-white">CHYS FASHION</p>
-        <p className="mt-1">chysfashion.online</p>
+      <div className="bg-[#1a1a2e] py-5 text-center">
+        <p className="text-sm font-bold text-white">CHYS FASHION</p>
+        <p className="mt-0.5 text-xs text-white/40">chysfashion.online</p>
       </div>
     </div>
   );
