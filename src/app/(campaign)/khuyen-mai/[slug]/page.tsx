@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getCampaignBySlug } from "@/lib/campaigns";
+import { getShippingRules } from "@/lib/shipping";
 import { CampaignCountdown } from "@/components/campaign-countdown";
 import { CampaignProductGallery } from "@/components/campaign-product-gallery";
 import { CampaignOrderForm } from "@/components/campaign-order-form";
@@ -21,7 +22,10 @@ function fmt(n: number) {
 
 export default async function CampaignPage({ params }: Params) {
   const { slug } = await params;
-  const campaign = await getCampaignBySlug(slug);
+  const [campaign, shippingRules] = await Promise.all([
+    getCampaignBySlug(slug),
+    getShippingRules(),
+  ]);
   if (!campaign) notFound();
 
   const featured = campaign.products[0];
@@ -131,7 +135,7 @@ export default async function CampaignPage({ params }: Params) {
             ĐẶT HÀNG NGAY — NHẬN NGAY ƯU ĐÃI
           </p>
         </div>
-        <CampaignOrderForm products={campaign.products} />
+        <CampaignOrderForm products={campaign.products} shippingRules={shippingRules} />
       </div>
 
       {/* Footer */}

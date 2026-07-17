@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import type { Product } from "@/lib/types";
 import { createOrder } from "@/lib/orders";
+import { calcShippingFee, type ShippingRule } from "@/lib/shipping";
 
 interface Props {
   products: Product[];
+  shippingRules: ShippingRule[];
 }
 
 interface SelectedItem {
@@ -25,7 +27,7 @@ function fmt(n: number) {
   return n.toLocaleString("vi-VN") + "đ";
 }
 
-export function CampaignOrderForm({ products }: Props) {
+export function CampaignOrderForm({ products, shippingRules }: Props) {
   const [selections, setSelections] = useState<Selections>({});
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
@@ -119,7 +121,7 @@ export function CampaignOrderForm({ products }: Props) {
 
   const items = Object.values(selections).filter(Boolean) as SelectedItem[];
   const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
-  const shipping = subtotal >= 500000 ? 0 : 30000;
+  const shipping = calcShippingFee(subtotal, shippingRules);
   const total = subtotal + shipping;
 
   async function handleSubmit(e: React.FormEvent) {
