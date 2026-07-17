@@ -185,11 +185,8 @@ export function CampaignOrderForm({ products }: Props) {
                 key={p.id}
                 className={`border-2 bg-white transition-colors ${checked ? "border-red-500" : "border-gray-200"}`}
               >
-                {/* Image — click to toggle */}
-                <div
-                  className="relative aspect-square w-full cursor-pointer overflow-hidden bg-gray-100"
-                  onClick={() => toggleProduct(p)}
-                >
+                {/* Image */}
+                <div className="relative aspect-square w-full overflow-hidden bg-gray-100">
                   {(() => {
                     const colorImg = sel?.color
                       ? p.colors.find((c) => c.name === sel.color)?.images?.[0]
@@ -215,11 +212,8 @@ export function CampaignOrderForm({ products }: Props) {
                   )}
                 </div>
 
-                {/* Price + code — also clickable */}
-                <div
-                  className="cursor-pointer px-2 py-1.5"
-                  onClick={() => toggleProduct(p)}
-                >
+                {/* Price + code */}
+                <div className="px-2 py-1.5">
                   <div className="flex flex-wrap items-baseline gap-1">
                     <span className="text-base font-black text-red-600">
                       {p.price.toLocaleString("vi-VN")}
@@ -235,6 +229,21 @@ export function CampaignOrderForm({ products }: Props) {
                       MÃ SP: <span className="font-bold text-red-500">{code}</span>
                     </p>
                   )}
+                </div>
+
+                {/* Select button */}
+                <div className="px-2 pb-2">
+                  <button
+                    type="button"
+                    onClick={() => toggleProduct(p)}
+                    className={`w-full py-1.5 text-xs font-bold uppercase tracking-wide transition-colors ${
+                      checked
+                        ? "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                        : "bg-red-600 text-white hover:bg-red-700"
+                    }`}
+                  >
+                    {checked ? "✕ Bỏ chọn" : "＋ Chọn sản phẩm"}
+                  </button>
                 </div>
 
                 {/* Inline options — visible when selected */}
