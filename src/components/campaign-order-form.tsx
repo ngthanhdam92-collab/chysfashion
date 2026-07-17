@@ -310,32 +310,55 @@ export function CampaignOrderForm({ products }: Props) {
 
       {/* ── Order summary ── */}
       {items.length > 0 && (
-        <div className="mx-2 mb-4 border border-gray-200 bg-white">
-          <div className="border-b border-gray-200 bg-gray-50 px-3 py-2">
-            <p className="text-xs font-bold uppercase text-gray-700">Thông tin đơn hàng</p>
+        <div className="mx-2 mb-4 overflow-hidden border-2 border-red-500">
+          {/* Header */}
+          <div className="bg-red-600 px-4 py-2.5">
+            <p className="text-sm font-bold uppercase tracking-wide text-white">
+              🛒 Thông tin đơn hàng
+            </p>
           </div>
-          <div className="divide-y divide-gray-100 px-3">
+
+          {/* Items */}
+          <div className="divide-y divide-gray-100 bg-white">
             {items.map((item) => (
-              <div key={item.productId} className="py-2">
-                <p className="text-xs font-semibold text-gray-800 line-clamp-1">{item.name}</p>
-                <div className="mt-0.5 flex items-center justify-between">
-                  <span className="text-xs text-gray-500">
-                    {[item.color, item.size].filter(Boolean).join(" · ")} · SL: {item.quantity}
+              <div key={item.productId} className="px-4 py-3">
+                <p className="text-sm font-bold text-gray-900 line-clamp-1">{item.name}</p>
+                <div className="mt-1.5 flex items-center justify-between gap-2">
+                  <div className="flex flex-wrap gap-1.5">
+                    {item.color && (
+                      <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+                        {item.color}
+                      </span>
+                    )}
+                    {item.size && (
+                      <span className="rounded bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
+                        Size {item.size}
+                      </span>
+                    )}
+                    <span className="rounded bg-orange-50 px-2 py-0.5 text-xs font-medium text-orange-700">
+                      SL: {item.quantity}
+                    </span>
+                  </div>
+                  <span className="shrink-0 text-base font-black text-red-600">
+                    {fmt(item.price * item.quantity)}
                   </span>
-                  <span className="text-sm font-bold text-red-600">{fmt(item.price * item.quantity)}</span>
                 </div>
               </div>
             ))}
           </div>
-          <div className="border-t border-gray-200 px-3 py-2 space-y-1">
-            <div className="flex justify-between text-xs text-gray-500">
-              <span>Phí vận chuyển</span>
-              <span>{shipping === 0 ? "Miễn phí" : fmt(shipping)}</span>
-            </div>
-            <div className="flex justify-between text-sm font-bold text-red-600">
-              <span>Tổng cộng</span>
-              <span>{fmt(total)}</span>
-            </div>
+
+          {/* Shipping */}
+          <div className="flex items-center justify-between bg-gray-50 px-4 py-2.5">
+            <span className="text-sm text-gray-600">🚚 Phí vận chuyển</span>
+            <span className="text-sm font-semibold text-gray-700">
+              {shipping === 0 ? "Miễn phí" : fmt(shipping)}
+            </span>
+          </div>
+
+          {/* Total */}
+          <div className="flex items-center justify-between bg-red-600 px-4 py-3">
+            <span className="text-base font-bold text-white">Tổng cộng</span>
+            <span className="text-xl font-black text-white">{fmt(total)}</span>
           </div>
         </div>
       )}
