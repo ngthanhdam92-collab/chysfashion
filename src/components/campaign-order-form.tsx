@@ -190,15 +190,22 @@ export function CampaignOrderForm({ products }: Props) {
                   className="relative aspect-square w-full cursor-pointer overflow-hidden bg-gray-100"
                   onClick={() => toggleProduct(p)}
                 >
-                  {p.images[0] && (
-                    <Image
-                      src={p.images[0]}
-                      alt={p.name}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 448px) 50vw, 220px"
-                    />
-                  )}
+                  {(() => {
+                    const colorImg = sel?.color
+                      ? p.colors.find((c) => c.name === sel.color)?.images?.[0]
+                      : undefined;
+                    const src = colorImg ?? p.images[0];
+                    return src ? (
+                      <Image
+                        key={src}
+                        src={src}
+                        alt={p.name}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 448px) 50vw, 220px"
+                      />
+                    ) : null;
+                  })()}
                   {checked && (
                     <div className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-red-500">
                       <svg viewBox="0 0 12 10" className="h-3 w-3 fill-none stroke-white stroke-[2.5]">
