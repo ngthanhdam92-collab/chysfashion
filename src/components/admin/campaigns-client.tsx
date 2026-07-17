@@ -47,6 +47,8 @@ export function CampaignsClient({ campaigns: initial, products }: Props) {
   const [displayName, setDisplayName] = useState("");
   const [bannerImages, setBannerImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+  const dragIdx = useRef<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -317,7 +319,29 @@ export function CampaignsClient({ campaigns: initial, products }: Props) {
                 {bannerImages.length > 0 && (
                   <div className="mt-2 grid grid-cols-4 gap-2">
                     {bannerImages.map((url, i) => (
-                      <div key={url} className="group relative aspect-square overflow-hidden border border-line bg-gray-50">
+                      <div
+                        key={url}
+                        draggable
+                        onDragStart={() => { dragIdx.current = i; }}
+                        onDragOver={(e) => { e.preventDefault(); setDragOverIdx(i); }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          const from = dragIdx.current;
+                          if (from === null || from === i) return;
+                          setBannerImages((prev) => {
+                            const next = [...prev];
+                            const [moved] = next.splice(from, 1);
+                            next.splice(i, 0, moved);
+                            return next;
+                          });
+                          dragIdx.current = null;
+                          setDragOverIdx(null);
+                        }}
+                        onDragEnd={() => { dragIdx.current = null; setDragOverIdx(null); }}
+                        className={`group relative aspect-square cursor-grab overflow-hidden border-2 bg-gray-50 transition-all active:cursor-grabbing ${
+                          dragOverIdx === i ? "border-gold opacity-70 scale-95" : "border-line"
+                        }`}
+                      >
                         <Image src={url} alt={`slide ${i + 1}`} fill className="object-cover" sizes="80px" />
                         <button
                           type="button"
