@@ -15,7 +15,7 @@ export function CampaignProductGallery({ images, name }: Props) {
 
   return (
     <div>
-      <div className="relative aspect-square w-full overflow-hidden bg-gray-100">
+      <div className="relative aspect-[3/4] w-full overflow-hidden bg-gray-100">
         <Image
           src={images[active]}
           alt={name}
