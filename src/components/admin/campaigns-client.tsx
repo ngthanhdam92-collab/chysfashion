@@ -97,7 +97,7 @@ export function CampaignsClient({ campaigns: initial, products }: Props) {
       : await createCampaign(fd);
 
     setSaving(false);
-    if (result && "error" in result) { setError(result.error); return; }
+    if (result && "error" in result) { setError(result.error ?? "Lỗi không xác định"); return; }
     window.location.reload();
   }
 
