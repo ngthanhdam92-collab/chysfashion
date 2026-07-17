@@ -29,11 +29,20 @@ export function CampaignOrderForm({ products }: Props) {
   const [selections, setSelections] = useState<Selections>({});
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
-  const [city, setCity] = useState("");
+  const [street, setStreet] = useState("");
   const [note, setNote] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "bank_transfer">("cod");
+
+  // Cascading address
   const [provinces, setProvinces] = useState<{ code: number; name: string }[]>([]);
+  const [provinceCode, setProvinceCode] = useState("");
+  const [provinceName, setProvinceName] = useState("");
+  const [districts, setDistricts] = useState<{ code: number; name: string }[]>([]);
+  const [districtCode, setDistrictCode] = useState("");
+  const [districtName, setDistrictName] = useState("");
+  const [wards, setWards] = useState<{ code: number; name: string }[]>([]);
+  const [wardName, setWardName] = useState("");
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -44,6 +53,33 @@ export function CampaignOrderForm({ products }: Props) {
       .then(setProvinces)
       .catch(() => {});
   }, []);
+
+  function onProvinceChange(code: string, name: string) {
+    setProvinceCode(code);
+    setProvinceName(name);
+    setDistricts([]);
+    setDistrictCode("");
+    setDistrictName("");
+    setWards([]);
+    setWardName("");
+    if (!code) return;
+    fetch(`https://provinces.open-api.vn/api/p/${code}?depth=2`)
+      .then((r) => r.json())
+      .then((d) => setDistricts(d.districts ?? []))
+      .catch(() => {});
+  }
+
+  function onDistrictChange(code: string, name: string) {
+    setDistrictCode(code);
+    setDistrictName(name);
+    setWards([]);
+    setWardName("");
+    if (!code) return;
+    fetch(`https://provinces.open-api.vn/api/d/${code}?depth=2`)
+      .then((r) => r.json())
+      .then((d) => setWards(d.wards ?? []))
+      .catch(() => {});
+  }
 
   function toggleProduct(p: Product) {
     setSelections((prev) => {
@@ -89,14 +125,18 @@ export function CampaignOrderForm({ products }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!items.length) { setError("Vui lòng chọn ít nhất 1 sản phẩm"); return; }
+    if (!provinceName) { setError("Vui lòng chọn tỉnh/thành phố"); return; }
+    if (!districtName) { setError("Vui lòng chọn quận/huyện"); return; }
+    if (!wardName) { setError("Vui lòng chọn phường/xã"); return; }
     setSubmitting(true);
     setError(null);
 
+    const fullAddress = [street, wardName, districtName].filter(Boolean).join(", ");
     const result = await createOrder({
       fullName,
       phone,
-      address,
-      city,
+      address: fullAddress,
+      city: provinceName,
       note,
       items,
       subtotal,
@@ -312,24 +352,51 @@ export function CampaignOrderForm({ products }: Props) {
             placeholder="Số điện thoại *"
             className="w-full border border-gray-300 px-3 py-3 text-sm focus:border-red-400 focus:outline-none"
           />
-          <input
-            required
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            placeholder="Số nhà, tên đường, phường/xã *"
-            className="w-full border border-gray-300 px-3 py-3 text-sm focus:border-red-400 focus:outline-none"
-          />
           <select
-            required
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
+            value={provinceCode}
+            onChange={(e) => {
+              const opt = e.target.options[e.target.selectedIndex];
+              onProvinceChange(e.target.value, opt.text);
+            }}
             className="w-full border border-gray-300 px-3 py-3 text-sm focus:border-red-400 focus:outline-none"
           >
             <option value="">Chọn tỉnh / thành phố *</option>
             {provinces.map((p) => (
-              <option key={p.code} value={p.name}>{p.name}</option>
+              <option key={p.code} value={p.code}>{p.name}</option>
             ))}
           </select>
+          <select
+            value={districtCode}
+            disabled={!provinceCode}
+            onChange={(e) => {
+              const opt = e.target.options[e.target.selectedIndex];
+              onDistrictChange(e.target.value, opt.text);
+            }}
+            className="w-full border border-gray-300 px-3 py-3 text-sm focus:border-red-400 focus:outline-none disabled:bg-gray-50 disabled:text-gray-400"
+          >
+            <option value="">Chọn quận / huyện *</option>
+            {districts.map((d) => (
+              <option key={d.code} value={d.code}>{d.name}</option>
+            ))}
+          </select>
+          <select
+            value={wardName}
+            disabled={!districtCode}
+            onChange={(e) => setWardName(e.target.value)}
+            className="w-full border border-gray-300 px-3 py-3 text-sm focus:border-red-400 focus:outline-none disabled:bg-gray-50 disabled:text-gray-400"
+          >
+            <option value="">Chọn phường / xã *</option>
+            {wards.map((w) => (
+              <option key={w.code} value={w.name}>{w.name}</option>
+            ))}
+          </select>
+          <input
+            required
+            value={street}
+            onChange={(e) => setStreet(e.target.value)}
+            placeholder="Số nhà, tên đường *"
+            className="w-full border border-gray-300 px-3 py-3 text-sm focus:border-red-400 focus:outline-none"
+          />
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
