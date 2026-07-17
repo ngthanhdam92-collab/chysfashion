@@ -5,6 +5,7 @@ import Image from "next/image";
 import type { Product } from "@/lib/types";
 import { createOrder } from "@/lib/orders";
 import { calcShippingFee, type ShippingRule } from "@/lib/shipping";
+import { trackPurchase } from "@/lib/pixel-events";
 
 interface Props {
   products: Product[];
@@ -150,6 +151,7 @@ export function CampaignOrderForm({ products, shippingRules }: Props) {
 
     setSubmitting(false);
     if ("error" in result) { setError(result.error); return; }
+    trackPurchase({ value: total, orderId: result.orderCode });
     setSuccess(result.orderCode);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
