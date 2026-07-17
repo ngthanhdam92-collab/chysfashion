@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Pencil, Trash2, ExternalLink, ToggleLeft, ToggleRight, X } from "lucide-react";
+import { useState, useRef } from "react";
+import Image from "next/image";
+import { Plus, Pencil, Trash2, ExternalLink, ToggleLeft, ToggleRight, X, Upload, ImagePlus } from "lucide-react";
 import type { Campaign } from "@/lib/campaigns";
 import type { Product } from "@/lib/types";
+import { createClient } from "@/lib/supabase/client";
 import {
   createCampaign,
   updateCampaign,
@@ -42,6 +44,10 @@ export function CampaignsClient({ campaigns: initial, products }: Props) {
   const [discountPercent, setDiscountPercent] = useState<number | "">(0);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [productSearch, setProductSearch] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [bannerImages, setBannerImages] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -49,7 +55,7 @@ export function CampaignsClient({ campaigns: initial, products }: Props) {
     setEditingId(null);
     setTitle(""); setSlug(""); setBannerMessage("");
     setDescription(""); setCountdownHours(1); setDiscountPercent(0);
-    setSelectedIds([]);
+    setSelectedIds([]); setDisplayName(""); setBannerImages([]);
     setProductSearch(""); setError(null);
     setFormOpen(true);
   }
@@ -63,8 +69,30 @@ export function CampaignsClient({ campaigns: initial, products }: Props) {
     setCountdownHours(c.countdownHours ?? 1);
     setDiscountPercent(c.discountPercent ?? 0);
     setSelectedIds(c.productIds);
+    setDisplayName(c.displayName ?? "");
+    setBannerImages(c.bannerImages ?? []);
     setProductSearch(""); setError(null);
     setFormOpen(true);
+  }
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    setUploading(true);
+    const supabase = createClient();
+    const urls: string[] = [];
+    for (const file of files) {
+      const ext = file.name.split(".").pop();
+      const path = `campaigns/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("product-media").upload(path, file, { upsert: false });
+      if (!upErr) {
+        const { data } = supabase.storage.from("product-media").getPublicUrl(path);
+        urls.push(data.publicUrl);
+      }
+    }
+    setBannerImages((prev) => [...prev, ...urls]);
+    setUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   function closeForm() {
@@ -92,6 +120,8 @@ export function CampaignsClient({ campaigns: initial, products }: Props) {
     fd.set("countdownHours", String(countdownHours));
     fd.set("discountPercent", String(discountPercent || 0));
     fd.set("productIds", JSON.stringify(selectedIds));
+    fd.set("displayName", displayName);
+    fd.set("bannerImages", JSON.stringify(bannerImages));
 
     const result = editingId
       ? await updateCampaign(editingId, fd)
@@ -245,6 +275,64 @@ export function CampaignsClient({ campaigns: initial, products }: Props) {
                   placeholder="VD: SALE OFF 48% — Freeship khi mua 2 sản phẩm"
                   className="mt-1 w-full border border-line bg-white px-3 py-2.5 text-sm focus:border-gold focus:outline-none"
                 />
+              </div>
+
+              {/* Display name */}
+              <div>
+                <label className="text-xs text-muted">
+                  Tên hiển thị trên landing page{" "}
+                  <span className="text-muted/60">(để trống sẽ dùng tên sản phẩm đầu tiên)</span>
+                </label>
+                <input
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="VD: Bộ Quần Áo Nam Cao Cấp"
+                  className="mt-1 w-full border border-line bg-white px-3 py-2.5 text-sm focus:border-gold focus:outline-none"
+                />
+              </div>
+
+              {/* Banner images */}
+              <div>
+                <label className="text-xs text-muted">
+                  Ảnh slide riêng{" "}
+                  <span className="text-muted/60">(để trống sẽ dùng ảnh sản phẩm)</span>
+                </label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handleImageUpload}
+                />
+                <button
+                  type="button"
+                  disabled={uploading}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="mt-1 flex items-center gap-2 border border-dashed border-line px-3 py-2 text-xs text-muted hover:border-gold hover:text-ink disabled:opacity-50"
+                >
+                  <ImagePlus size={14} />
+                  {uploading ? "Đang tải lên..." : "Thêm ảnh slide"}
+                </button>
+                {bannerImages.length > 0 && (
+                  <div className="mt-2 grid grid-cols-4 gap-2">
+                    {bannerImages.map((url, i) => (
+                      <div key={url} className="group relative aspect-square overflow-hidden border border-line bg-gray-50">
+                        <Image src={url} alt={`slide ${i + 1}`} fill className="object-cover" sizes="80px" />
+                        <button
+                          type="button"
+                          onClick={() => setBannerImages((prev) => prev.filter((_, j) => j !== i))}
+                          className="absolute right-0.5 top-0.5 hidden h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white group-hover:flex"
+                        >
+                          <X size={10} />
+                        </button>
+                        <span className="absolute bottom-0.5 left-0.5 rounded bg-black/50 px-1 text-[9px] text-white">
+                          {i + 1}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Countdown hours */}

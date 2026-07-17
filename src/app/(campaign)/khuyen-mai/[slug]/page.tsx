@@ -29,7 +29,10 @@ export default async function CampaignPage({ params }: Params) {
   if (!campaign) notFound();
 
   const featured = campaign.products[0];
-  const allImages = campaign.products.flatMap((p) => p.images).slice(0, 12);
+  const displayName = campaign.displayName || featured?.name || campaign.title;
+  const allImages = campaign.bannerImages.length > 0
+    ? campaign.bannerImages
+    : campaign.products.flatMap((p) => p.images).slice(0, 12);
 
   return (
     <div className="mx-auto max-w-md">
@@ -54,10 +57,10 @@ export default async function CampaignPage({ params }: Params) {
       )}
 
       {/* Product name + Sale badge + CTA */}
-      {featured && (
+      {(featured || campaign.displayName) && (
         <div className="px-4 pt-3 pb-2">
           <h2 className="text-base font-bold uppercase text-gray-900 leading-tight">
-            {featured.name}
+            {displayName}
           </h2>
           <div className="mt-2 flex items-center gap-2">
             {campaign.discountPercent && (

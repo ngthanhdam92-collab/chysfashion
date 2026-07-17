@@ -15,6 +15,8 @@ interface CampaignRow {
   description: string | null;
   countdown_hours: number;
   discount_percent: number | null;
+  display_name: string | null;
+  banner_images: string[];
 }
 
 export interface Campaign {
@@ -29,6 +31,8 @@ export interface Campaign {
   description: string | null;
   countdownHours: number;
   discountPercent: number | null;
+  displayName: string | null;
+  bannerImages: string[];
 }
 
 export interface CampaignWithProducts extends Campaign {
@@ -48,6 +52,8 @@ function mapRow(row: CampaignRow): Campaign {
     description: row.description ?? null,
     countdownHours: row.countdown_hours ?? 1,
     discountPercent: row.discount_percent ?? null,
+    displayName: row.display_name ?? null,
+    bannerImages: row.banner_images ?? [],
   };
 }
 

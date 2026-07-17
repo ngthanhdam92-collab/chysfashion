@@ -26,6 +26,8 @@ export async function createCampaign(formData: FormData) {
   const description = String(formData.get("description") || "").trim() || null;
   const countdownHours = Number(formData.get("countdownHours") || 1);
   const discountPercent = Number(formData.get("discountPercent") || 0) || null;
+  const displayName = String(formData.get("displayName") || "").trim() || null;
+  const bannerImages = JSON.parse(String(formData.get("bannerImages") || "[]")) as string[];
 
   const { error } = await supabase.from("campaigns").insert({
     title,
@@ -37,6 +39,8 @@ export async function createCampaign(formData: FormData) {
     description,
     countdown_hours: countdownHours,
     discount_percent: discountPercent,
+    display_name: displayName,
+    banner_images: bannerImages,
   });
 
   if (error) return { error: error.message };
@@ -57,6 +61,8 @@ export async function updateCampaign(id: string, formData: FormData) {
   const description = String(formData.get("description") || "").trim() || null;
   const countdownHours = Number(formData.get("countdownHours") || 1);
   const discountPercent = Number(formData.get("discountPercent") || 0) || null;
+  const displayName = String(formData.get("displayName") || "").trim() || null;
+  const bannerImages = JSON.parse(String(formData.get("bannerImages") || "[]")) as string[];
 
   const { error } = await supabase.from("campaigns").update({
     title,
@@ -66,6 +72,8 @@ export async function updateCampaign(id: string, formData: FormData) {
     description,
     countdown_hours: countdownHours,
     discount_percent: discountPercent,
+    display_name: displayName,
+    banner_images: bannerImages,
   }).eq("id", id);
 
   if (error) return { error: error.message };
