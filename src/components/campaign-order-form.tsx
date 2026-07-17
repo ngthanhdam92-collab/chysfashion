@@ -170,14 +170,12 @@ export function CampaignOrderForm({ products }: Props) {
 
   return (
     <form onSubmit={handleSubmit} id="order-form">
-      {/* ── Product grid ── */}
+      {/* ── Product grid with inline options ── */}
       <div className="px-2 pt-3 pb-2">
-        <div
-          className="mb-2 border-2 border-dashed border-red-500 py-1 text-center text-sm font-bold uppercase text-red-600"
-        >
+        <div className="mb-2 border-2 border-dashed border-red-500 py-1 text-center text-sm font-bold uppercase text-red-600">
           SẢN PHẨM CỦA SHOP
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 items-start gap-2">
           {products.map((p) => {
             const sel = selections[p.id];
             const checked = !!sel;
@@ -185,13 +183,13 @@ export function CampaignOrderForm({ products }: Props) {
             return (
               <div
                 key={p.id}
-                onClick={() => toggleProduct(p)}
-                className={`cursor-pointer border-2 bg-white transition-colors ${
-                  checked ? "border-red-500" : "border-gray-200"
-                }`}
+                className={`border-2 bg-white transition-colors ${checked ? "border-red-500" : "border-gray-200"}`}
               >
-                {/* Image with checkmark overlay */}
-                <div className="relative aspect-square w-full overflow-hidden bg-gray-100">
+                {/* Image — click to toggle */}
+                <div
+                  className="relative aspect-square w-full cursor-pointer overflow-hidden bg-gray-100"
+                  onClick={() => toggleProduct(p)}
+                >
                   {p.images[0] && (
                     <Image
                       src={p.images[0]}
@@ -209,9 +207,13 @@ export function CampaignOrderForm({ products }: Props) {
                     </div>
                   )}
                 </div>
-                {/* Info */}
-                <div className="px-2 py-1.5">
-                  <div className="flex items-baseline gap-1.5">
+
+                {/* Price + code — also clickable */}
+                <div
+                  className="cursor-pointer px-2 py-1.5"
+                  onClick={() => toggleProduct(p)}
+                >
+                  <div className="flex flex-wrap items-baseline gap-1">
                     <span className="text-base font-black text-red-600">
                       {p.price.toLocaleString("vi-VN")}
                     </span>
@@ -227,106 +229,106 @@ export function CampaignOrderForm({ products }: Props) {
                     </p>
                   )}
                 </div>
+
+                {/* Inline options — visible when selected */}
+                {checked && sel && (
+                  <div className="space-y-2 border-t border-red-100 bg-red-50 px-2 pb-2 pt-2">
+                    {p.colors.length > 0 && (
+                      <div>
+                        <p className="mb-1 text-[10px] font-semibold uppercase text-gray-500">Màu</p>
+                        <div className="flex flex-wrap gap-1">
+                          {p.colors.map((c) => (
+                            <button
+                              key={c.name}
+                              type="button"
+                              onClick={() => update(p.id, "color", c.name)}
+                              className={`rounded border px-2 py-0.5 text-xs font-medium transition-colors ${
+                                sel.color === c.name
+                                  ? "border-red-500 bg-red-500 text-white"
+                                  : "border-gray-300 bg-white text-gray-700"
+                              }`}
+                            >
+                              {c.name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {p.sizes.length > 0 && (
+                      <div>
+                        <p className="mb-1 text-[10px] font-semibold uppercase text-gray-500">Size</p>
+                        <div className="flex flex-wrap gap-1">
+                          {p.sizes.map((s) => (
+                            <button
+                              key={s}
+                              type="button"
+                              onClick={() => update(p.id, "size", s)}
+                              className={`rounded border px-2 py-0.5 text-xs font-medium transition-colors ${
+                                sel.size === s
+                                  ? "border-red-500 bg-red-500 text-white"
+                                  : "border-gray-300 bg-white text-gray-700"
+                              }`}
+                            >
+                              {s}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-[10px] font-semibold uppercase text-gray-500">SL</p>
+                      <button
+                        type="button"
+                        onClick={() => changeQty(p.id, -1)}
+                        className="flex h-6 w-6 items-center justify-center rounded border border-gray-300 bg-white text-sm text-gray-700"
+                      >
+                        −
+                      </button>
+                      <span className="w-4 text-center text-sm font-bold">{sel.quantity}</span>
+                      <button
+                        type="button"
+                        onClick={() => changeQty(p.id, 1)}
+                        className="flex h-6 w-6 items-center justify-center rounded border border-gray-300 bg-white text-sm text-gray-700"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* ── Options for selected products ── */}
-      {items.length > 0 && (
-        <div className="mx-2 mb-3 space-y-3 border border-red-100 bg-red-50 px-3 py-3">
-          <p className="text-xs font-bold uppercase text-red-600">Tuỳ chọn sản phẩm đã chọn</p>
-          {items.map((sel) => {
-            const p = products.find((x) => x.id === sel.productId)!;
-            if (!p) return null;
-            return (
-              <div key={sel.productId} className="border-t border-red-100 pt-3 first:border-0 first:pt-0">
-                <p className="mb-2 text-xs font-semibold text-gray-800 line-clamp-1">{p.name}</p>
-                <div className="space-y-2">
-                  {p.colors.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-xs text-gray-500">Màu:</span>
-                      {p.colors.map((c) => (
-                        <button
-                          key={c.name}
-                          type="button"
-                          onClick={() => update(p.id, "color", c.name)}
-                          className={`rounded border px-2.5 py-0.5 text-xs transition-colors ${
-                            sel.color === c.name
-                              ? "border-red-500 bg-red-500 font-semibold text-white"
-                              : "border-gray-300 text-gray-600"
-                          }`}
-                        >
-                          {c.name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {p.sizes.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-xs text-gray-500">Size:</span>
-                      {p.sizes.map((s) => (
-                        <button
-                          key={s}
-                          type="button"
-                          onClick={() => update(p.id, "size", s)}
-                          className={`rounded border px-2.5 py-0.5 text-xs transition-colors ${
-                            sel.size === s
-                              ? "border-red-500 bg-red-500 font-semibold text-white"
-                              : "border-gray-300 text-gray-600"
-                          }`}
-                        >
-                          {s}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500">SL:</span>
-                    <button
-                      type="button"
-                      onClick={() => changeQty(p.id, -1)}
-                      className="flex h-7 w-7 items-center justify-center rounded border border-gray-300 text-gray-700"
-                    >
-                      −
-                    </button>
-                    <span className="w-5 text-center text-sm font-semibold">{sel.quantity}</span>
-                    <button
-                      type="button"
-                      onClick={() => changeQty(p.id, 1)}
-                      className="flex h-7 w-7 items-center justify-center rounded border border-gray-300 text-gray-700"
-                    >
-                      +
-                    </button>
-                    <span className="ml-auto text-sm font-bold text-red-600">
-                      {fmt(sel.price * sel.quantity)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-
       {/* ── Order summary ── */}
       {items.length > 0 && (
-        <div className="mx-3 mb-4 bg-gray-50 px-4 py-3 text-sm">
-          {items.map((item) => (
-            <div key={item.productId} className="flex justify-between py-0.5 text-gray-700">
-              <span className="line-clamp-1 flex-1 pr-2">{item.name} × {item.quantity}</span>
-              <span className="shrink-0 font-medium">{fmt(item.price * item.quantity)}</span>
-            </div>
-          ))}
-          <div className="mt-2 flex justify-between border-t border-gray-200 pt-2 text-gray-500">
-            <span>Phí vận chuyển</span>
-            <span>{shipping === 0 ? "Miễn phí" : fmt(shipping)}</span>
+        <div className="mx-2 mb-4 border border-gray-200 bg-white">
+          <div className="border-b border-gray-200 bg-gray-50 px-3 py-2">
+            <p className="text-xs font-bold uppercase text-gray-700">Thông tin đơn hàng</p>
           </div>
-          <div className="mt-1 flex justify-between font-bold text-red-600">
-            <span>Tổng cộng</span>
-            <span>{fmt(total)}</span>
+          <div className="divide-y divide-gray-100 px-3">
+            {items.map((item) => (
+              <div key={item.productId} className="py-2">
+                <p className="text-xs font-semibold text-gray-800 line-clamp-1">{item.name}</p>
+                <div className="mt-0.5 flex items-center justify-between">
+                  <span className="text-xs text-gray-500">
+                    {[item.color, item.size].filter(Boolean).join(" · ")} · SL: {item.quantity}
+                  </span>
+                  <span className="text-sm font-bold text-red-600">{fmt(item.price * item.quantity)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="border-t border-gray-200 px-3 py-2 space-y-1">
+            <div className="flex justify-between text-xs text-gray-500">
+              <span>Phí vận chuyển</span>
+              <span>{shipping === 0 ? "Miễn phí" : fmt(shipping)}</span>
+            </div>
+            <div className="flex justify-between text-sm font-bold text-red-600">
+              <span>Tổng cộng</span>
+              <span>{fmt(total)}</span>
+            </div>
           </div>
         </div>
       )}
