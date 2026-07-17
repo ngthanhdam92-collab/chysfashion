@@ -16,13 +16,6 @@ interface Props {
   products: Product[];
 }
 
-function toDatetimeLocal(iso: string) {
-  if (!iso) return "";
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
 function slugify(s: string) {
   return s
     .toLowerCase()
@@ -44,7 +37,6 @@ export function CampaignsClient({ campaigns: initial, products }: Props) {
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [bannerMessage, setBannerMessage] = useState("");
-  const [endsAt, setEndsAt] = useState("");
   const [description, setDescription] = useState("");
   const [countdownHours, setCountdownHours] = useState(1);
   const [discountPercent, setDiscountPercent] = useState<number | "">(0);
@@ -55,7 +47,7 @@ export function CampaignsClient({ campaigns: initial, products }: Props) {
 
   function openCreate() {
     setEditingId(null);
-    setTitle(""); setSlug(""); setBannerMessage(""); setEndsAt("");
+    setTitle(""); setSlug(""); setBannerMessage("");
     setDescription(""); setCountdownHours(1); setDiscountPercent(0);
     setSelectedIds([]);
     setProductSearch(""); setError(null);
@@ -67,7 +59,6 @@ export function CampaignsClient({ campaigns: initial, products }: Props) {
     setTitle(c.title);
     setSlug(c.slug);
     setBannerMessage(c.bannerMessage ?? "");
-    setEndsAt(toDatetimeLocal(c.endsAt));
     setDescription(c.description ?? "");
     setCountdownHours(c.countdownHours ?? 1);
     setDiscountPercent(c.discountPercent ?? 0);
@@ -97,7 +88,6 @@ export function CampaignsClient({ campaigns: initial, products }: Props) {
     fd.set("title", title);
     fd.set("slug", slug || slugify(title));
     fd.set("bannerMessage", bannerMessage);
-    fd.set("endsAt", endsAt ? new Date(endsAt).toISOString() : "");
     fd.set("description", description);
     fd.set("countdownHours", String(countdownHours));
     fd.set("discountPercent", String(discountPercent || 0));
@@ -159,8 +149,6 @@ export function CampaignsClient({ campaigns: initial, products }: Props) {
                   <p className="font-medium text-ink">{c.title}</p>
                 </div>
                 <p className="mt-0.5 text-xs text-muted">
-                  Kết thúc: {new Date(c.endsAt).toLocaleString("vi-VN")}
-                  {" · "}
                   {c.productIds.length} sản phẩm
                 </p>
                 <a
@@ -300,18 +288,6 @@ export function CampaignsClient({ campaigns: initial, products }: Props) {
                   rows={5}
                   placeholder={"Size: S M L XL 2XL\nChất liệu: Cotton cao cấp\nThiết kế trẻ trung, năng động"}
                   className="mt-1 w-full border border-line bg-white px-3 py-2 text-sm focus:border-gold focus:outline-none"
-                />
-              </div>
-
-              {/* End date */}
-              <div>
-                <label className="text-xs text-muted">Thời gian kết thúc *</label>
-                <input
-                  type="datetime-local"
-                  required
-                  value={endsAt}
-                  onChange={(e) => setEndsAt(e.target.value)}
-                  className="mt-1 w-full border border-line bg-white px-3 py-2.5 text-sm focus:border-gold focus:outline-none"
                 />
               </div>
 

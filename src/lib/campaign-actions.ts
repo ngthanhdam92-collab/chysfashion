@@ -19,11 +19,9 @@ export async function createCampaign(formData: FormData) {
   const rawSlug = String(formData.get("slug") || "").trim();
   const slug = rawSlug || slugify(title);
   const bannerMessage = String(formData.get("bannerMessage") || "").trim() || null;
-  const endsAt = String(formData.get("endsAt") || "");
   const productIds = JSON.parse(String(formData.get("productIds") || "[]")) as string[];
 
   if (!title) return { error: "Tên chiến dịch là bắt buộc" };
-  if (!endsAt) return { error: "Thời gian kết thúc là bắt buộc" };
 
   const description = String(formData.get("description") || "").trim() || null;
   const countdownHours = Number(formData.get("countdownHours") || 1);
@@ -33,7 +31,7 @@ export async function createCampaign(formData: FormData) {
     title,
     slug,
     banner_message: bannerMessage,
-    ends_at: endsAt,
+    ends_at: "2099-12-31T23:59:59Z",
     product_ids: productIds,
     is_active: true,
     description,
@@ -52,7 +50,6 @@ export async function updateCampaign(id: string, formData: FormData) {
   const rawSlug = String(formData.get("slug") || "").trim();
   const slug = rawSlug || slugify(title);
   const bannerMessage = String(formData.get("bannerMessage") || "").trim() || null;
-  const endsAt = String(formData.get("endsAt") || "");
   const productIds = JSON.parse(String(formData.get("productIds") || "[]")) as string[];
 
   if (!title) return { error: "Tên chiến dịch là bắt buộc" };
@@ -65,7 +62,6 @@ export async function updateCampaign(id: string, formData: FormData) {
     title,
     slug,
     banner_message: bannerMessage,
-    ends_at: endsAt,
     product_ids: productIds,
     description,
     countdown_hours: countdownHours,
