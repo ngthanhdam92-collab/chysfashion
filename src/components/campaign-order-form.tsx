@@ -6,6 +6,7 @@ import type { Product } from "@/lib/types";
 import { createOrder } from "@/lib/orders";
 import { calcShippingFee, type ShippingRule } from "@/lib/shipping";
 import { trackPurchase } from "@/lib/pixel-events";
+import { parseSizeChartData, recommendSizeFromData } from "@/lib/size-chart";
 
 interface Props {
   products: Product[];
@@ -26,6 +27,166 @@ type Selections = Record<string, SelectedItem | undefined>;
 
 function fmt(n: number) {
   return n.toLocaleString("vi-VN") + "đ";
+}
+
+function InlineSizeGuide({ products }: { products: Product[] }) {
+  const [open, setOpen] = useState(false);
+  const [height, setHeight] = useState(170);
+  const [weight, setWeight] = useState(60);
+  const [result, setResult] = useState<string | null>(null);
+  const [calculated, setCalculated] = useState(false);
+
+  const product = products.find((p) => p.sizes.length > 0 && p.sizeChart && Object.keys(p.sizeChart).length > 0);
+  if (!product) return null;
+
+  const chartData = parseSizeChartData(product.sizeChart ?? {});
+  const { columns, rows } = chartData;
+  const chartSizes = product.sizes.filter((s) => rows[s]);
+  if (chartSizes.length === 0) return null;
+
+  const heightMinCol = columns.find((c) => c.key === "heightMin");
+  const heightMaxCol = columns.find((c) => c.key === "heightMax");
+  const weightMinCol = columns.find((c) => c.key === "weightMin");
+  const weightMaxCol = columns.find((c) => c.key === "weightMax");
+  const canRecommend = !!heightMinCol && !!heightMaxCol;
+
+  type DisplayRow = { label: string; unit?: string; render: (s: string) => string };
+  const displayRows: DisplayRow[] = [];
+  const usedKeys = new Set<string>();
+
+  if (heightMinCol && heightMaxCol) {
+    displayRows.push({
+      label: "Chiều cao", unit: "cm",
+      render: (s) => {
+        const r = rows[s]; if (!r) return "—";
+        return r.heightMin && r.heightMax ? `${r.heightMin}–${r.heightMax}` : "—";
+      },
+    });
+    usedKeys.add("heightMin"); usedKeys.add("heightMax");
+  }
+  if (weightMinCol && weightMaxCol) {
+    displayRows.push({
+      label: "Cân nặng", unit: "kg",
+      render: (s) => {
+        const r = rows[s]; if (!r) return "—";
+        return r.weightMin && r.weightMax ? `${r.weightMin}–${r.weightMax}` : "—";
+      },
+    });
+    usedKeys.add("weightMin"); usedKeys.add("weightMax");
+  }
+  for (const col of columns) {
+    if (usedKeys.has(col.key)) continue;
+    displayRows.push({
+      label: col.label, unit: col.unit,
+      render: (s) => {
+        const val = rows[s]?.[col.key];
+        return val !== undefined && val !== 0 ? String(val) : "—";
+      },
+    });
+  }
+
+  function calculate() {
+    const r = recommendSizeFromData(height, weight, product!.sizes, chartData);
+    setResult(r); setCalculated(true);
+  }
+
+  return (
+    <div className="border-b border-gray-200">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center justify-between bg-blue-600 px-4 py-3"
+      >
+        <span className="text-sm font-bold uppercase tracking-wide text-white">
+          Hướng dẫn chọn size
+        </span>
+        <svg
+          className={`h-4 w-4 text-white transition-transform ${open ? "rotate-180" : ""}`}
+          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="bg-gray-50 px-4 py-4 space-y-4">
+          {canRecommend && (
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase text-gray-500">Tính size cho tôi</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="mb-1 block text-xs text-gray-500">Chiều cao</label>
+                  <div className="flex items-center border border-gray-300 bg-white">
+                    <input
+                      type="number" value={height} min={140} max={210}
+                      onChange={(e) => { setHeight(Number(e.target.value)); setCalculated(false); }}
+                      className="min-w-0 flex-1 px-3 py-2 text-sm focus:outline-none"
+                    />
+                    <span className="border-l border-gray-300 px-2 py-2 text-xs text-gray-400">cm</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-gray-500">Cân nặng</label>
+                  <div className="flex items-center border border-gray-300 bg-white">
+                    <input
+                      type="number" value={weight} min={30} max={150}
+                      onChange={(e) => { setWeight(Number(e.target.value)); setCalculated(false); }}
+                      className="min-w-0 flex-1 px-3 py-2 text-sm focus:outline-none"
+                    />
+                    <span className="border-l border-gray-300 px-2 py-2 text-xs text-gray-400">kg</span>
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button" onClick={calculate}
+                className="mt-2 bg-blue-600 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white hover:bg-blue-700"
+              >
+                Tính toán
+              </button>
+              {calculated && (
+                <div className={`mt-2 px-3 py-2.5 text-sm border ${result ? "border-blue-200 bg-blue-50 text-blue-700" : "border-gray-200 bg-white text-gray-500"}`}>
+                  {result
+                    ? <>Gợi ý size phù hợp: <span className="text-base font-black">{result}</span></>
+                    : "Không xác định được size phù hợp."}
+                </div>
+              )}
+            </div>
+          )}
+
+          {chartSizes.length > 0 && displayRows.length > 0 && (
+            <div className="overflow-x-auto">
+              <p className="mb-2 text-xs font-semibold uppercase text-gray-500">Thông số sản phẩm (cm / kg)</p>
+              <table className="w-full border-collapse text-xs">
+                <thead>
+                  <tr className="bg-gray-200">
+                    <th className="px-2 py-2 text-left font-semibold text-gray-600">Thông số</th>
+                    {chartSizes.map((s) => (
+                      <th key={s} className={`px-2 py-2 text-center font-bold ${result === s ? "bg-blue-600 text-white" : "text-gray-800"}`}>
+                        {s}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {displayRows.map(({ label, unit, render }, i) => (
+                    <tr key={label} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                      <td className="px-2 py-1.5 text-gray-500">{label}{unit ? ` (${unit})` : ""}</td>
+                      {chartSizes.map((s) => (
+                        <td key={s} className={`px-2 py-1.5 text-center ${result === s ? "font-bold text-blue-600" : "text-gray-700"}`}>
+                          {render(s)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="mt-1.5 text-[10px] italic text-gray-400">*Thông số khi trải phẳng, có thể chênh lệch so với số đo cơ thể.</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function CampaignOrderForm({ products, shippingRules }: Props) {
@@ -174,6 +335,8 @@ export function CampaignOrderForm({ products, shippingRules }: Props) {
 
   return (
     <form onSubmit={handleSubmit} id="order-form">
+      <InlineSizeGuide products={products} />
+
       {/* ── Product grid with inline options ── */}
       <div className="px-2 pt-3 pb-2">
         <div className="mb-2 border-2 border-dashed border-red-500 py-1 text-center text-sm font-bold uppercase text-red-600">

@@ -163,11 +163,6 @@ export default async function CampaignPage({ params }: Params) {
 
       {/* Inline order form */}
       <div className="bg-white" id="order-form">
-        <div className="border-b border-gray-100 bg-red-600 px-4 py-3 text-center">
-          <p className="text-sm font-bold uppercase tracking-wide text-white">
-            ĐẶT HÀNG NGAY — NHẬN NGAY ƯU ĐÃI
-          </p>
-        </div>
         <CampaignOrderForm products={campaign.products} shippingRules={shippingRules} />
       </div>
 
