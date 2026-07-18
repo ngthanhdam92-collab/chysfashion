@@ -50,6 +50,16 @@ export default async function RootLayout({
         )}
       </head>
       <body className="min-h-full flex flex-col font-sans">
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=GT-MB8XH75V"
+          strategy="afterInteractive"
+        />
+        <Script id="gtag-init" strategy="afterInteractive">{`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'GT-MB8XH75V');
+        `}</Script>
         <PixelScripts
           fbPixelId={pixelSettings.fbPixelId || undefined}
           ttPixelId={pixelSettings.ttPixelId || undefined}
