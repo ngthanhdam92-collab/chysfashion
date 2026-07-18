@@ -6,7 +6,13 @@ import type { Product } from "@/lib/types";
 import { createOrder } from "@/lib/orders";
 import { calcShippingFee, type ShippingRule } from "@/lib/shipping";
 import { trackPurchase } from "@/lib/pixel-events";
-import { parseSizeChartData, recommendSizeFromData } from "@/lib/size-chart";
+import {
+  parseSizeChartData,
+  recommendSizeFromData,
+  DEFAULT_SIZE_CHART,
+  DEFAULT_COLUMNS,
+  type SizeChartData,
+} from "@/lib/size-chart";
 
 interface Props {
   products: Product[];
@@ -36,10 +42,19 @@ function InlineSizeGuide({ products }: { products: Product[] }) {
   const [result, setResult] = useState<string | null>(null);
   const [calculated, setCalculated] = useState(false);
 
-  const product = products.find((p) => p.sizes.length > 0 && p.sizeChart && Object.keys(p.sizeChart).length > 0);
+  const product = products.find((p) => p.sizes.length > 0);
   if (!product) return null;
 
-  const chartData = parseSizeChartData(product.sizeChart ?? {});
+  let chartData: SizeChartData;
+  if (product.sizeChart && Object.keys(product.sizeChart).length > 0) {
+    chartData = parseSizeChartData(product.sizeChart);
+  } else {
+    const rows: Record<string, Record<string, number>> = {};
+    for (const s of product.sizes) {
+      if (DEFAULT_SIZE_CHART[s]) rows[s] = DEFAULT_SIZE_CHART[s] as unknown as Record<string, number>;
+    }
+    chartData = { columns: DEFAULT_COLUMNS, rows };
+  }
   const { columns, rows } = chartData;
   const chartSizes = product.sizes.filter((s) => rows[s]);
   if (chartSizes.length === 0) return null;
