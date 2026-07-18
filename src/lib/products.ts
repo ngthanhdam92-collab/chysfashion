@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { Product, ProductVariant } from "./types";
 import { createPublicClient } from "./supabase/public";
 import type { SizeChartRow } from "./size-chart";
@@ -89,34 +90,43 @@ export interface ProductFilters {
   hasDiscount?: boolean;
 }
 
+const _getAllProducts = unstable_cache(
+  async (filtersStr: string): Promise<Product[]> => {
+    const filters: ProductFilters | undefined = filtersStr ? JSON.parse(filtersStr) : undefined;
+    const supabase = createPublicClient();
+    let query = supabase.from("products").select("*").order("sort_order", { ascending: true }).order("created_at", { ascending: false });
+
+    if (filters?.gender) {
+      query = query.in("gender", [filters.gender, "unisex"]);
+    }
+    if (filters?.category) {
+      query = query.eq("category", filters.category);
+    }
+    if (filters?.isNew) {
+      query = query.eq("is_new", true);
+    }
+    if (filters?.isBestSeller) {
+      query = query.eq("is_bestseller", true);
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      console.error("getAllProducts error:", error.message);
+      return [];
+    }
+
+    let rows = (data as ProductRow[]).map((r) => mapRow(r));
+    if (filters?.hasDiscount) {
+      rows = rows.filter((p) => !!p.compareAtPrice);
+    }
+    return rows;
+  },
+  ["products-list"],
+  { tags: ["products"], revalidate: 60 }
+);
+
 export async function getAllProducts(filters?: ProductFilters): Promise<Product[]> {
-  const supabase = createPublicClient();
-  let query = supabase.from("products").select("*").order("sort_order", { ascending: true }).order("created_at", { ascending: false });
-
-  if (filters?.gender) {
-    query = query.in("gender", [filters.gender, "unisex"]);
-  }
-  if (filters?.category) {
-    query = query.eq("category", filters.category);
-  }
-  if (filters?.isNew) {
-    query = query.eq("is_new", true);
-  }
-  if (filters?.isBestSeller) {
-    query = query.eq("is_bestseller", true);
-  }
-
-  const { data, error } = await query;
-  if (error) {
-    console.error("getAllProducts error:", error.message);
-    return [];
-  }
-
-  let rows = (data as ProductRow[]).map((r) => mapRow(r));
-  if (filters?.hasDiscount) {
-    rows = rows.filter((p) => !!p.compareAtPrice);
-  }
-  return rows;
+  return _getAllProducts(filters ? JSON.stringify(filters) : "");
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | undefined> {

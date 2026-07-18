@@ -1,17 +1,23 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "./supabase/server";
-import { getHomepageSettings } from "./homepage-settings";
 
 async function upsert(patch: Record<string, unknown>) {
-  const current = await getHomepageSettings();
-  const merged = { ...current, ...patch };
   const supabase = await createClient();
+  // Read directly from DB to avoid stale cache data in merge
+  const { data } = await supabase
+    .from("homepage_settings")
+    .select("value")
+    .eq("key", "main")
+    .maybeSingle();
+  const current = (data?.value as Record<string, unknown>) ?? {};
+  const merged = { ...current, ...patch };
   const { error } = await supabase
     .from("homepage_settings")
     .upsert({ key: "main", value: merged }, { onConflict: "key" });
   if (error) return { error: error.message };
+  revalidateTag("homepage", {});
   revalidatePath("/");
   revalidatePath("/admin/homepage");
   return { success: true };

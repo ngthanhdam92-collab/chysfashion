@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { createPublicClient } from "./supabase/public";
 import { createClient } from "./supabase/server";
 import { getAllProducts } from "./products";
@@ -57,23 +58,31 @@ function mapRow(row: CampaignRow): Campaign {
   };
 }
 
+const _getCampaignBySlug = unstable_cache(
+  async (slug: string): Promise<CampaignWithProducts | null> => {
+    const supabase = createPublicClient();
+    const { data, error } = await supabase
+      .from("campaigns")
+      .select("*")
+      .eq("slug", slug)
+      .eq("is_active", true)
+      .maybeSingle();
+    if (error || !data) return null;
+
+    const campaign = mapRow(data as CampaignRow);
+    const allProducts = await getAllProducts();
+    const products = campaign.productIds
+      .map((id) => allProducts.find((p) => p.id === id))
+      .filter(Boolean) as Product[];
+
+    return { ...campaign, products };
+  },
+  ["campaign-by-slug"],
+  { tags: ["campaigns"], revalidate: 60 }
+);
+
 export async function getCampaignBySlug(slug: string): Promise<CampaignWithProducts | null> {
-  const supabase = createPublicClient();
-  const { data, error } = await supabase
-    .from("campaigns")
-    .select("*")
-    .eq("slug", slug)
-    .eq("is_active", true)
-    .maybeSingle();
-  if (error || !data) return null;
-
-  const campaign = mapRow(data as CampaignRow);
-  const allProducts = await getAllProducts();
-  const products = campaign.productIds
-    .map((id) => allProducts.find((p) => p.id === id))
-    .filter(Boolean) as Product[];
-
-  return { ...campaign, products };
+  return _getCampaignBySlug(slug);
 }
 
 export async function getAllCampaigns(): Promise<Campaign[]> {

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "./supabase/server";
 
 export async function createFlashSale(data: {
@@ -18,6 +18,7 @@ export async function createFlashSale(data: {
     is_active: true,
   });
   if (error) return { error: error.message };
+  revalidateTag("flash-sales", {});
   revalidatePath("/admin/flash-sales");
   revalidatePath("/");
   return { success: true };
@@ -38,6 +39,7 @@ export async function updateFlashSale(
     })
     .eq("id", id);
   if (error) return { error: error.message };
+  revalidateTag("flash-sales", {});
   revalidatePath("/admin/flash-sales");
   revalidatePath("/");
   return { success: true };
@@ -47,6 +49,7 @@ export async function deleteFlashSale(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("flash_sales").delete().eq("id", id);
   if (error) return { error: error.message };
+  revalidateTag("flash-sales", {});
   revalidatePath("/admin/flash-sales");
   revalidatePath("/");
   return { success: true };
@@ -59,6 +62,7 @@ export async function toggleFlashSale(id: string, isActive: boolean) {
     .update({ is_active: isActive })
     .eq("id", id);
   if (error) return { error: error.message };
+  revalidateTag("flash-sales", {});
   revalidatePath("/admin/flash-sales");
   revalidatePath("/");
   return { success: true };
@@ -73,6 +77,7 @@ export async function setFlashSaleProducts(flashSaleId: string, productIds: stri
     );
     if (error) return { error: error.message };
   }
+  revalidateTag("flash-sales", {});
   revalidatePath("/admin/flash-sales");
   revalidatePath("/");
   return { success: true };

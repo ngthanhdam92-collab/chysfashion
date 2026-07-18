@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "./supabase/server";
 import { slugify } from "./slugify";
 
@@ -20,6 +20,7 @@ export async function createCategory(formData: FormData): Promise<ActionResult> 
     return { error: error.message };
   }
 
+  revalidateTag("categories", {});
   revalidatePath("/admin/categories");
   revalidatePath("/san-pham");
   return { success: true };
@@ -36,6 +37,7 @@ export async function updateCategory(id: string, formData: FormData): Promise<Ac
     return { error: error.message };
   }
 
+  revalidateTag("categories", {});
   revalidatePath("/admin/categories");
   revalidatePath("/san-pham");
   return { success: true };
@@ -50,6 +52,7 @@ export async function updateCategoryImage(id: string, imageUrl: string): Promise
 
   if (error) return { error: error.message };
 
+  revalidateTag("categories", {});
   revalidatePath("/admin/categories");
   revalidatePath("/");
   revalidatePath("/san-pham");
@@ -68,6 +71,7 @@ export async function updateCategoryGender(
 
   if (error) return { error: error.message };
 
+  revalidateTag("categories", {});
   revalidatePath("/admin/categories");
   revalidatePath("/");
   return { success: true };
@@ -85,6 +89,7 @@ export async function updateCategoryBannerImage(
 
   if (error) return { error: error.message };
 
+  revalidateTag("categories", {});
   revalidatePath("/admin/homepage");
   revalidatePath("/");
   return { success: true };
@@ -98,6 +103,7 @@ export async function deleteCategory(id: string): Promise<ActionResult> {
     return { error: error.message };
   }
 
+  revalidateTag("categories", {});
   revalidatePath("/admin/categories");
   revalidatePath("/san-pham");
   return { success: true };

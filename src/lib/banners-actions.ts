@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "./supabase/server";
 
@@ -24,6 +24,7 @@ export async function createBanner(formData: FormData) {
   const { error } = await supabase.from("banners").insert(payload);
   if (error) return { error: error.message };
 
+  revalidateTag("banners", {});
   revalidatePath("/admin/banners");
   revalidatePath("/");
   redirect("/admin/banners");
@@ -37,6 +38,7 @@ export async function updateBanner(id: string, formData: FormData) {
   const { error } = await supabase.from("banners").update(payload).eq("id", id);
   if (error) return { error: error.message };
 
+  revalidateTag("banners", {});
   revalidatePath("/admin/banners");
   revalidatePath("/");
   redirect("/admin/banners");
@@ -46,6 +48,7 @@ export async function deleteBanner(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("banners").delete().eq("id", id);
   if (error) return { error: error.message };
+  revalidateTag("banners", {});
   revalidatePath("/admin/banners");
   revalidatePath("/");
   return { success: true };

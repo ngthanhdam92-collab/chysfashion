@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { createPublicClient } from "./supabase/public";
 
 export interface Banner {
@@ -49,17 +50,21 @@ export async function getAllBanners(): Promise<Banner[]> {
   return (data as BannerRow[]).map(mapRow);
 }
 
-export async function getActiveBanners(): Promise<Banner[]> {
-  const supabase = createPublicClient();
-  const { data, error } = await supabase
-    .from("banners")
-    .select("*")
-    .eq("is_active", true)
-    .order("position", { ascending: true })
-    .order("created_at", { ascending: false });
-  if (error) return [];
-  return (data as BannerRow[]).map(mapRow);
-}
+export const getActiveBanners = unstable_cache(
+  async (): Promise<Banner[]> => {
+    const supabase = createPublicClient();
+    const { data, error } = await supabase
+      .from("banners")
+      .select("*")
+      .eq("is_active", true)
+      .order("position", { ascending: true })
+      .order("created_at", { ascending: false });
+    if (error) return [];
+    return (data as BannerRow[]).map(mapRow);
+  },
+  ["banners-active"],
+  { tags: ["banners"], revalidate: 300 }
+);
 
 export async function getBannerById(id: string): Promise<Banner | null> {
   const supabase = createPublicClient();

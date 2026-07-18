@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "./supabase/server";
 import { ProductColor } from "./types";
@@ -144,6 +144,7 @@ export async function createProduct(formData: FormData) {
     return { error: error.message };
   }
 
+  revalidateTag("products", {});
   revalidatePath("/", "layout");
   revalidatePath("/admin/products");
   redirect("/admin/products");
@@ -161,6 +162,7 @@ export async function updateProduct(id: string, formData: FormData) {
     return { error: error.message };
   }
 
+  revalidateTag("products", {});
   revalidatePath("/", "layout"); // revalidate all pages sharing root layout
   revalidatePath(`/san-pham/${slug}`);
   revalidatePath("/admin/products");
@@ -206,6 +208,7 @@ export async function updateVariantStock(
     if (error) return { error: error.message };
   }
 
+  revalidateTag("products", {});
   revalidatePath("/admin");
   revalidatePath("/admin/products");
   return {};
@@ -218,6 +221,7 @@ export async function reorderProducts(orderedIds: string[]) {
       supabase.from("products").update({ sort_order: idx + 1 }).eq("id", id)
     )
   );
+  revalidateTag("products", {});
   revalidatePath("/admin/products");
   revalidatePath("/san-pham");
 }
@@ -239,6 +243,7 @@ export async function moveProductUp(id: string) {
   await supabase.from("products").update({ sort_order: above.sort_order }).eq("id", current.id);
   await supabase.from("products").update({ sort_order: current.sort_order }).eq("id", above.id);
 
+  revalidateTag("products", {});
   revalidatePath("/admin/products");
   revalidatePath("/san-pham");
 }
@@ -260,6 +265,7 @@ export async function moveProductDown(id: string) {
   await supabase.from("products").update({ sort_order: below.sort_order }).eq("id", current.id);
   await supabase.from("products").update({ sort_order: current.sort_order }).eq("id", below.id);
 
+  revalidateTag("products", {});
   revalidatePath("/admin/products");
   revalidatePath("/san-pham");
 }
@@ -270,6 +276,7 @@ export async function deleteProduct(id: string) {
   if (error) {
     return { error: error.message };
   }
+  revalidateTag("products", {});
   revalidatePath("/san-pham");
   revalidatePath("/admin/products");
   return { success: true };
@@ -301,6 +308,7 @@ export async function updateVariantImages(
 
   if (error) return { error: error.message };
 
+  revalidateTag("products", {});
   revalidatePath("/", "layout");
   revalidatePath(`/san-pham/${data.slug}`);
   revalidatePath("/admin/products");
@@ -416,6 +424,7 @@ export async function createBulkProducts(formData: FormData) {
   const { error } = await supabase.from("products").insert(payloads);
   if (error) return { error: error.message };
 
+  revalidateTag("products", {});
   revalidatePath("/", "layout");
   revalidatePath("/admin/products");
   redirect("/admin/products");
@@ -432,6 +441,7 @@ export async function updateProductFlag(
     .update({ [flag]: value })
     .eq("id", id);
   if (error) return { error: error.message };
+  revalidateTag("products", {});
   revalidatePath("/");
   revalidatePath("/admin/homepage");
   return { success: true };

@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { createPublicClient } from "./supabase/public";
 
 export interface AnnouncementBar {
@@ -69,12 +70,16 @@ function parse(raw: unknown): HomepageSettings {
   };
 }
 
-export async function getHomepageSettings(): Promise<HomepageSettings> {
-  const supabase = createPublicClient();
-  const { data } = await supabase
-    .from("homepage_settings")
-    .select("value")
-    .eq("key", "main")
-    .maybeSingle();
-  return parse(data?.value);
-}
+export const getHomepageSettings = unstable_cache(
+  async (): Promise<HomepageSettings> => {
+    const supabase = createPublicClient();
+    const { data } = await supabase
+      .from("homepage_settings")
+      .select("value")
+      .eq("key", "main")
+      .maybeSingle();
+    return parse(data?.value);
+  },
+  ["homepage-settings"],
+  { tags: ["homepage"], revalidate: 300 }
+);

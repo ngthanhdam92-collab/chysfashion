@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { createPublicClient } from "./supabase/public";
 
 export interface StoryProductLink {
@@ -29,15 +30,19 @@ function mapRow(r: Record<string, unknown>): Story {
   };
 }
 
-export async function getActiveStories(): Promise<Story[]> {
-  const supabase = createPublicClient();
-  const { data } = await supabase
-    .from("customer_stories")
-    .select("*")
-    .eq("is_active", true)
-    .order("position", { ascending: true });
-  return (data ?? []).map(mapRow);
-}
+export const getActiveStories = unstable_cache(
+  async (): Promise<Story[]> => {
+    const supabase = createPublicClient();
+    const { data } = await supabase
+      .from("customer_stories")
+      .select("*")
+      .eq("is_active", true)
+      .order("position", { ascending: true });
+    return (data ?? []).map(mapRow);
+  },
+  ["stories-active"],
+  { tags: ["stories"], revalidate: 300 }
+);
 
 export async function getAllStories(): Promise<Story[]> {
   const { createClient } = await import("./supabase/server");

@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { createPublicClient } from "./supabase/public";
 import { createClient } from "./supabase/server";
 
@@ -37,32 +38,36 @@ function mapRow(row: FlashSaleRow): FlashSale {
   };
 }
 
-export async function getActiveFlashSale(): Promise<FlashSaleWithProducts | null> {
-  const supabase = createPublicClient();
-  const now = new Date().toISOString();
+export const getActiveFlashSale = unstable_cache(
+  async (): Promise<FlashSaleWithProducts | null> => {
+    const supabase = createPublicClient();
+    const now = new Date().toISOString();
 
-  const { data: sale } = await supabase
-    .from("flash_sales")
-    .select("*")
-    .eq("is_active", true)
-    .lte("start_time", now)
-    .gte("end_time", now)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    const { data: sale } = await supabase
+      .from("flash_sales")
+      .select("*")
+      .eq("is_active", true)
+      .lte("start_time", now)
+      .gte("end_time", now)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-  if (!sale) return null;
+    if (!sale) return null;
 
-  const { data: links } = await supabase
-    .from("flash_sale_products")
-    .select("product_id")
-    .eq("flash_sale_id", sale.id);
+    const { data: links } = await supabase
+      .from("flash_sale_products")
+      .select("product_id")
+      .eq("flash_sale_id", sale.id);
 
-  return {
-    ...mapRow(sale as FlashSaleRow),
-    productIds: (links ?? []).map((l: { product_id: string }) => l.product_id),
-  };
-}
+    return {
+      ...mapRow(sale as FlashSaleRow),
+      productIds: (links ?? []).map((l: { product_id: string }) => l.product_id),
+    };
+  },
+  ["flash-sale-active"],
+  { tags: ["flash-sales"], revalidate: 60 }
+);
 
 export async function getAllFlashSales(): Promise<FlashSale[]> {
   const supabase = await createClient();

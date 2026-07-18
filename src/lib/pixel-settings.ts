@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { createPublicClient } from "./supabase/public";
 
 export interface PixelSettings {
@@ -18,12 +19,16 @@ function parse(raw: unknown): PixelSettings {
   };
 }
 
-export async function getPixelSettings(): Promise<PixelSettings> {
-  const supabase = createPublicClient();
-  const { data } = await supabase
-    .from("homepage_settings")
-    .select("value")
-    .eq("key", "pixel_settings")
-    .maybeSingle();
-  return parse(data?.value);
-}
+export const getPixelSettings = unstable_cache(
+  async (): Promise<PixelSettings> => {
+    const supabase = createPublicClient();
+    const { data } = await supabase
+      .from("homepage_settings")
+      .select("value")
+      .eq("key", "pixel_settings")
+      .maybeSingle();
+    return parse(data?.value);
+  },
+  ["pixel-settings"],
+  { tags: ["pixel"], revalidate: 3600 }
+);

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "./supabase/server";
 
 function slugify(s: string) {
@@ -44,6 +44,7 @@ export async function createCampaign(formData: FormData) {
   });
 
   if (error) return { error: error.message };
+  revalidateTag("campaigns", {});
   revalidatePath("/admin/campaigns");
   return { success: true };
 }
@@ -77,6 +78,7 @@ export async function updateCampaign(id: string, formData: FormData) {
   }).eq("id", id);
 
   if (error) return { error: error.message };
+  revalidateTag("campaigns", {});
   revalidatePath("/admin/campaigns");
   revalidatePath(`/khuyen-mai/${slug}`);
   return { success: true };
@@ -86,6 +88,7 @@ export async function deleteCampaign(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("campaigns").delete().eq("id", id);
   if (error) return { error: error.message };
+  revalidateTag("campaigns", {});
   revalidatePath("/admin/campaigns");
   return { success: true };
 }
@@ -97,6 +100,7 @@ export async function toggleCampaign(id: string, isActive: boolean) {
     .update({ is_active: isActive })
     .eq("id", id);
   if (error) return { error: error.message };
+  revalidateTag("campaigns", {});
   revalidatePath("/admin/campaigns");
   return { success: true };
 }

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "./supabase/server";
 import type { StoryProductLink } from "./stories";
 
@@ -26,6 +26,7 @@ export async function createStory(formData: FormData) {
   });
 
   if (error) return { error: error.message };
+  revalidateTag("stories", {});
   revalidatePath("/");
   revalidatePath("/admin/stories");
   return { success: true };
@@ -56,6 +57,7 @@ export async function updateStory(id: string, formData: FormData) {
     .eq("id", id);
 
   if (error) return { error: error.message };
+  revalidateTag("stories", {});
   revalidatePath("/");
   revalidatePath("/admin/stories");
   return { success: true };
@@ -68,6 +70,7 @@ export async function deleteStory(id: string) {
     .delete()
     .eq("id", id);
   if (error) return { error: error.message };
+  revalidateTag("stories", {});
   revalidatePath("/");
   revalidatePath("/admin/stories");
   return { success: true };

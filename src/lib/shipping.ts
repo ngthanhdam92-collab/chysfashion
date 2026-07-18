@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { createPublicClient } from "./supabase/public";
 
 export interface ShippingRule {
@@ -26,15 +27,19 @@ function mapRow(r: ShippingRuleRow): ShippingRule {
   };
 }
 
-export async function getShippingRules(): Promise<ShippingRule[]> {
-  const supabase = createPublicClient();
-  const { data, error } = await supabase
-    .from("shipping_rules")
-    .select("*")
-    .order("position", { ascending: true });
-  if (error || !data) return [];
-  return (data as ShippingRuleRow[]).map(mapRow);
-}
+export const getShippingRules = unstable_cache(
+  async (): Promise<ShippingRule[]> => {
+    const supabase = createPublicClient();
+    const { data, error } = await supabase
+      .from("shipping_rules")
+      .select("*")
+      .order("position", { ascending: true });
+    if (error || !data) return [];
+    return (data as ShippingRuleRow[]).map(mapRow);
+  },
+  ["shipping-rules"],
+  { tags: ["shipping"], revalidate: 300 }
+);
 
 export function calcShippingFee(subtotal: number, rules: ShippingRule[]): number {
   if (rules.length === 0) return subtotal >= 500000 ? 0 : 30000;

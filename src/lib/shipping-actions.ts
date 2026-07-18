@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "./supabase/server";
 
 export interface ShippingRuleInput {
@@ -30,6 +30,7 @@ export async function saveShippingRules(rules: ShippingRuleInput[]) {
     if (insErr) return { error: insErr.message };
   }
 
+  revalidateTag("shipping", {});
   revalidatePath("/admin/shipping");
   return { success: true };
 }
