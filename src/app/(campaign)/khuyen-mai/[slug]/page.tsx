@@ -71,7 +71,7 @@ export default async function CampaignPage({ params }: Params) {
             {/* Diagonal stripe texture */}
             <div className="absolute inset-0 opacity-10"
               style={{ backgroundImage: "repeating-linear-gradient(45deg, #fff 0, #fff 1px, transparent 0, transparent 50%)", backgroundSize: "8px 8px" }} />
-            <p className="relative text-[13px] font-extrabold uppercase tracking-[0.12em] text-white">
+            <p className="relative text-[16px] font-extrabold uppercase tracking-[0.12em] text-white">
               {campaign.bannerMessage}
             </p>
           </div>
