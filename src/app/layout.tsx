@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Be_Vietnam_Pro } from "next/font/google";
+import { Playfair_Display, Be_Vietnam_Pro, Barlow_Condensed } from "next/font/google";
 import Script from "next/script";
 import { PixelScripts } from "@/components/pixel-scripts";
 import { getPixelSettings } from "@/lib/pixel-settings";
@@ -13,6 +13,12 @@ const playfair = Playfair_Display({
 const beVietnamPro = Be_Vietnam_Pro({
   variable: "--font-vietnam",
   weight: ["300", "400", "500", "600", "700"],
+  subsets: ["latin", "vietnamese"],
+});
+
+const barlowCondensed = Barlow_Condensed({
+  variable: "--font-barlow-condensed",
+  weight: ["700", "800"],
   subsets: ["latin", "vietnamese"],
 });
 
@@ -40,7 +46,7 @@ export default async function RootLayout({
   return (
     <html
       lang="vi"
-      className={`${playfair.variable} ${beVietnamPro.variable} h-full antialiased`}
+      className={`${playfair.variable} ${beVietnamPro.variable} ${barlowCondensed.variable} h-full antialiased`}
     >
       <head>
         <Script src="/polyfills.js" strategy="beforeInteractive" />
