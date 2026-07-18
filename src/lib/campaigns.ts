@@ -75,7 +75,24 @@ const _getCampaignBySlug = unstable_cache(
       .map((id) => allProducts.find((p) => p.id === id))
       .filter(Boolean) as Product[];
 
-    return { ...campaign, products };
+    // Batch-fetch size charts for campaign products (getAllProducts skips this for perf)
+    const chartIds = [...new Set(products.map((p) => p.sizeChartId).filter(Boolean))] as string[];
+    const chartMap: Record<string, Record<string, unknown>> = {};
+    if (chartIds.length > 0) {
+      const { data: charts } = await supabase
+        .from("size_charts")
+        .select("id, data")
+        .in("id", chartIds);
+      for (const chart of (charts ?? [])) {
+        chartMap[chart.id] = chart.data as Record<string, unknown>;
+      }
+    }
+    const productsWithCharts = products.map((p) => ({
+      ...p,
+      sizeChart: (p.sizeChartId ? chartMap[p.sizeChartId] : undefined) ?? {},
+    }));
+
+    return { ...campaign, products: productsWithCharts };
   },
   ["campaign-by-slug"],
   { tags: ["campaigns"], revalidate: 60 }
