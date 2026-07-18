@@ -38,12 +38,42 @@ export default async function CampaignPage({ params }: Params) {
     <div className="mx-auto max-w-md">
 
       {/* Header */}
-      <div className="bg-[#1a1a2e] px-4 py-5 text-center text-white">
-        <p className="text-xs font-semibold tracking-[0.2em] uppercase opacity-70">CHYS FASHION</p>
-        <h1 className="mt-1 text-xl font-bold leading-tight">{campaign.title}</h1>
+      <div className="relative overflow-hidden bg-[#0c0c0c]">
+        {/* Red glow from top-center */}
+        <div className="absolute inset-x-0 top-0 h-40 bg-[radial-gradient(ellipse_70%_60%_at_50%_0%,rgba(185,28,28,0.35),transparent)]" />
+        {/* Top accent line */}
+        <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-red-600 to-transparent" />
+
+        <div className="relative px-5 pb-0 pt-7 text-center text-white">
+          {/* Brand with decorative lines */}
+          <div className="flex items-center justify-center gap-3">
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent to-red-600/60" />
+            <p className="text-[9px] font-bold tracking-[0.4em] text-red-400 uppercase">CHYS FASHION</p>
+            <div className="h-px flex-1 bg-gradient-to-l from-transparent to-red-600/60" />
+          </div>
+
+          {/* Title */}
+          <h1 className="mt-3 text-[1.6rem] font-black uppercase leading-[1.15] tracking-tight text-white drop-shadow-sm">
+            {campaign.title}
+          </h1>
+
+          {/* Diamond separator */}
+          <div className="mt-3 flex items-center justify-center gap-2">
+            <div className="h-px w-10 bg-white/15" />
+            <div className="h-[5px] w-[5px] rotate-45 bg-red-500" />
+            <div className="h-px w-10 bg-white/15" />
+          </div>
+        </div>
+
+        {/* Banner message — full-width bold strip */}
         {campaign.bannerMessage && (
-          <div className="mx-auto mt-3 max-w-xs rounded border border-white/20 bg-white/10 px-3 py-2 text-sm leading-snug">
-            {campaign.bannerMessage}
+          <div className="relative mt-5 overflow-hidden bg-red-700 px-4 py-3.5 text-center">
+            {/* Diagonal stripe texture */}
+            <div className="absolute inset-0 opacity-10"
+              style={{ backgroundImage: "repeating-linear-gradient(45deg, #fff 0, #fff 1px, transparent 0, transparent 50%)", backgroundSize: "8px 8px" }} />
+            <p className="relative text-[13px] font-extrabold uppercase tracking-[0.12em] text-white">
+              {campaign.bannerMessage}
+            </p>
           </div>
         )}
       </div>
