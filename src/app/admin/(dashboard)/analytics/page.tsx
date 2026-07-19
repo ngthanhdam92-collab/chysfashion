@@ -9,6 +9,7 @@ import { Order, OrderItem } from "@/lib/types";
 import Link from "next/link";
 import { TrendingUp, TrendingDown, AlertCircle, Globe, ShoppingCart, Package, CreditCard } from "lucide-react";
 import { AnalyticsPeriodPicker } from "@/components/admin/analytics-period-picker";
+import { GaRealtimeWidget } from "@/components/admin/ga-realtime-widget";
 
 type Period = "today" | "yesterday" | "7d" | "custom";
 type View   = "revenue" | "traffic";
@@ -467,6 +468,8 @@ export default async function AnalyticsPage({
       ════════════════════════════════════════════════════════════════════════ */}
       {view === "traffic" && traffic && (
         <div className="mt-6">
+          <GaRealtimeWidget />
+
           {traffic.uniqueSessions === 0 && (
             <div className="mb-5 flex items-start gap-2.5 rounded border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
               <AlertCircle size={16} className="mt-0.5 shrink-0" />
