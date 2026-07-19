@@ -1,11 +1,11 @@
-import { BetaAnalyticsDataClient } from "@google-analytics/data";
+import { AnalyticsDataClient } from "@google-analytics/data";
 import { NextResponse } from "next/server";
 
 function getClient() {
   const raw = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
   if (!raw) throw new Error("GOOGLE_SERVICE_ACCOUNT_KEY not set");
   const credentials = JSON.parse(raw);
-  return new BetaAnalyticsDataClient({ credentials });
+  return new AnalyticsDataClient({ credentials });
 }
 
 export async function GET() {
