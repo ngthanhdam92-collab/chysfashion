@@ -46,7 +46,8 @@ export async function GET() {
 
     return NextResponse.json({ activeUsers: totalActive, topPages, topSources });
   } catch (err) {
-    console.error("GA realtime error:", err);
-    return NextResponse.json({ error: "Failed to fetch realtime data" }, { status: 500 });
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("GA realtime error:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
