@@ -16,7 +16,6 @@ export async function GET() {
     const client = getClient();
     const [response] = await client.runRealtimeReport({
       property: `properties/${propertyId}`,
-      dimensions: [{ name: "pagePath" }, { name: "medium" }],
       metrics: [{ name: "activeUsers" }],
     });
 
