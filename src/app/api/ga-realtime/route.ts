@@ -28,7 +28,7 @@ export async function GET() {
     const url = `https://analyticsdata.googleapis.com/v1beta/properties/${propertyId}:runRealtimeReport`;
     const body = {
       metrics: [{ name: "activeUsers" }],
-      dimensions: [{ name: "pagePath" }],
+      dimensions: [{ name: "unifiedScreenName" }, { name: "country" }],
     };
 
     const res = await fetch(url, {
