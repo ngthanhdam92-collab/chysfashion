@@ -65,6 +65,7 @@ export default async function RootLayout({
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
           gtag('config', 'GT-MB8XH75V');
+          gtag('config', 'G-NB1QTZWJ2P');
         `}</Script>
         <PixelScripts
           fbPixelId={pixelSettings.fbPixelId || undefined}
