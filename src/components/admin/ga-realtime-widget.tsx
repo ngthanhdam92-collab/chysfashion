@@ -81,14 +81,14 @@ export function GaRealtimeWidget() {
               </div>
             )}
 
-            {/* Top sources */}
+            {/* Top countries */}
             {data.topSources.length > 0 && (
               <div>
-                <p className="mb-2 text-[11px] font-semibold uppercase tracking-label text-muted">Nguồn truy cập</p>
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-label text-muted">Quốc gia</p>
                 <div className="space-y-1.5">
                   {data.topSources.map((s) => (
                     <div key={s.source} className="flex items-center justify-between gap-2">
-                      <span className="text-xs text-ink capitalize">{s.source === "(none)" ? "Trực tiếp" : s.source}</span>
+                      <span className="text-xs text-ink">{s.source}</span>
                       <span className="shrink-0 text-xs font-semibold text-ink">{s.users}</span>
                     </div>
                   ))}

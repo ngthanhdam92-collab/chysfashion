@@ -50,10 +50,13 @@ export async function GET() {
     const totalActive = rows.reduce((sum, row) => sum + parseInt(row.metricValues?.[0]?.value ?? "0", 10), 0);
 
     const pageMap: Record<string, number> = {};
+    const countryMap: Record<string, number> = {};
     for (const row of rows) {
       const page = row.dimensionValues?.[0]?.value ?? "(unknown)";
+      const country = row.dimensionValues?.[1]?.value ?? "(unknown)";
       const count = parseInt(row.metricValues?.[0]?.value ?? "0", 10);
       pageMap[page] = (pageMap[page] ?? 0) + count;
+      countryMap[country] = (countryMap[country] ?? 0) + count;
     }
 
     const topPages = Object.entries(pageMap)
@@ -61,7 +64,12 @@ export async function GET() {
       .slice(0, 5)
       .map(([page, users]) => ({ page, users }));
 
-    return NextResponse.json({ activeUsers: totalActive, topPages, topSources: [] });
+    const topSources = Object.entries(countryMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([source, users]) => ({ source, users }));
+
+    return NextResponse.json({ activeUsers: totalActive, topPages, topSources });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("GA realtime error:", message);
