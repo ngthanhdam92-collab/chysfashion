@@ -20,7 +20,7 @@ export default function ContactPage() {
       <div className="mt-6 space-y-4">
         <div className="flex items-center gap-3">
           <Phone size={18} className="text-gold-dark" />
-          <span>1900 xxxx (7:30 – 21:30, tất cả các ngày trong tuần)</span>
+          <span>0986 959 980 (7:30 – 21:30, tất cả các ngày trong tuần)</span>
         </div>
         <div className="flex items-center gap-3">
           <Mail size={18} className="text-gold-dark" />
@@ -28,7 +28,7 @@ export default function ContactPage() {
         </div>
         <div className="flex items-center gap-3">
           <MapPin size={18} className="text-gold-dark" />
-          <span>TP. Hồ Chí Minh, Việt Nam</span>
+          <span>172 Ngõ 172 Nguyễn Văn Trỗi, Phủ Lý, Hà Nam</span>
         </div>
       </div>
     </SimplePage>
