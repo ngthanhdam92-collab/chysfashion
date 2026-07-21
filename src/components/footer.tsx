@@ -75,7 +75,7 @@ export function Footer() {
             </div>
             <div className="mt-5">
               <p className="text-[11px] tracking-label uppercase text-paper mb-2">Hotline</p>
-              <p className="text-sm text-stone">1800-xxxx (miễn phí)</p>
+              <p className="text-sm text-stone">0986 959 980</p>
               <p className="text-xs text-stone/60 mt-0.5">T2–T7 · 8:00–21:00</p>
             </div>
           </div>
