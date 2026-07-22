@@ -96,7 +96,7 @@ export function HomepageCollectionBanners({ categories, selectedValues }: Props)
       {SLOTS.map((_, idx) => {
         const catValue = slots[idx];
         const cat = getCat(catValue);
-        const imgUrl = catValue ? (bannerImages[catValue] || cat?.imageUrl || "") : "";
+        const imgUrl = catValue ? (bannerImages[catValue] || "") : "";
         const isUploading = uploading[idx];
         const err = uploadErrors[idx];
 
