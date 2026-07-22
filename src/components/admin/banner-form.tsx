@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Upload, X } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import type { Banner } from "@/lib/banners";
 import type { Category } from "@/lib/categories";
 import type { Product } from "@/lib/types";
@@ -56,17 +55,16 @@ export function BannerForm({ banner, categories = [], products = [], action }: B
     if (!file) return;
     setUploading(true);
     setError(null);
-    const supabase = createClient();
     const ext = file.name.split(".").pop();
-    const path = `banners/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error: uploadError } = await supabase.storage
-      .from("product-media")
-      .upload(path, file);
-    if (uploadError) {
-      setError(`Không thể tải ảnh: ${uploadError.message}`);
+    const fd = new FormData();
+    fd.set("file", file);
+    fd.set("path", `banners/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`);
+    const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+    const json = await res.json();
+    if (!res.ok || json.error) {
+      setError(`Không thể tải ảnh: ${json.error ?? `HTTP ${res.status}`}`);
     } else {
-      const { data } = supabase.storage.from("product-media").getPublicUrl(path);
-      setImageUrl(data.publicUrl);
+      setImageUrl(json.url);
     }
     setUploading(false);
     e.target.value = "";
@@ -103,7 +101,7 @@ export function BannerForm({ banner, categories = [], products = [], action }: B
         {imageUrl ? (
           <div className="relative">
             <div className="relative aspect-[16/6] w-full overflow-hidden rounded border border-line bg-cream">
-              <Image src={imageUrl} alt="Banner preview" fill className="object-cover" />
+              <Image src={imageUrl} alt="Banner preview" fill unoptimized className="object-cover" />
             </div>
             <button
               type="button"

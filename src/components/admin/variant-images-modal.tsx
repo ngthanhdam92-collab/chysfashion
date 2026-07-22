@@ -121,7 +121,7 @@ export function VariantImagesModal({ productId, productName, colors, onClose }: 
                   {(images[color.name] ?? []).map((url) => (
                     <div key={url} className="group relative h-20 w-20 shrink-0">
                       <div className="relative h-20 w-20 overflow-hidden border border-line">
-                        <Image src={url} alt="" fill sizes="80px" className="object-cover" />
+                        <Image src={url} alt="" fill unoptimized sizes="80px" className="object-cover" />
                       </div>
                       <button
                         type="button"

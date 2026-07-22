@@ -350,7 +350,7 @@ export function PromotionsClient({
                               <input type="checkbox" checked={checked} onChange={() => toggleProduct(prod.slug)} className="h-3.5 w-3.5 shrink-0" />
                               {prod.image ? (
                                 <div className="relative h-9 w-7 shrink-0 overflow-hidden rounded bg-cream">
-                                  <Image src={prod.image} alt={prod.name} fill sizes="28px" className="object-cover" />
+                                  <Image src={prod.image} alt={prod.name} fill unoptimized sizes="28px" className="object-cover" />
                                 </div>
                               ) : (
                                 <div className="h-9 w-7 shrink-0 rounded bg-cream" />

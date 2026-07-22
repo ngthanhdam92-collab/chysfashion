@@ -342,7 +342,7 @@ export function CampaignsClient({ campaigns: initial, products }: Props) {
                           dragOverIdx === i ? "border-gold opacity-70 scale-95" : "border-line"
                         }`}
                       >
-                        <Image src={url} alt={`slide ${i + 1}`} fill className="object-cover" sizes="80px" />
+                        <Image src={url} alt={`slide ${i + 1}`} fill unoptimized className="object-cover" sizes="80px" />
                         <button
                           type="button"
                           onClick={() => setBannerImages((prev) => prev.filter((_, j) => j !== i))}

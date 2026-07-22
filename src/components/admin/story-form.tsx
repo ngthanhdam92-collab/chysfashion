@@ -3,7 +3,6 @@
 import { useState, useTransition } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { createStory, updateStory } from "@/lib/stories-actions";
 import { formatVnd } from "@/lib/utils";
 import type { Story, StoryProductLink } from "@/lib/stories";
@@ -43,17 +42,14 @@ export function StoryForm({ story, products }: Props) {
     setUploading(true);
     setError(null);
     try {
-      const supabase = createClient();
       const ext = file.name.split(".").pop();
-      const path = `stories/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from("product-media")
-        .upload(path, file, { upsert: false });
-      if (upErr) throw new Error(upErr.message);
-      const { data } = supabase.storage
-        .from("product-media")
-        .getPublicUrl(path);
-      setImageUrl(data.publicUrl);
+      const fd = new FormData();
+      fd.set("file", file);
+      fd.set("path", `stories/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const json = await res.json();
+      if (!res.ok || json.error) throw new Error(json.error ?? `HTTP ${res.status}`);
+      setImageUrl(json.url);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload thất bại");
     } finally {

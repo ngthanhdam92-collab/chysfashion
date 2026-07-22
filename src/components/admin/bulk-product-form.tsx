@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Image from "next/image";
 import { X, Plus, Trash2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import { Category } from "@/lib/categories";
 import type { SizeChartTemplate } from "@/lib/size-chart-templates";
 
@@ -136,15 +135,16 @@ export function BulkProductForm({ categories, sizeCharts, action }: BulkProductF
     if (!files || files.length === 0) return;
     setUploadingMain(itemId);
     setError(null);
-    const supabase = createClient();
     const urls: string[] = [];
     for (const file of Array.from(files)) {
       const ext = file.name.split(".").pop();
-      const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from("product-media").upload(path, file);
-      if (uploadError) { setError(`Không thể tải ảnh: ${uploadError.message}`); continue; }
-      const { data } = supabase.storage.from("product-media").getPublicUrl(path);
-      urls.push(data.publicUrl);
+      const fd = new FormData();
+      fd.set("file", file);
+      fd.set("path", `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const json = await res.json();
+      if (!res.ok || json.error) { setError(`Không thể tải ảnh: ${json.error ?? `HTTP ${res.status}`}`); continue; }
+      urls.push(json.url);
     }
     if (urls.length > 0) {
       setItems((its) =>
@@ -159,15 +159,16 @@ export function BulkProductForm({ categories, sizeCharts, action }: BulkProductF
     const uploadKey = `${itemId}__${colorName}`;
     setUploadingVariant(uploadKey);
     setError(null);
-    const supabase = createClient();
     const urls: string[] = [];
     for (const file of Array.from(files)) {
       const ext = file.name.split(".").pop();
-      const path = `variants/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from("product-media").upload(path, file);
-      if (uploadError) { setError(`Không thể tải ảnh: ${uploadError.message}`); continue; }
-      const { data } = supabase.storage.from("product-media").getPublicUrl(path);
-      urls.push(data.publicUrl);
+      const fd = new FormData();
+      fd.set("file", file);
+      fd.set("path", `variants/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const json = await res.json();
+      if (!res.ok || json.error) { setError(`Không thể tải ảnh: ${json.error ?? `HTTP ${res.status}`}`); continue; }
+      urls.push(json.url);
     }
     if (urls.length > 0) {
       setItems((its) =>
@@ -567,7 +568,7 @@ export function BulkProductForm({ categories, sizeCharts, action }: BulkProductF
                             imgIdx === 0 ? "border-2 border-gold" : "border-line"
                           }`}
                         >
-                          <Image src={url} alt="" fill sizes="80px" className="object-cover" />
+                          <Image src={url} alt="" fill unoptimized sizes="80px" className="object-cover" />
                           {imgIdx === 0 && (
                             <span className="absolute bottom-0 left-0 right-0 bg-gold/90 py-0.5 text-center text-[10px] uppercase text-paper">
                               Bìa
@@ -635,7 +636,7 @@ export function BulkProductForm({ categories, sizeCharts, action }: BulkProductF
                               {imgs.map((url) => (
                                 <div key={url} className="group relative h-14 w-14 shrink-0">
                                   <div className="relative h-14 w-14 overflow-hidden border border-line">
-                                    <Image src={url} alt="" fill sizes="56px" className="object-cover" />
+                                    <Image src={url} alt="" fill unoptimized sizes="56px" className="object-cover" />
                                   </div>
                                   <button
                                     type="button"

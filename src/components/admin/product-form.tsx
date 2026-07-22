@@ -6,7 +6,6 @@ import { X, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { Product } from "@/lib/types";
 import { Category } from "@/lib/categories";
-import { createClient } from "@/lib/supabase/client";
 import type { SizeChartTemplate } from "@/lib/size-chart-templates";
 
 interface ProductFormProps {
@@ -271,19 +270,18 @@ export function ProductForm({ product, categories, allProducts = [], sizeCharts 
     if (files.length === 0) return;
     setUploading(true);
     setError(null);
-    const supabase = createClient();
     for (const file of files) {
       const ext = file.name.split(".").pop();
-      const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error: uploadError } = await supabase.storage
-        .from("product-media")
-        .upload(path, file);
-      if (uploadError) {
-        setError(`Không thể tải ảnh "${file.name}": ${uploadError.message}`);
+      const fd = new FormData();
+      fd.set("file", file);
+      fd.set("path", `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const json = await res.json();
+      if (!res.ok || json.error) {
+        setError(`Không thể tải ảnh "${file.name}": ${json.error ?? `HTTP ${res.status}`}`);
         continue;
       }
-      const { data } = supabase.storage.from("product-media").getPublicUrl(path);
-      setKeptImages((imgs) => [...imgs, data.publicUrl]);
+      setKeptImages((imgs) => [...imgs, json.url]);
     }
     setUploading(false);
     e.target.value = "";
@@ -299,17 +297,16 @@ export function ProductForm({ product, categories, allProducts = [], sizeCharts 
     }
     setUploadingVideo(true);
     setError(null);
-    const supabase = createClient();
     const ext = file.name.split(".").pop();
-    const path = `videos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error: uploadError } = await supabase.storage
-      .from("product-media")
-      .upload(path, file);
-    if (uploadError) {
-      setError(`Không thể tải video: ${uploadError.message}`);
+    const fd = new FormData();
+    fd.set("file", file);
+    fd.set("path", `videos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`);
+    const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+    const json = await res.json();
+    if (!res.ok || json.error) {
+      setError(`Không thể tải video: ${json.error ?? `HTTP ${res.status}`}`);
     } else {
-      const { data } = supabase.storage.from("product-media").getPublicUrl(path);
-      setVideoUrl(data.publicUrl);
+      setVideoUrl(json.url);
     }
     setUploadingVideo(false);
     e.target.value = "";
@@ -319,20 +316,19 @@ export function ProductForm({ product, categories, allProducts = [], sizeCharts 
     if (!files || files.length === 0) return;
     setUploadingVariant(colorName);
     setError(null);
-    const supabase = createClient();
     const urls: string[] = [];
     for (const file of Array.from(files)) {
       const ext = file.name.split(".").pop();
-      const path = `variants/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error: uploadError } = await supabase.storage
-        .from("product-media")
-        .upload(path, file);
-      if (uploadError) {
-        setError(`Không thể tải ảnh: ${uploadError.message}`);
+      const fd = new FormData();
+      fd.set("file", file);
+      fd.set("path", `variants/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const json = await res.json();
+      if (!res.ok || json.error) {
+        setError(`Không thể tải ảnh: ${json.error ?? `HTTP ${res.status}`}`);
         continue;
       }
-      const { data } = supabase.storage.from("product-media").getPublicUrl(path);
-      urls.push(data.publicUrl);
+      urls.push(json.url);
     }
     if (urls.length > 0) {
       setVariantImages((prev) => ({
@@ -382,7 +378,7 @@ export function ProductForm({ product, categories, allProducts = [], sizeCharts 
                   index === 0 ? "border-2 border-gold" : "border-line"
                 }`}
               >
-                <Image src={url} alt="" fill sizes="96px" className="object-cover" />
+                <Image src={url} alt="" fill unoptimized sizes="96px" className="object-cover" />
                 <input type="hidden" name="keptImages" value={url} />
                 {index === 0 && (
                   <span className="absolute bottom-0 left-0 right-0 bg-gold/90 py-0.5 text-center text-[10px] uppercase text-paper">
@@ -606,7 +602,7 @@ export function ProductForm({ product, categories, allProducts = [], sizeCharts 
                       {(variantImages[opt.name] ?? []).map((url) => (
                         <div key={url} className="group relative h-16 w-16 shrink-0">
                           <div className="relative h-16 w-16 overflow-hidden border border-line">
-                            <Image src={url} alt="" fill sizes="64px" className="object-cover" />
+                            <Image src={url} alt="" fill unoptimized sizes="64px" className="object-cover" />
                           </div>
                           <button
                             type="button"
@@ -904,7 +900,7 @@ export function ProductForm({ product, categories, allProducts = [], sizeCharts 
               <div key={p.id} className="flex items-center gap-1.5 border border-line bg-white pl-1.5 pr-2 py-1">
                 {p.images[0] && (
                   <div className="relative h-8 w-6 shrink-0 overflow-hidden">
-                    <Image src={p.images[0]} alt="" fill sizes="24px" className="object-cover" />
+                    <Image src={p.images[0]} alt="" fill unoptimized sizes="24px" className="object-cover" />
                   </div>
                 )}
                 <span className="max-w-[140px] truncate text-xs text-ink">{p.name}</span>
@@ -951,7 +947,7 @@ export function ProductForm({ product, categories, allProducts = [], sizeCharts 
                     >
                       {p.images[0] && (
                         <div className="relative h-10 w-7 shrink-0 overflow-hidden">
-                          <Image src={p.images[0]} alt="" fill sizes="28px" className="object-cover" />
+                          <Image src={p.images[0]} alt="" fill unoptimized sizes="28px" className="object-cover" />
                         </div>
                       )}
                       <div className="min-w-0">
@@ -994,7 +990,7 @@ export function ProductForm({ product, categories, allProducts = [], sizeCharts 
                 <div key={p.id} className="flex items-center gap-1.5 border border-amber-200 bg-amber-50 pl-1.5 pr-2 py-1">
                   {p.images[0] && (
                     <div className="relative h-8 w-6 shrink-0 overflow-hidden">
-                      <Image src={p.images[0]} alt="" fill sizes="24px" className="object-cover" />
+                      <Image src={p.images[0]} alt="" fill unoptimized sizes="24px" className="object-cover" />
                     </div>
                   )}
                   <span className="max-w-[140px] truncate text-xs text-ink">{p.name}</span>
@@ -1040,7 +1036,7 @@ export function ProductForm({ product, categories, allProducts = [], sizeCharts 
                     >
                       {p.images[0] && (
                         <div className="relative h-10 w-7 shrink-0 overflow-hidden">
-                          <Image src={p.images[0]} alt="" fill sizes="28px" className="object-cover" />
+                          <Image src={p.images[0]} alt="" fill unoptimized sizes="28px" className="object-cover" />
                         </div>
                       )}
                       <div className="min-w-0">
