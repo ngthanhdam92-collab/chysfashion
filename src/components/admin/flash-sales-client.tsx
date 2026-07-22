@@ -353,7 +353,7 @@ export function FlashSalesClient({ sales: initialSales, products }: Props) {
                       />
                       <div className="relative h-10 w-8 shrink-0 overflow-hidden bg-cream">
                         {cover ? (
-                          <Image src={cover} alt={p.name} fill sizes="32px" className="object-cover" />
+                          <Image src={cover} alt={p.name} fill unoptimized sizes="32px" className="object-cover" />
                         ) : (
                           <div className="h-full w-full bg-line" />
                         )}

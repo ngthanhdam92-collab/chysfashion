@@ -41,6 +41,7 @@ export function WishlistView() {
                       src={item.image}
                       alt={item.name}
                       fill
+                      unoptimized
                       sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />

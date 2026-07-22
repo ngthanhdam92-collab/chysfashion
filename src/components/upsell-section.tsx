@@ -85,6 +85,7 @@ export function UpsellSection({
                   src={it.product.images[0]}
                   alt={it.product.name}
                   fill
+                  unoptimized
                   sizes="48px"
                   className="object-cover"
                 />

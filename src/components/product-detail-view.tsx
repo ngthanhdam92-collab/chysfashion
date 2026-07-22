@@ -175,7 +175,7 @@ function ThumbList({ gallery, hasVideo, videoUrl, activeIndex, isVideoSlide, pro
               activeIndex === slideIndex ? "border-gold" : "border-transparent hover:border-line"
             }`}
           >
-            <Image src={src} alt={`${productName} ${i + 1}`} fill sizes="72px" className="object-cover" />
+            <Image src={src} alt={`${productName} ${i + 1}`} fill unoptimized sizes="72px" className="object-cover" />
           </button>
         );
       })}
@@ -214,6 +214,7 @@ function MainMedia({ isVideoSlide, mainSrc, videoUrl, productName, productId, ac
           src={mainSrc}
           alt={productName}
           fill
+          unoptimized
           sizes="(min-width: 1024px) 40vw, 100vw"
           className="object-cover transition-opacity duration-200"
           priority
@@ -289,7 +290,7 @@ function RelatedSuggestions({ products }: { products: Product[] }) {
             >
               <div className="relative h-16 w-12 shrink-0 overflow-hidden bg-cream">
                 {cover ? (
-                  <Image src={cover} alt={p.name} fill sizes="48px" className="object-cover" />
+                  <Image src={cover} alt={p.name} fill unoptimized sizes="48px" className="object-cover" />
                 ) : (
                   <div className="h-full w-full bg-line" />
                 )}

@@ -20,6 +20,7 @@ export function CampaignProductGallery({ images, name }: Props) {
           src={images[active]}
           alt={name}
           fill
+          unoptimized
           className="object-cover"
           sizes="100vw"
           priority
@@ -39,6 +40,7 @@ export function CampaignProductGallery({ images, name }: Props) {
                 src={img}
                 alt={`${name} ${i + 1}`}
                 fill
+                unoptimized
                 className="object-cover"
                 sizes="64px"
               />

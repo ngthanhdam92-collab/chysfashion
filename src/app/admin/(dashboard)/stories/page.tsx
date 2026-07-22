@@ -47,6 +47,7 @@ export default async function StoriesPage() {
                   src={story.imageUrl}
                   alt={story.customerName || "Story"}
                   fill
+                  unoptimized
                   className="object-cover"
                   sizes="200px"
                 />

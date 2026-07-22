@@ -42,7 +42,7 @@ export default async function BannersPage() {
                 {/* Thumbnail */}
                 <div className="relative h-16 w-28 shrink-0 overflow-hidden rounded bg-cream">
                   {b.imageUrl ? (
-                    <Image src={b.imageUrl} alt={b.title} fill className="object-cover" />
+                    <Image src={b.imageUrl} alt={b.title} fill unoptimized className="object-cover" />
                   ) : (
                     <div className="flex h-full items-center justify-center text-[10px] text-stone">
                       Chưa có ảnh

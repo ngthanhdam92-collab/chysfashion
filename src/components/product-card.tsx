@@ -86,6 +86,7 @@ export function ProductCard({ product }: { product: Product }) {
                 src={activeCover}
                 alt={product.name}
                 fill
+                unoptimized
                 sizes="(min-width: 1024px) 17vw, (min-width: 640px) 33vw, 50vw"
                 className={`object-cover transition-all duration-500 ease-out group-hover:scale-105 ${
                   showHover ? "opacity-0" : "opacity-100"
@@ -97,6 +98,7 @@ export function ProductCard({ product }: { product: Product }) {
                   src={activeHoverImage}
                   alt={product.name}
                   fill
+                  unoptimized
                   sizes="(min-width: 1024px) 17vw, (min-width: 640px) 33vw, 50vw"
                   className={`object-cover transition-opacity duration-500 ease-out ${
                     showHover ? "opacity-100" : "opacity-0"

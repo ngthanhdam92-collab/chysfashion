@@ -5,7 +5,6 @@ import Image from "next/image";
 import { Plus, Pencil, Trash2, ExternalLink, ToggleLeft, ToggleRight, X, Upload, ImagePlus } from "lucide-react";
 import type { Campaign } from "@/lib/campaigns";
 import type { Product } from "@/lib/types";
-import { createClient } from "@/lib/supabase/client";
 import {
   createCampaign,
   updateCampaign,
@@ -81,16 +80,15 @@ export function CampaignsClient({ campaigns: initial, products }: Props) {
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
     setUploading(true);
-    const supabase = createClient();
     const urls: string[] = [];
     for (const file of files) {
       const ext = file.name.split(".").pop();
-      const path = `campaigns/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error: upErr } = await supabase.storage.from("product-media").upload(path, file, { upsert: false });
-      if (!upErr) {
-        const { data } = supabase.storage.from("product-media").getPublicUrl(path);
-        urls.push(data.publicUrl);
-      }
+      const fd = new FormData();
+      fd.set("file", file);
+      fd.set("path", `campaigns/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const json = await res.json();
+      if (res.ok && !json.error) urls.push(json.url);
     }
     setBannerImages((prev) => [...prev, ...urls]);
     setUploading(false);

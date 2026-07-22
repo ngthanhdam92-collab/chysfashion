@@ -20,6 +20,7 @@ export function HeroBanner({ banner }: HeroBannerProps) {
           alt={banner.title || "Banner"}
           width={1440}
           height={540}
+          unoptimized
           style={{ width: "100%", height: "auto" }}
           sizes="100vw"
           priority
@@ -33,6 +34,7 @@ export function HeroBanner({ banner }: HeroBannerProps) {
             src={banner.imageUrl}
             alt={banner.title || "Banner"}
             fill
+            unoptimized
             priority
             className="object-cover object-center"
             sizes="100vw"

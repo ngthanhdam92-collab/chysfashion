@@ -4,7 +4,6 @@ import { useState } from "react";
 import Image from "next/image";
 import { X, Plus, ImageIcon } from "lucide-react";
 import { ProductColor } from "@/lib/types";
-import { createClient } from "@/lib/supabase/client";
 import { updateVariantImages } from "@/lib/products-actions";
 
 interface Props {
@@ -32,20 +31,19 @@ export function VariantImagesModal({ productId, productName, colors, onClose }: 
     setUploading(colorName);
     setError(null);
     setSaved(false);
-    const supabase = createClient();
     const urls: string[] = [];
     for (const file of Array.from(files)) {
       const ext = file.name.split(".").pop();
-      const path = `variants/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error: uploadError } = await supabase.storage
-        .from("product-media")
-        .upload(path, file);
-      if (uploadError) {
-        setError(`Không thể tải ảnh: ${uploadError.message}`);
+      const fd = new FormData();
+      fd.set("file", file);
+      fd.set("path", `variants/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const json = await res.json();
+      if (!res.ok || json.error) {
+        setError(`Không thể tải ảnh: ${json.error ?? `HTTP ${res.status}`}`);
         continue;
       }
-      const { data } = supabase.storage.from("product-media").getPublicUrl(path);
-      urls.push(data.publicUrl);
+      urls.push(json.url);
     }
     if (urls.length > 0) {
       setImages((prev) => ({

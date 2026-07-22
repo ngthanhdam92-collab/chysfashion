@@ -49,6 +49,7 @@ export function CartView() {
                       src={line.image}
                       alt={line.name}
                       fill
+                      unoptimized
                       className="object-cover"
                       sizes="96px"
                     />

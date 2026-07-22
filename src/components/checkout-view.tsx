@@ -572,7 +572,7 @@ export function CheckoutView({ bankSettings }: { bankSettings?: BankSettings }) 
               {/* Thumbnail */}
               <div className="relative h-20 w-16 shrink-0 overflow-hidden bg-cream">
                 {line.image ? (
-                  <Image src={line.image} alt={line.name} fill className="object-cover" sizes="64px" />
+                  <Image src={line.image} alt={line.name} fill unoptimized className="object-cover" sizes="64px" />
                 ) : (
                   <ProductImagePlaceholder seed={line.slug} className="h-full w-full" />
                 )}

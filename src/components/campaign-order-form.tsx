@@ -380,6 +380,7 @@ export function CampaignOrderForm({ products, shippingRules }: Props) {
                         src={src}
                         alt={p.name}
                         fill
+                        unoptimized
                         className="object-cover"
                         sizes="(max-width: 448px) 50vw, 220px"
                       />

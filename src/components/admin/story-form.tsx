@@ -121,6 +121,7 @@ export function StoryForm({ story, products }: Props) {
                 src={imageUrl}
                 alt="Story preview"
                 fill
+                unoptimized
                 className="object-cover"
                 sizes="112px"
               />
