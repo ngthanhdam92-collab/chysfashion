@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "./supabase/server";
 import { createPublicClient } from "./supabase/public";
+import { requireAdmin } from "./admin-guard";
 import { type Promotion, type PromotionType, type AppliesTo, calcDiscount } from "./promotions";
 
 interface PromoRow {
@@ -53,6 +54,8 @@ export interface CreatePromotionInput {
 }
 
 export async function createPromotion(input: CreatePromotionInput) {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
   const { error } = await supabase.from("promotions").insert({
     code: input.code.toUpperCase().trim(),
@@ -72,6 +75,8 @@ export async function createPromotion(input: CreatePromotionInput) {
 }
 
 export async function updatePromotion(id: string, input: CreatePromotionInput) {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
   const { error } = await supabase
     .from("promotions")
@@ -94,6 +99,8 @@ export async function updatePromotion(id: string, input: CreatePromotionInput) {
 }
 
 export async function deletePromotion(id: string) {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
   const { error } = await supabase.from("promotions").delete().eq("id", id);
   if (error) return { error: error.message };
@@ -102,6 +109,8 @@ export async function deletePromotion(id: string) {
 }
 
 export async function togglePromotion(id: string, isActive: boolean) {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
   const { error } = await supabase
     .from("promotions")

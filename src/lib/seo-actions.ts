@@ -2,11 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "./supabase/server";
+import { requireAdmin } from "./admin-guard";
 
 export async function upsertPageSeo(
   pageKey: string,
   data: { metaTitle: string; metaDescription: string; ogImage: string }
 ): Promise<{ error?: string }> {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
   const { error } = await supabase.from("page_seo").upsert(
     {

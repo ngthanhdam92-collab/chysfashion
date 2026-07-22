@@ -1,4 +1,5 @@
 import { LogOut } from "lucide-react";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/supabase/actions";
 import { AdminSidebarNav } from "@/components/admin/admin-sidebar-nav";
@@ -16,6 +17,8 @@ export default async function DashboardLayout({
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  if (!user) redirect("/admin/login");
 
   const email = user?.email ?? "";
   const displayName = email.split("@")[0] || "Admin";

@@ -3,10 +3,13 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "./supabase/server";
 import { slugify } from "./slugify";
+import { requireAdmin } from "./admin-guard";
 
 type ActionResult = { error: string } | { success: true };
 
 export async function createCategory(formData: FormData): Promise<ActionResult> {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const label = String(formData.get("label") || "").trim();
   if (!label) return { error: "Vui lòng nhập tên danh mục." };
 
@@ -27,6 +30,8 @@ export async function createCategory(formData: FormData): Promise<ActionResult> 
 }
 
 export async function updateCategory(id: string, formData: FormData): Promise<ActionResult> {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const label = String(formData.get("label") || "").trim();
   if (!label) return { error: "Vui lòng nhập tên danh mục." };
 
@@ -44,6 +49,8 @@ export async function updateCategory(id: string, formData: FormData): Promise<Ac
 }
 
 export async function updateCategoryImage(id: string, imageUrl: string): Promise<ActionResult> {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
   const { error } = await supabase
     .from("categories")
@@ -63,6 +70,8 @@ export async function updateCategoryGender(
   id: string,
   gender: "nam" | "nu" | "unisex"
 ): Promise<ActionResult> {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
   const { error } = await supabase
     .from("categories")
@@ -81,6 +90,8 @@ export async function updateCategoryBannerImage(
   id: string,
   bannerImageUrl: string
 ): Promise<ActionResult> {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
   const { error } = await supabase
     .from("categories")
@@ -96,6 +107,8 @@ export async function updateCategoryBannerImage(
 }
 
 export async function deleteCategory(id: string): Promise<ActionResult> {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
   const { error } = await supabase.from("categories").delete().eq("id", id);
 

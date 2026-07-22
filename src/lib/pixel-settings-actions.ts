@@ -6,6 +6,9 @@ import type { PixelSettings } from "./pixel-settings";
 
 export async function savePixelSettings(settings: PixelSettings) {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Unauthorized" };
+
   const { error } = await supabase
     .from("homepage_settings")
     .upsert({ key: "pixel_settings", value: settings }, { onConflict: "key" });

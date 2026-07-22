@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "./supabase/server";
+import { requireAdmin } from "./admin-guard";
 
 function slugify(s: string) {
   return s
@@ -14,6 +15,8 @@ function slugify(s: string) {
 }
 
 export async function createCampaign(formData: FormData) {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
   const title = String(formData.get("title") || "").trim();
   const rawSlug = String(formData.get("slug") || "").trim();
@@ -50,6 +53,8 @@ export async function createCampaign(formData: FormData) {
 }
 
 export async function updateCampaign(id: string, formData: FormData) {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
   const title = String(formData.get("title") || "").trim();
   const rawSlug = String(formData.get("slug") || "").trim();
@@ -85,6 +90,8 @@ export async function updateCampaign(id: string, formData: FormData) {
 }
 
 export async function deleteCampaign(id: string) {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
   const { error } = await supabase.from("campaigns").delete().eq("id", id);
   if (error) return { error: error.message };
@@ -94,6 +101,8 @@ export async function deleteCampaign(id: string) {
 }
 
 export async function toggleCampaign(id: string, isActive: boolean) {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
   const { error } = await supabase
     .from("campaigns")

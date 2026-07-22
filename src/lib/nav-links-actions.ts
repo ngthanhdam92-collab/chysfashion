@@ -2,10 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "./supabase/server";
+import { requireAdmin } from "./admin-guard";
 
 type ActionResult = { error: string } | { success: true };
 
 export async function createNavLink(formData: FormData): Promise<ActionResult> {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const label = String(formData.get("label") || "").trim();
   const href = String(formData.get("href") || "").trim();
   const parentId = String(formData.get("parentId") || "").trim() || null;
@@ -28,6 +31,8 @@ export async function createNavLink(formData: FormData): Promise<ActionResult> {
 }
 
 export async function updateNavLink(id: string, formData: FormData): Promise<ActionResult> {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const label = String(formData.get("label") || "").trim();
   const href = String(formData.get("href") || "").trim();
   if (!label || !href) return { error: "Vui lòng nhập đầy đủ tên và đường dẫn." };
@@ -42,6 +47,8 @@ export async function updateNavLink(id: string, formData: FormData): Promise<Act
 }
 
 export async function deleteNavLink(id: string): Promise<ActionResult> {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
   const { error } = await supabase.from("nav_links").delete().eq("id", id);
   if (error) return { error: error.message };
@@ -55,6 +62,8 @@ export async function moveNavLink(
   id: string,
   direction: "up" | "down"
 ): Promise<ActionResult> {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
   const { data: allLinks, error: fetchError } = await supabase
     .from("nav_links")

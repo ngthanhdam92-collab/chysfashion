@@ -6,6 +6,9 @@ import type { BankSettings } from "./bank-settings";
 
 export async function saveBankSettings(settings: BankSettings) {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Unauthorized" };
+
   const { error } = await supabase
     .from("homepage_settings")
     .upsert({ key: "bank_settings", value: settings }, { onConflict: "key" });

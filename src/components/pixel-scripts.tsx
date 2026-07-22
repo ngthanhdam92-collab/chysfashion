@@ -18,11 +18,17 @@ export function PixelScripts({ fbPixelId, ttPixelId }: PixelScriptsProps) {
     trackPageView();
   }, [pathname]);
 
-  if (!fbPixelId && !ttPixelId) return null;
+  // Sanitize IDs: FB Pixel = digits only, TikTok Pixel = alphanumeric uppercase only
+  const safeFb = /^\d{1,20}$/.test(fbPixelId ?? "") ? fbPixelId : undefined;
+  const safeTt = /^[A-Z0-9]{1,30}$/.test((ttPixelId ?? "").toUpperCase())
+    ? ttPixelId
+    : undefined;
+
+  if (!safeFb && !safeTt) return null;
 
   return (
     <>
-      {fbPixelId && (
+      {safeFb && (
         <Script
           id="fb-pixel"
           strategy="afterInteractive"
@@ -36,14 +42,14 @@ export function PixelScripts({ fbPixelId, ttPixelId }: PixelScriptsProps) {
                 t.src=v;s=b.getElementsByTagName(e)[0];
                 s.parentNode.insertBefore(t,s)
               }(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
-              fbq('init','${fbPixelId}');
+              fbq('init','${safeFb}');
               fbq('track','PageView');
             `,
           }}
         />
       )}
 
-      {ttPixelId && (
+      {safeTt && (
         <Script
           id="tt-pixel"
           strategy="afterInteractive"
@@ -66,7 +72,7 @@ export function PixelScripts({ fbPixelId, ttPixelId }: PixelScriptsProps) {
                   var s=document.getElementsByTagName("script")[0];
                   s.parentNode.insertBefore(a,s)
                 };
-                ttq.load('${ttPixelId}');
+                ttq.load('${safeTt}');
                 ttq.page();
               }(window,document,'ttq');
             `,

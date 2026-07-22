@@ -2,8 +2,11 @@
 
 import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "./supabase/server";
+import { requireAdmin } from "./admin-guard";
 
 async function upsert(patch: Record<string, unknown>) {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
   // Read directly from DB to avoid stale cache data in merge
   const { data } = await supabase

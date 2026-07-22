@@ -129,32 +129,48 @@ export async function getAllProducts(filters?: ProductFilters): Promise<Product[
   return _getAllProducts(filters ? JSON.stringify(filters) : "");
 }
 
-export async function getProductBySlug(slug: string): Promise<Product | undefined> {
-  const supabase = createPublicClient();
-  const { data, error } = await supabase
-    .from("products")
-    .select("*")
-    .eq("slug", slug)
-    .maybeSingle();
+const _getProductBySlug = unstable_cache(
+  async (slug: string): Promise<Product | undefined> => {
+    const supabase = createPublicClient();
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .eq("slug", slug)
+      .maybeSingle();
 
-  if (error || !data) return undefined;
-  const row = data as ProductRow;
-  const sizeChartData = await fetchSizeChart(row.size_chart_id);
-  return mapRow(row, sizeChartData);
+    if (error || !data) return undefined;
+    const row = data as ProductRow;
+    const sizeChartData = await fetchSizeChart(row.size_chart_id);
+    return mapRow(row, sizeChartData);
+  },
+  ["product-by-slug"],
+  { tags: ["products"], revalidate: 60 }
+);
+
+export async function getProductBySlug(slug: string): Promise<Product | undefined> {
+  return _getProductBySlug(slug);
 }
 
-export async function getProductById(id: string): Promise<Product | undefined> {
-  const supabase = createPublicClient();
-  const { data, error } = await supabase
-    .from("products")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
+const _getProductById = unstable_cache(
+  async (id: string): Promise<Product | undefined> => {
+    const supabase = createPublicClient();
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
 
-  if (error || !data) return undefined;
-  const row = data as ProductRow;
-  const sizeChartData = await fetchSizeChart(row.size_chart_id);
-  return mapRow(row, sizeChartData);
+    if (error || !data) return undefined;
+    const row = data as ProductRow;
+    const sizeChartData = await fetchSizeChart(row.size_chart_id);
+    return mapRow(row, sizeChartData);
+  },
+  ["product-by-id"],
+  { tags: ["products"], revalidate: 60 }
+);
+
+export async function getProductById(id: string): Promise<Product | undefined> {
+  return _getProductById(id);
 }
 
 export async function getUpsellProducts(product: Product, limit = 3): Promise<Product[]> {

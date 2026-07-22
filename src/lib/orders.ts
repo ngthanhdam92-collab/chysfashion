@@ -66,7 +66,45 @@ export interface CreateOrderInput {
 export async function createOrder(
   input: CreateOrderInput
 ): Promise<{ orderCode: string } | { error: string }> {
+  // Server-side price integrity checks
+  const computedSubtotal = input.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  if (Math.abs(computedSubtotal - input.subtotal) > 1) {
+    return { error: "Giá trị đơn hàng không hợp lệ." };
+  }
+  const computedTotal = Math.max(0, computedSubtotal - input.discount) + input.shipping;
+  if (Math.abs(computedTotal - input.total) > 1) {
+    return { error: "Tổng tiền đơn hàng không hợp lệ." };
+  }
+
   const supabase = createPublicClient();
+
+  // Verify item prices against DB (reject if more than 50% below listed price)
+  const slugs = [...new Set(input.items.map((i) => i.slug))];
+  if (slugs.length > 0) {
+    const { data: products } = await supabase
+      .from("products")
+      .select("slug, price, variants")
+      .in("slug", slugs);
+    if (products && products.length > 0) {
+      const priceMap = new Map(
+        (products as { slug: string; price: number; variants: { color: string; size: string; price?: number }[] | null }[])
+          .map((p) => [p.slug, p])
+      );
+      for (const item of input.items) {
+        const product = priceMap.get(item.slug);
+        if (!product) continue;
+        let dbPrice = product.price;
+        if (product.variants && Array.isArray(product.variants)) {
+          const v = product.variants.find((v) => v.color === item.color && v.size === item.size);
+          if (v?.price && v.price > 0) dbPrice = v.price;
+        }
+        if (item.price < dbPrice * 0.5) {
+          return { error: "Giá sản phẩm không hợp lệ." };
+        }
+      }
+    }
+  }
+
   const orderCode = input.orderCode || `CHYS${Date.now().toString().slice(-8)}`;
 
   // Check if customer already transferred before placing the order

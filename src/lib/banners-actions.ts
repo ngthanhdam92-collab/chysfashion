@@ -3,6 +3,7 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "./supabase/server";
+import { requireAdmin } from "./admin-guard";
 
 function parseBannerPayload(formData: FormData) {
   return {
@@ -17,6 +18,8 @@ function parseBannerPayload(formData: FormData) {
 }
 
 export async function createBanner(formData: FormData) {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const payload = parseBannerPayload(formData);
   if (!payload.title) return { error: "Vui lòng nhập tiêu đề banner." };
 
@@ -31,6 +34,8 @@ export async function createBanner(formData: FormData) {
 }
 
 export async function updateBanner(id: string, formData: FormData) {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const payload = parseBannerPayload(formData);
   if (!payload.title) return { error: "Vui lòng nhập tiêu đề banner." };
 
@@ -45,6 +50,8 @@ export async function updateBanner(id: string, formData: FormData) {
 }
 
 export async function deleteBanner(id: string) {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
   const { error } = await supabase.from("banners").delete().eq("id", id);
   if (error) return { error: error.message };

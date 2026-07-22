@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "./supabase/server";
 import type { MovementType } from "./stock-movements";
+import { requireAdmin } from "./admin-guard";
 
 export async function createStockMovement(payload: {
   productId: string;
@@ -14,6 +15,8 @@ export async function createStockMovement(payload: {
   quantity: number; // absolute value — direction determined by type
   note: string;
 }): Promise<{ error?: string }> {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
 
   // Determine signed delta for stock
@@ -138,6 +141,8 @@ async function applyStockDelta(
 // ── delete ────────────────────────────────────────────────────────────────────
 
 export async function deleteStockMovement(id: string): Promise<{ error?: string }> {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
 
   const { data: m, error: fetchErr } = await supabase
@@ -172,6 +177,8 @@ export async function updateStockMovement(
   id: string,
   payload: { type: MovementType; quantity: number; note: string }
 ): Promise<{ error?: string }> {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
 
   const { data: old, error: fetchErr } = await supabase

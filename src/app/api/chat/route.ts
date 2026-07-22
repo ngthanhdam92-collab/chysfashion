@@ -146,10 +146,14 @@ async function executeTool(name: string, args: Record<string, string>): Promise<
   if (name === "lookup_order") {
     const q = args.query.trim().replace(/\s/g, "");
     const isPhone = /^\d{9,11}$/.test(q);
+    const isOrderCode = /^CHYS\d{8}$/i.test(q);
+    if (!isPhone && !isOrderCode) {
+      return "Vui lòng nhập số điện thoại (9-11 chữ số) hoặc mã đơn hàng hợp lệ (VD: CHYS12345678).";
+    }
     const { data } = await supabase
       .from("orders")
       .select("order_code, full_name, status, total, created_at, city")
-      .or(isPhone ? `phone.eq.${q}` : `order_code.ilike.${q}`)
+      .or(isPhone ? `phone.eq.${q}` : `order_code.ilike.${q.toUpperCase()}`)
       .limit(5);
 
     if (!data || data.length === 0) {

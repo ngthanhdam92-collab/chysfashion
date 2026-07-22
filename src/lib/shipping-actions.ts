@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "./supabase/server";
+import { requireAdmin } from "./admin-guard";
 
 export interface ShippingRuleInput {
   label: string;
@@ -11,6 +12,8 @@ export interface ShippingRuleInput {
 }
 
 export async function saveShippingRules(rules: ShippingRuleInput[]) {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
   const { error: delErr } = await supabase
     .from("shipping_rules")

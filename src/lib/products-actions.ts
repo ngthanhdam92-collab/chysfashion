@@ -6,6 +6,7 @@ import { createClient } from "./supabase/server";
 import { ProductColor } from "./types";
 import { slugify } from "./slugify";
 import { createPublicClient } from "./supabase/public";
+import { requireAdmin } from "./admin-guard";
 
 function parseColors(raw: string, variantImagesJson: string): ProductColor[] {
   let variantImages: Record<string, string[]> = {};
@@ -133,6 +134,8 @@ function buildProductPayload(formData: FormData, slug: string) {
 }
 
 export async function createProduct(formData: FormData) {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const name = String(formData.get("name") || "");
   const slug = slugify(String(formData.get("slug") || name));
   const payload = buildProductPayload(formData, slug);
@@ -151,6 +154,8 @@ export async function createProduct(formData: FormData) {
 }
 
 export async function updateProduct(id: string, formData: FormData) {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const name = String(formData.get("name") || "");
   const slug = slugify(String(formData.get("slug") || name));
   const payload = buildProductPayload(formData, slug);
@@ -175,6 +180,8 @@ export async function updateVariantStock(
   size: string,
   newStock: number
 ): Promise<{ error?: string }> {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
 
   // Fetch current product to get existing variants
@@ -215,6 +222,8 @@ export async function updateVariantStock(
 }
 
 export async function reorderProducts(orderedIds: string[]) {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
   await Promise.all(
     orderedIds.map((id, idx) =>
@@ -227,6 +236,8 @@ export async function reorderProducts(orderedIds: string[]) {
 }
 
 export async function moveProductUp(id: string) {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
   const { data } = await supabase
     .from("products")
@@ -249,6 +260,8 @@ export async function moveProductUp(id: string) {
 }
 
 export async function moveProductDown(id: string) {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
   const { data } = await supabase
     .from("products")
@@ -271,6 +284,8 @@ export async function moveProductDown(id: string) {
 }
 
 export async function deleteProduct(id: string) {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
   const { error } = await supabase.from("products").delete().eq("id", id);
   if (error) {
@@ -286,6 +301,8 @@ export async function updateVariantImages(
   productId: string,
   variantImages: Record<string, string[]>
 ) {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const pub = createPublicClient();
   const { data } = await pub
     .from("products")
@@ -316,6 +333,8 @@ export async function updateVariantImages(
 }
 
 export async function createBulkProducts(formData: FormData) {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const category = String(formData.get("category") || "");
   const categoryLabel = String(formData.get("categoryLabel") || "");
   const gender = String(formData.get("gender") || "unisex");
@@ -435,6 +454,8 @@ export async function updateProductFlag(
   flag: "is_bestseller" | "is_new",
   value: boolean
 ) {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
   const { error } = await supabase
     .from("products")

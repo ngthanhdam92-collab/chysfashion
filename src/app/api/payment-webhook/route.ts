@@ -12,7 +12,7 @@ function extractOrderCode(text: string): string | null {
 // Casso sends: body.secure_token
 function isAuthorized(body: Record<string, unknown>, req: NextRequest): boolean {
   const secret = process.env.PAYMENT_WEBHOOK_SECRET;
-  if (!secret) return true; // no secret configured = allow all (dev mode)
+  if (!secret) return false; // secret must be configured — reject if missing
 
   // Parse "Authorization: Apikey {value}" header (Sepay format)
   const authHeader = req.headers.get("authorization") ?? "";

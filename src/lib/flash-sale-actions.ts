@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "./supabase/server";
+import { requireAdmin } from "./admin-guard";
 
 export async function createFlashSale(data: {
   name: string;
@@ -9,6 +10,8 @@ export async function createFlashSale(data: {
   startTime: string;
   endTime: string;
 }) {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
   const { error } = await supabase.from("flash_sales").insert({
     name: data.name,
@@ -28,6 +31,8 @@ export async function updateFlashSale(
   id: string,
   data: { name: string; discountPercent: number; startTime: string; endTime: string }
 ) {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
   const { error } = await supabase
     .from("flash_sales")
@@ -46,6 +51,8 @@ export async function updateFlashSale(
 }
 
 export async function deleteFlashSale(id: string) {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
   const { error } = await supabase.from("flash_sales").delete().eq("id", id);
   if (error) return { error: error.message };
@@ -56,6 +63,8 @@ export async function deleteFlashSale(id: string) {
 }
 
 export async function toggleFlashSale(id: string, isActive: boolean) {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
   const { error } = await supabase
     .from("flash_sales")
@@ -69,6 +78,8 @@ export async function toggleFlashSale(id: string, isActive: boolean) {
 }
 
 export async function setFlashSaleProducts(flashSaleId: string, productIds: string[]) {
+  const authErr = await requireAdmin();
+  if (authErr) return authErr;
   const supabase = await createClient();
   await supabase.from("flash_sale_products").delete().eq("flash_sale_id", flashSaleId);
   if (productIds.length > 0) {

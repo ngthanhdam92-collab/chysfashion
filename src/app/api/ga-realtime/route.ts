@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { GoogleAuth } from "google-auth-library";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 
 function getAuth() {
   const raw = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
@@ -17,6 +18,10 @@ function getAuth() {
 
 export async function GET() {
   try {
+    const serverClient = await createServerClient();
+    const { data: { user } } = await serverClient.auth.getUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     const propertyId = process.env.GOOGLE_GA4_PROPERTY_ID?.trim();
     if (!propertyId) return NextResponse.json({ error: "GA4 property not configured" }, { status: 500 });
 
