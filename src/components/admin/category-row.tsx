@@ -51,7 +51,8 @@ export function CategoryRow({ category }: { category: Category }) {
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) { alert("DEBUG: không có file"); return; }
+    alert(`DEBUG 1: Bắt đầu upload file "${file.name}" (${file.size} bytes)`);
     setUploading(true);
     setError(null);
     try {
@@ -60,15 +61,19 @@ export function CategoryRow({ category }: { category: Category }) {
       fd.set("file", file);
       fd.set("path", `categories/${category.id}-${Date.now()}.${ext}`);
       const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      alert(`DEBUG 2: API trả về HTTP ${res.status}`);
       const json = await res.json();
+      alert(`DEBUG 3: Response JSON: ${JSON.stringify(json)}`);
       if (!res.ok || json.error) throw new Error(json.error ?? `HTTP ${res.status}`);
       const result = await updateCategoryImage(category.id, json.url);
+      alert(`DEBUG 4: updateCategoryImage result: ${JSON.stringify(result)}`);
       if (result && "error" in result) throw new Error(result.error);
       setImageUrl(json.url);
+      alert(`DEBUG 5: Xong! URL = ${json.url}`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Upload thất bại";
       setError(msg);
-      alert("LỖI UPLOAD ẢNH:\n" + msg);
+      alert("LỖI: " + msg);
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
