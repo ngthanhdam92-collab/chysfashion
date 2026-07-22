@@ -48,7 +48,7 @@ export function HomepageCategorySection({ categories, stories, featuredOrder }: 
               <div className="flex h-[62px] w-[62px] items-center justify-center rounded-full bg-gradient-to-br from-gold via-amber-400 to-rose-400 p-[2.5px]">
                 <div className="relative h-full w-full overflow-hidden rounded-full bg-cream">
                   {cat.imageUrl ? (
-                    <Image src={cat.imageUrl} alt={cat.label} fill className="object-cover" sizes="62px" />
+                    <Image src={cat.imageUrl} alt={cat.label} fill className="object-cover" sizes="62px" unoptimized />
                   ) : (
                     <ProductImagePlaceholder seed={cat.value} className="h-full w-full" />
                   )}
@@ -100,6 +100,7 @@ export function HomepageCategorySection({ categories, stories, featuredOrder }: 
                       src={cat.imageUrl}
                       alt={cat.label}
                       fill
+                      unoptimized
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
                       sizes="(min-width: 640px) 17vw, 130px"
                     />

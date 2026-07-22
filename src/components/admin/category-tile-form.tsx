@@ -94,7 +94,7 @@ export function CategoryTileForm({ tile, categories = [], action }: CategoryTile
         {imageUrl ? (
           <div className="relative">
             <div className="relative aspect-[3/4] w-40 overflow-hidden rounded border border-line bg-cream">
-              <Image src={imageUrl} alt="preview" fill className="object-cover" />
+              <Image src={imageUrl} alt="preview" fill unoptimized className="object-cover" />
             </div>
             <button
               type="button"

@@ -133,6 +133,7 @@ export default async function HomePage() {
                       src={(cat.bannerImageUrl ?? cat.imageUrl)!}
                       alt={cat.label}
                       fill
+                      unoptimized
                       className="object-cover transition-transform duration-700 group-hover:scale-105"
                       sizes="100vw"
                     />
