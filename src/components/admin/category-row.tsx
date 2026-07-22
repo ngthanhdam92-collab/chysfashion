@@ -5,7 +5,6 @@ import Image from "next/image";
 import { Pencil, Trash2, Check, X, Camera, Loader2 } from "lucide-react";
 import { Category } from "@/lib/categories";
 import { updateCategory, deleteCategory, updateCategoryImage, updateCategoryGender } from "@/lib/categories-actions";
-import { uploadToStorage } from "@/lib/storage-actions";
 
 export function CategoryRow({ category }: { category: Category }) {
   const [editing, setEditing] = useState(false);
@@ -57,15 +56,15 @@ export function CategoryRow({ category }: { category: Category }) {
     setError(null);
     try {
       const ext = file.name.split(".").pop();
-      const path = `categories/${category.id}-${Date.now()}.${ext}`;
       const fd = new FormData();
       fd.set("file", file);
-      fd.set("path", path);
-      const upload = await uploadToStorage(fd);
-      if ("error" in upload) throw new Error(upload.error);
-      const result = await updateCategoryImage(category.id, upload.url);
+      fd.set("path", `categories/${category.id}-${Date.now()}.${ext}`);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const json = await res.json();
+      if (!res.ok || json.error) throw new Error(json.error ?? `HTTP ${res.status}`);
+      const result = await updateCategoryImage(category.id, json.url);
       if (result && "error" in result) throw new Error(result.error);
-      setImageUrl(upload.url);
+      setImageUrl(json.url);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload thất bại");
     } finally {

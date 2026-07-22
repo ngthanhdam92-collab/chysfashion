@@ -3,7 +3,6 @@
 import { useState, useRef, useTransition } from "react";
 import Image from "next/image";
 import { Camera, Loader2 } from "lucide-react";
-import { uploadToStorage } from "@/lib/storage-actions";
 import { updateCategoryBannerImage } from "@/lib/categories-actions";
 import { saveCollectionBanners } from "@/lib/homepage-settings-actions";
 import type { Category } from "@/lib/categories";
@@ -64,15 +63,15 @@ export function HomepageCollectionBanners({ categories, selectedValues }: Props)
     setUploadErrors((p) => ({ ...p, [slotIdx]: "" }));
     try {
       const ext = file.name.split(".").pop();
-      const path = `banners/collection-${cat.id}-${Date.now()}.${ext}`;
       const fd = new FormData();
       fd.set("file", file);
-      fd.set("path", path);
-      const upload = await uploadToStorage(fd);
-      if ("error" in upload) throw new Error(upload.error);
-      const result = await updateCategoryBannerImage(cat.id, upload.url);
+      fd.set("path", `banners/collection-${cat.id}-${Date.now()}.${ext}`);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const json = await res.json();
+      if (!res.ok || json.error) throw new Error(json.error ?? `HTTP ${res.status}`);
+      const result = await updateCategoryBannerImage(cat.id, json.url);
       if (result && "error" in result) throw new Error(result.error);
-      setBannerImages((p) => ({ ...p, [catValue]: upload.url }));
+      setBannerImages((p) => ({ ...p, [catValue]: json.url }));
     } catch (err) {
       setUploadErrors((p) => ({
         ...p,

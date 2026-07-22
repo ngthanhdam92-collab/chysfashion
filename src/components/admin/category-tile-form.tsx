@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Upload, X } from "lucide-react";
-import { uploadToStorage } from "@/lib/storage-actions";
 import type { CategoryTile } from "@/lib/category-tiles";
 import type { Category } from "@/lib/categories";
 
@@ -50,15 +49,15 @@ export function CategoryTileForm({ tile, categories = [], action }: CategoryTile
     setUploading(true);
     setError(null);
     const ext = file.name.split(".").pop();
-    const path = `tiles/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const fd = new FormData();
     fd.set("file", file);
-    fd.set("path", path);
-    const upload = await uploadToStorage(fd);
-    if ("error" in upload) {
-      setError(`Không thể tải ảnh: ${upload.error}`);
+    fd.set("path", `tiles/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`);
+    const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+    const json = await res.json();
+    if (!res.ok || json.error) {
+      setError(`Không thể tải ảnh: ${json.error ?? `HTTP ${res.status}`}`);
     } else {
-      setImageUrl(upload.url);
+      setImageUrl(json.url);
     }
     setUploading(false);
     e.target.value = "";
