@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition, useRef } from "react";
-import Image from "next/image";
 import { Pencil, Trash2, Check, X, Camera, Loader2 } from "lucide-react";
 import { Category } from "@/lib/categories";
 import { updateCategory, deleteCategory, updateCategoryImage, updateCategoryGender } from "@/lib/categories-actions";
@@ -51,8 +50,7 @@ export function CategoryRow({ category }: { category: Category }) {
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file) { alert("DEBUG: không có file"); return; }
-    alert(`DEBUG 1: Bắt đầu upload file "${file.name}" (${file.size} bytes)`);
+    if (!file) return;
     setUploading(true);
     setError(null);
     try {
@@ -61,19 +59,13 @@ export function CategoryRow({ category }: { category: Category }) {
       fd.set("file", file);
       fd.set("path", `categories/${category.id}-${Date.now()}.${ext}`);
       const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
-      alert(`DEBUG 2: API trả về HTTP ${res.status}`);
       const json = await res.json();
-      alert(`DEBUG 3: Response JSON: ${JSON.stringify(json)}`);
       if (!res.ok || json.error) throw new Error(json.error ?? `HTTP ${res.status}`);
       const result = await updateCategoryImage(category.id, json.url);
-      alert(`DEBUG 4: updateCategoryImage result: ${JSON.stringify(result)}`);
       if (result && "error" in result) throw new Error(result.error);
       setImageUrl(json.url);
-      alert(`DEBUG 5: Xong! URL = ${json.url}`);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Upload thất bại";
-      setError(msg);
-      alert("LỖI: " + msg);
+      setError(err instanceof Error ? err.message : "Upload thất bại");
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -94,13 +86,11 @@ export function CategoryRow({ category }: { category: Category }) {
             <Loader2 size={16} className="animate-spin text-muted" />
           ) : imageUrl ? (
             <>
-              <Image
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={imageUrl}
                 alt={category.label}
-                fill
-                className="object-cover"
-                sizes="48px"
-                onError={() => setImageUrl("")}
+                className="h-full w-full object-cover"
               />
               <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
                 <Camera size={14} className="text-white" />
