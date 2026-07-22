@@ -66,7 +66,9 @@ export function CategoryRow({ category }: { category: Category }) {
       if (result && "error" in result) throw new Error(result.error);
       setImageUrl(json.url);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload thất bại");
+      const msg = err instanceof Error ? err.message : "Upload thất bại";
+      setError(msg);
+      alert("LỖI UPLOAD ẢNH:\n" + msg);
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
