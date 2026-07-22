@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useTransition } from "react";
-import Image from "next/image";
 import { Camera, Loader2 } from "lucide-react";
 import { updateCategoryBannerImage } from "@/lib/categories-actions";
 import { saveCollectionBanners } from "@/lib/homepage-settings-actions";
@@ -131,12 +130,11 @@ export function HomepageCollectionBanners({ categories, selectedValues }: Props)
               title={catValue ? "Click để đổi ảnh banner" : "Chọn danh mục trước"}
             >
               {imgUrl && (
-                <Image
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
                   src={imgUrl}
                   alt={cat?.label ?? ""}
-                  fill
-                  className="object-cover"
-                  sizes="(min-width: 768px) 700px, 100vw"
+                  className="absolute inset-0 h-full w-full object-cover"
                 />
               )}
               {/* Hover overlay */}
