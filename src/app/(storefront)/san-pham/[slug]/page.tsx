@@ -1,10 +1,17 @@
 import { notFound } from "next/navigation";
 import { ChevronDown } from "lucide-react";
-import { getProductBySlug, getRelatedProducts, getUpsellProducts } from "@/lib/products";
+import { getAllProducts, getProductBySlug, getRelatedProducts, getUpsellProducts } from "@/lib/products";
 import { getActiveFlashSale } from "@/lib/flash-sales";
 import { ProductDetailView } from "@/components/product-detail-view";
 import { RecentlyViewedSection } from "@/components/recently-viewed-section";
 import { Breadcrumb } from "@/components/breadcrumb";
+
+export const revalidate = 60;
+
+export async function generateStaticParams() {
+  const products = await getAllProducts();
+  return products.map((p) => ({ slug: p.slug }));
+}
 
 interface Params {
   params: Promise<{ slug: string }>;
