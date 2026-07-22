@@ -35,7 +35,7 @@ export function HomepageProductPicker({ products, flag, label, limit = 8 }: Home
     setStates((s) => ({ ...s, [id]: next }));
     startTransition(async () => {
       const res = await updateProductFlag(id, flag, next);
-      if (res?.error) {
+      if (res && "error" in res) {
         setError(res.error);
         setStates((s) => ({ ...s, [id]: !next }));
       }

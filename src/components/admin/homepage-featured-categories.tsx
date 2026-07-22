@@ -49,7 +49,7 @@ export function HomepageFeaturedCategories({ categories, selected }: Props) {
     setError(null);
     startTransition(async () => {
       const res = await saveFeaturedCategories(checked);
-      if (res?.error) setError(res.error);
+      if (res && "error" in res) setError(res.error);
       else setSaved(true);
     });
   }
