@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Pencil, Trash2, Check, X, Camera, Loader2 } from "lucide-react";
 import { Category } from "@/lib/categories";
 import { updateCategory, deleteCategory, updateCategoryImage, updateCategoryGender } from "@/lib/categories-actions";
-import { createClient } from "@/lib/supabase/client";
+import { uploadToStorage } from "@/lib/storage-actions";
 
 export function CategoryRow({ category }: { category: Category }) {
   const [editing, setEditing] = useState(false);
@@ -56,18 +56,16 @@ export function CategoryRow({ category }: { category: Category }) {
     setUploading(true);
     setError(null);
     try {
-      const supabase = createClient();
       const ext = file.name.split(".").pop();
       const path = `categories/${category.id}-${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from("product-media")
-        .upload(path, file, { upsert: true });
-      if (upErr) throw new Error(upErr.message);
-      const { data } = supabase.storage.from("product-media").getPublicUrl(path);
-      const url = data.publicUrl;
-      const result = await updateCategoryImage(category.id, url);
+      const fd = new FormData();
+      fd.set("file", file);
+      fd.set("path", path);
+      const upload = await uploadToStorage(fd);
+      if ("error" in upload) throw new Error(upload.error);
+      const result = await updateCategoryImage(category.id, upload.url);
       if (result && "error" in result) throw new Error(result.error);
-      setImageUrl(url);
+      setImageUrl(upload.url);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload thất bại");
     } finally {

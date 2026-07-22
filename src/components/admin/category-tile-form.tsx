@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Upload, X } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { uploadToStorage } from "@/lib/storage-actions";
 import type { CategoryTile } from "@/lib/category-tiles";
 import type { Category } from "@/lib/categories";
 
@@ -49,15 +49,16 @@ export function CategoryTileForm({ tile, categories = [], action }: CategoryTile
     if (!file) return;
     setUploading(true);
     setError(null);
-    const supabase = createClient();
     const ext = file.name.split(".").pop();
     const path = `tiles/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error: uploadError } = await supabase.storage.from("product-media").upload(path, file);
-    if (uploadError) {
-      setError(`Không thể tải ảnh: ${uploadError.message}`);
+    const fd = new FormData();
+    fd.set("file", file);
+    fd.set("path", path);
+    const upload = await uploadToStorage(fd);
+    if ("error" in upload) {
+      setError(`Không thể tải ảnh: ${upload.error}`);
     } else {
-      const { data } = supabase.storage.from("product-media").getPublicUrl(path);
-      setImageUrl(data.publicUrl);
+      setImageUrl(upload.url);
     }
     setUploading(false);
     e.target.value = "";

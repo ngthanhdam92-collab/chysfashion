@@ -3,7 +3,7 @@
 import { useState, useRef, useTransition } from "react";
 import Image from "next/image";
 import { Camera, Loader2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { uploadToStorage } from "@/lib/storage-actions";
 import { updateCategoryBannerImage } from "@/lib/categories-actions";
 import { saveCollectionBanners } from "@/lib/homepage-settings-actions";
 import type { Category } from "@/lib/categories";
@@ -63,18 +63,16 @@ export function HomepageCollectionBanners({ categories, selectedValues }: Props)
     setUploading((p) => ({ ...p, [slotIdx]: true }));
     setUploadErrors((p) => ({ ...p, [slotIdx]: "" }));
     try {
-      const supabase = createClient();
       const ext = file.name.split(".").pop();
       const path = `banners/collection-${cat.id}-${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from("product-media")
-        .upload(path, file, { upsert: true });
-      if (upErr) throw new Error(upErr.message);
-      const { data } = supabase.storage.from("product-media").getPublicUrl(path);
-      const url = data.publicUrl;
-      const result = await updateCategoryBannerImage(cat.id, url);
+      const fd = new FormData();
+      fd.set("file", file);
+      fd.set("path", path);
+      const upload = await uploadToStorage(fd);
+      if ("error" in upload) throw new Error(upload.error);
+      const result = await updateCategoryBannerImage(cat.id, upload.url);
       if (result && "error" in result) throw new Error(result.error);
-      setBannerImages((p) => ({ ...p, [catValue]: url }));
+      setBannerImages((p) => ({ ...p, [catValue]: upload.url }));
     } catch (err) {
       setUploadErrors((p) => ({
         ...p,
