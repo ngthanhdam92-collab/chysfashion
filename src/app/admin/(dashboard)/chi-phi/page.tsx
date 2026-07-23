@@ -96,9 +96,11 @@ export default async function ChiPhiPage({
   const totalAd = adEntries.reduce((s, e) => s + e.amount, 0);
   const opPerOrder = settings.packagingPerOrder + settings.printingPerOrder;
   const totalOp = opPerOrder * orderCount;
+  const shippingPerOrder = settings.shippingCostPerOrder;
+  const totalShipping = shippingPerOrder * orderCount;
   const estimatedReturns = Math.round((orderCount * settings.returnRatePct) / 100);
   const totalRet = estimatedReturns * settings.returnCostPerUnit;
-  const totalExternal = totalAd + totalOp + totalRet;
+  const totalExternal = totalAd + totalOp + totalShipping + totalRet;
   const netProfit = grossProfit - totalExternal;
 
   // Per-order allocation
@@ -161,7 +163,7 @@ export default async function ChiPhiPage({
         <ProfitCard
           label="Chi phí ngoài"
           value={totalExternal > 0 ? formatVnd(totalExternal) : "Chưa nhập"}
-          sub="QC + VH + hoàn hàng"
+          sub="QC + Ship + VH + hoàn"
           color="slate"
         />
       </div>
@@ -206,6 +208,11 @@ export default async function ChiPhiPage({
                   Vận hành: <span className="font-medium text-amber-600">−{formatVnd(totalOp)}</span>
                 </span>
               )}
+              {totalShipping > 0 && (
+                <span className="text-muted">
+                  Giao hàng: <span className="font-medium text-orange-500">−{formatVnd(totalShipping)}</span>
+                </span>
+              )}
               {totalRet > 0 && (
                 <span className="text-muted">
                   Hoàn hàng (ước tính): <span className="font-medium text-red-500">−{formatVnd(totalRet)}</span>
@@ -240,6 +247,7 @@ export default async function ChiPhiPage({
                   <th className="px-4 py-3 text-right">Doanh thu SP</th>
                   <th className="px-4 py-3 text-right">COGS</th>
                   <th className="px-4 py-3 text-right">QC+VH/đơn</th>
+                  <th className="px-4 py-3 text-right">Ship/đơn</th>
                   <th className="px-4 py-3 text-right">LN ròng/đơn</th>
                 </tr>
               </thead>
@@ -247,7 +255,7 @@ export default async function ChiPhiPage({
                 {dayOrders.map((order) => {
                   const rev = order.subtotal - (order.discount ?? 0);
                   const orderCogs = order.items.reduce((s, i) => s + itemCost(i), 0);
-                  const orderNet = rev - orderCogs - perOrderAdOp;
+                  const orderNet = rev - orderCogs - perOrderAdOp - shippingPerOrder;
                   const hasCost = orderCogs > 0;
                   return (
                     <tr key={order.id} className="border-b border-line last:border-0 hover:bg-cream/40">
@@ -268,6 +276,9 @@ export default async function ChiPhiPage({
                       </td>
                       <td className="px-4 py-3 text-right text-muted">
                         {perOrderAdOp > 0 ? formatVnd(perOrderAdOp) : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-right text-muted">
+                        {shippingPerOrder > 0 ? formatVnd(shippingPerOrder) : "—"}
                       </td>
                       <td className="px-4 py-3 text-right">
                         {hasCost ? (
@@ -294,6 +305,9 @@ export default async function ChiPhiPage({
                     </td>
                     <td className="px-4 py-3 text-right text-muted">
                       {totalAd + totalOp > 0 ? formatVnd(totalAd + totalOp) : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right text-muted">
+                      {totalShipping > 0 ? formatVnd(totalShipping) : "—"}
                     </td>
                     <td className="px-4 py-3 text-right">
                       {hasCogs ? (

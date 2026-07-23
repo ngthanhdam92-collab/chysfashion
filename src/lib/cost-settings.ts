@@ -8,6 +8,7 @@ export interface CostSettings {
   printingPerOrder: number;
   returnRatePct: number;
   returnCostPerUnit: number;
+  shippingCostPerOrder: number;
 }
 
 const DEFAULT: CostSettings = {
@@ -15,6 +16,7 @@ const DEFAULT: CostSettings = {
   printingPerOrder: 0,
   returnRatePct: 0,
   returnCostPerUnit: 0,
+  shippingCostPerOrder: 0,
 };
 
 export async function getCostSettings(): Promise<CostSettings> {
@@ -30,6 +32,7 @@ export async function getCostSettings(): Promise<CostSettings> {
     printingPerOrder: Number(data.printing_per_order ?? 0),
     returnRatePct: Number(data.return_rate_pct ?? 0),
     returnCostPerUnit: Number(data.return_cost_per_unit ?? 0),
+    shippingCostPerOrder: Number(data.shipping_cost_per_order ?? 0),
   };
 }
 
@@ -42,6 +45,7 @@ export async function saveCostSettings(settings: CostSettings) {
       printing_per_order: settings.printingPerOrder,
       return_rate_pct: settings.returnRatePct,
       return_cost_per_unit: settings.returnCostPerUnit,
+      shipping_cost_per_order: settings.shippingCostPerOrder,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "id" },

@@ -66,6 +66,24 @@ export function CostEntryPanel({ date, adEntries, settings, orderCount }: Props)
     });
   }
 
+  // ── Shipping cost per order ───────────────────────────────────────────────
+  const [shipCost, setShipCost] = useState(fmtInput(settings.shippingCostPerOrder));
+  const [shipSaved, setShipSaved] = useState(false);
+
+  const totalShip = parseNum(shipCost) * orderCount;
+
+  function handleSaveShipping() {
+    startTransition(async () => {
+      await saveCostSettings({
+        ...settings,
+        shippingCostPerOrder: parseNum(shipCost),
+      });
+      setShipSaved(true);
+      router.refresh();
+      setTimeout(() => setShipSaved(false), 2500);
+    });
+  }
+
   // ── Return rate settings ──────────────────────────────────────────────────
   const [ratePct, setRatePct] = useState(
     settings.returnRatePct > 0 ? String(settings.returnRatePct) : "",
@@ -91,7 +109,7 @@ export function CostEntryPanel({ date, adEntries, settings, orderCount }: Props)
     });
   }
 
-  const grandTotal = totalAd + totalRet;
+  const grandTotal = totalAd + totalShip + totalRet;
 
   return (
     <div className="space-y-5">
@@ -106,6 +124,12 @@ export function CostEntryPanel({ date, adEntries, settings, orderCount }: Props)
             <div className="text-right">
               <p className="text-[11px] text-muted">Quảng cáo</p>
               <p className="font-semibold text-blue-600">{formatVnd(totalAd)}</p>
+            </div>
+          )}
+          {totalShip > 0 && (
+            <div className="text-right">
+              <p className="text-[11px] text-muted">Phí giao hàng</p>
+              <p className="font-semibold text-orange-500">{formatVnd(totalShip)}</p>
             </div>
           )}
           {totalRet > 0 && (
@@ -159,7 +183,51 @@ export function CostEntryPanel({ date, adEntries, settings, orderCount }: Props)
         />
       </Section>
 
-      {/* ── 2. Return rate (settings, %) ── */}
+      {/* ── 2. Shipping cost per order ── */}
+      <Section
+        title="Phí giao hàng cố định"
+        badge="Cài đặt 1 lần"
+        total={totalShip}
+        totalColor="text-orange-500"
+        sub={
+          parseNum(shipCost) > 0 && orderCount > 0
+            ? `${orderCount} đơn × ${formatVnd(parseNum(shipCost))}`
+            : undefined
+        }
+      >
+        <p className="mb-4 text-xs text-muted">
+          Phí bạn trả cho đơn vị vận chuyển mỗi đơn hàng (không phải phí ship thu từ khách).
+          Chỉ cần lưu 1 lần, hệ thống tự nhân với số đơn trong ngày.
+        </p>
+        <div className="max-w-xs">
+          <label className="mb-1.5 block text-xs font-semibold text-orange-500">
+            Phí ship / đơn
+          </label>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={shipCost}
+            onChange={numInput(shipCost, setShipCost)}
+            placeholder="0"
+            className="w-full border border-line bg-white px-3 py-2 text-right font-mono text-sm focus:border-gold focus:outline-none"
+          />
+          <span className="mt-0.5 block text-right text-[10px] text-muted">VND / đơn</span>
+        </div>
+        {parseNum(shipCost) > 0 && orderCount > 0 && (
+          <div className="mt-3 rounded bg-orange-50 px-3 py-2.5 text-xs text-orange-700">
+            {orderCount} đơn × {formatVnd(parseNum(shipCost))} ={" "}
+            <strong>{formatVnd(totalShip)}</strong> phí giao hàng hôm nay
+          </div>
+        )}
+        <SaveRow
+          onSave={handleSaveShipping}
+          saved={shipSaved}
+          pending={pending}
+          label="Lưu phí giao hàng"
+        />
+      </Section>
+
+      {/* ── 3. Return rate (settings, %) ── */}
       <Section
         title="Hoàn hàng / Giao thất bại"
         badge="Ước tính theo %"
