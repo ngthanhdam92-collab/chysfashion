@@ -446,7 +446,7 @@ export function ProfitReportClient({
 
       {/* Legend note */}
       <p className="text-[11px] text-muted">
-        % tính trên doanh thu sản phẩm (subtotal − giảm giá). QC = quảng cáo (Facebook/Zalo/TikTok). CP khác = chi phí phát sinh + ước tính hoàn hàng.
+        % tính trên doanh thu sản phẩm (subtotal − giảm giá). QC = quảng cáo (Facebook/Zalo/TikTok). CP khác = chi phí phát sinh + phí giao hàng + ước tính hoàn hàng.
       </p>
     </div>
   );

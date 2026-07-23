@@ -151,7 +151,10 @@ export default async function AnalyticsPage({
   const totalIncidentalCost = costEntries
     .filter((e) => e.category === "incidental")
     .reduce((s, e) => s + e.amount, 0);
-  const totalExternalCost = totalAdCost + totalOpCost + totalRetCost + totalIncidentalCost;
+  const totalShipCost = costSettings
+    ? costSettings.shippingCostPerOrder * activeOrders.length
+    : 0;
+  const totalExternalCost = totalAdCost + totalOpCost + totalRetCost + totalIncidentalCost + totalShipCost;
   const netProfit = totalProfit - totalExternalCost;
   const hasExternalCosts = totalExternalCost > 0;
 
@@ -308,6 +311,12 @@ export default async function AnalyticsPage({
                         <div>
                           <p className="text-xs text-muted">Vận hành</p>
                           <p className="font-medium text-amber-600">−{formatVnd(totalOpCost)}</p>
+                        </div>
+                      )}
+                      {totalShipCost > 0 && (
+                        <div>
+                          <p className="text-xs text-muted">Giao hàng</p>
+                          <p className="font-medium text-orange-500">−{formatVnd(totalShipCost)}</p>
                         </div>
                       )}
                       {totalRetCost > 0 && (

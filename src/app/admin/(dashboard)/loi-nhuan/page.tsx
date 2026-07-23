@@ -260,7 +260,8 @@ export default async function LoiNhuanPage({
     // Return cost estimated from settings × orders in this period
     const estimatedReturns = Math.round((data.orderCount * settings.returnRatePct) / 100);
     const returnCost       = estimatedReturns * settings.returnCostPerUnit;
-    const otherCost        = (incidentalByKey[key] ?? 0) + returnCost;
+    const shippingCost     = data.orderCount * settings.shippingCostPerOrder;
+    const otherCost        = (incidentalByKey[key] ?? 0) + returnCost + shippingCost;
 
     const grossProfit = data.revenue - data.cogs;
     const netProfit   = grossProfit - adCost - otherCost;
