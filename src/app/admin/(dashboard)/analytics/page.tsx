@@ -102,7 +102,7 @@ export default async function AnalyticsPage({
 
   const activeOrders = allOrders.filter((o) => {
     const d = new Date(o.createdAt);
-    return o.status !== "da_huy" && d >= range.from && d <= range.to;
+    return o.status !== "da_huy" && o.status !== "da_hoan" && d >= range.from && d <= range.to;
   });
 
   function itemCost(item: OrderItem): number {

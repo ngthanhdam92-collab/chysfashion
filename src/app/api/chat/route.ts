@@ -136,6 +136,7 @@ function statusLabel(status: string): string {
     dang_xu_ly: "📦 Đang xử lý / giao hàng",
     da_giao: "✅ Đã giao thành công",
     da_huy: "❌ Đã hủy",
+    da_hoan: "↩️ Giao không thành công — hàng hoàn kho",
   };
   return map[status] ?? status;
 }

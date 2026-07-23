@@ -188,6 +188,19 @@ export async function getOrderByCode(
   return mapRow(data as OrderRow);
 }
 
+export async function adminGetOrderByCode(
+  orderCode: string
+): Promise<Order | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("orders")
+    .select("*")
+    .eq("order_code", orderCode.toUpperCase().trim())
+    .maybeSingle();
+  if (!data) return null;
+  return mapRow(data as OrderRow);
+}
+
 export async function updateOrderCustomerInfo(
   id: string,
   data: { phone: string; address: string }

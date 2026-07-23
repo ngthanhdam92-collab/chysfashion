@@ -22,6 +22,7 @@ const STATUS_LABEL: Record<string, string> = {
   dang_xu_ly: "Đang xử lý",
   da_giao:    "Đã giao hàng",
   da_huy:     "Đã hủy",
+  da_hoan:    "Giao không thành công",
 };
 
 const STATUS_COLOR: Record<string, string> = {
@@ -29,6 +30,7 @@ const STATUS_COLOR: Record<string, string> = {
   dang_xu_ly: "bg-amber-100 text-amber-700",
   da_giao:    "bg-green-100 text-green-700",
   da_huy:     "bg-red-100 text-red-700",
+  da_hoan:    "bg-orange-100 text-orange-700",
 };
 
 function maskPhone(phone: string) {

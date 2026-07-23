@@ -155,7 +155,7 @@ export default async function LoiNhuanPage({
 
   // ── Filter active orders in range ────────────────────────────────────────────
   const activeOrders = allOrders.filter((o) => {
-    if (o.status === "da_huy") return false;
+    if (o.status === "da_huy" || o.status === "da_hoan") return false;
     const dk = dayKey(new Date(o.createdAt));
     return dk >= fetchFrom && dk <= fetchTo;
   });

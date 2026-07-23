@@ -61,7 +61,7 @@ export default async function ChiPhiPage({
 
   // Orders for this date (not cancelled)
   const dayOrders = allOrders.filter((o) => {
-    return dayKeyVN(new Date(o.createdAt)) === date && o.status !== "da_huy";
+    return dayKeyVN(new Date(o.createdAt)) === date && o.status !== "da_huy" && o.status !== "da_hoan";
   });
   const orderCount = dayOrders.length;
 

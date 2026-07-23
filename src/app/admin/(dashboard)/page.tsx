@@ -35,10 +35,10 @@ export default async function AdminDashboardPage() {
   );
 
   const revenueToday = ordersToday
-    .filter((o) => o.status !== "da_huy")
+    .filter((o) => o.status !== "da_huy" && o.status !== "da_hoan")
     .reduce((sum, o) => sum + o.total, 0);
   const revenueYesterday = ordersYesterday
-    .filter((o) => o.status !== "da_huy")
+    .filter((o) => o.status !== "da_huy" && o.status !== "da_hoan")
     .reduce((sum, o) => sum + o.total, 0);
 
   const pendingCount = orders.filter((o) => o.status === "moi").length;

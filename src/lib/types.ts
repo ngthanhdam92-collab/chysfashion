@@ -56,7 +56,7 @@ export interface OrderItem {
   quantity: number;
 }
 
-export type OrderStatus = "moi" | "dang_xu_ly" | "da_giao" | "da_huy";
+export type OrderStatus = "moi" | "dang_xu_ly" | "da_giao" | "da_huy" | "da_hoan";
 
 export interface Order {
   id: string;

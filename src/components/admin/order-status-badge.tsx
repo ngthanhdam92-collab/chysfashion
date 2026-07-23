@@ -5,6 +5,7 @@ const STATUS_CONFIG: Record<OrderStatus, { label: string; className: string }> =
   dang_xu_ly: { label: "Đang xử lý", className: "bg-gold/15 text-gold-dark" },
   da_giao: { label: "Đã giao", className: "bg-success/15 text-success" },
   da_huy: { label: "Đã hủy", className: "bg-error/15 text-error" },
+  da_hoan: { label: "Đã hoàn", className: "bg-orange-100 text-orange-700" },
 };
 
 export function OrderStatusBadge({ status }: { status: OrderStatus }) {
@@ -21,4 +22,5 @@ export const ORDER_STATUS_OPTIONS: { value: OrderStatus; label: string }[] = [
   { value: "dang_xu_ly", label: "Đang xử lý" },
   { value: "da_giao", label: "Đã giao" },
   { value: "da_huy", label: "Đã hủy" },
+  { value: "da_hoan", label: "Đã hoàn" },
 ];

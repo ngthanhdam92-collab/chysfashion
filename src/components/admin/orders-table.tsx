@@ -131,6 +131,7 @@ const STATUS_QUICK: { value: OrderStatus; label: string; cls: string }[] = [
   { value: "dang_xu_ly", label: "Xử lý",    cls: "bg-amber-100 text-amber-700 hover:bg-amber-200"   },
   { value: "da_giao",    label: "Đã giao",  cls: "bg-emerald-100 text-emerald-700 hover:bg-emerald-200" },
   { value: "da_huy",     label: "Huỷ",      cls: "bg-red-100 text-red-700 hover:bg-red-200"         },
+  { value: "da_hoan",    label: "Hoàn",     cls: "bg-orange-100 text-orange-700 hover:bg-orange-200" },
 ];
 
 function BulkActionBar({
