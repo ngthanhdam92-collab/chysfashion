@@ -35,7 +35,7 @@ export default async function AdminOrderDetailPage({ params }: Params) {
           )}
           {order.paidAt ? (
             <span className="rounded bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-              ✓ Đã thanh toán · {new Date(order.paidAt).toLocaleString("vi-VN")}
+              ✓ Đã thanh toán · {new Date(order.paidAt).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}
             </span>
           ) : order.paymentMethod === "bank_transfer" ? (
             <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
@@ -114,7 +114,7 @@ export default async function AdminOrderDetailPage({ params }: Params) {
             <div>
               <dt className="text-xs text-muted">Ngày đặt</dt>
               <dd className="text-ink">
-                {new Date(order.createdAt).toLocaleString("vi-VN")}
+                {new Date(order.createdAt).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}
               </dd>
             </div>
           </dl>

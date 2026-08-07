@@ -438,7 +438,7 @@ export function OrdersTable({ orders, skuLookup = {} }: { orders: Order[]; skuLo
                         <OrderStatusBadge status={o.status} />
                       </td>
                       <td className="px-4 py-3 text-muted">
-                        {new Date(o.createdAt).toLocaleDateString("vi-VN")}
+                        {new Date(o.createdAt).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}
                       </td>
                     </tr>
                   );
